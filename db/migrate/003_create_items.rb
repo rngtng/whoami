@@ -1,0 +1,16 @@
+class CreateItems < ActiveRecord::Migration
+  def self.up
+    create_table :items do |t|
+      t.column :account_id, :integer
+      t.column :type,       :string
+      t.column :time,       :datetime
+      t.column :dataid,     :string
+      t.column :data,       :text
+      t.column :complete,   :boolean, :default => false
+    end
+  end
+
+  def self.down
+    drop_table :items
+  end
+end

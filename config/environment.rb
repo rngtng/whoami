@@ -28,7 +28,7 @@ Rails::Initializer.run do |config|
 
   # Use the database for sessions instead of the file system
   # (create the session table with 'rake db:sessions:create')
-  # config.action_controller.session_store = :active_record_store
+  config.action_controller.session_store = :active_record_store
 
   # Use SQL instead of Active Record's schema dumper when creating the test database.
   # This is necessary if your schema can't be completely dumped by the schema dumper, 
@@ -41,6 +41,7 @@ Rails::Initializer.run do |config|
   # Make Active Record use UTC-base instead of local time
   # config.active_record.default_timezone = :utc
   
+  config.connection_adapters = %w( mysql ) 
   # See Rails::Configuration for more options
 end
 
@@ -58,3 +59,28 @@ end
 # Mime::Type.register "application/x-mobile", :mobile
 
 # Include your application configuration below
+require 'open-uri' #open urls
+require 'feed-normalizer' #for rss, atom
+require 'flickr'
+require 'youtube'
+require 'ebay'
+require 'xmlrpc/client' ##blogs, like 'wordpress', 'blogger'
+
+require 'mylastfm' #created by myself
+require 'mydelicious' #created by myself
+
+
+##############################
+
+#require 'amazon'
+#require 'google'??
+#require 'yahoo'??
+#require 'feedburner'
+#require 'technorati'
+#require 'facebook'
+#require 'myspace'
+#require 'qype'
+#require 'twitter'
+#require 'plazes'
+#require 'wiki'
+#...

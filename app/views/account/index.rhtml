@@ -1,0 +1,13 @@
+<h2 style="float:left; border:0; margin:0; padding:0">your <%= @account.type %> Content:</h2>
+  <%= link_to 'edit',   :action => 'edit',   :id => @account.id %>
+  <%= link_to 'delete', :action => 'delete', :id => @account.id %>
+
+<%= periodically_call_remote :update => 'items',
+ :frequency => 20, 
+ :url => { :action => 'get_items', :id => @account.id },
+ :before => %(Element.show('spinner')),
+ :success => %(Element.hide('spinner')) %>
+ 
+<%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+
+<div id="items" ><%= render(:partial => "item", :collection => @items) %> </div>

@@ -1,0 +1,9 @@
+  <div class="item">
+  <%= link_to( 
+        image_tag( item.thumbnail, :size => "50x50",
+          :style => "float:left; margin-right:10px; border: 1px solid #{item.color};",
+          :title => item.info,
+	  :onmouseover => "this.width=100,this.height=100", 
+	  :onmouseout => "this.width=50,this.height=50" ), 
+	item.url ) %>
+  </div>

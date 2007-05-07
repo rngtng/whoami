@@ -1,0 +1,27 @@
+<div class="depot-form"> 
+  <fieldset> 
+    <legend>Edit Account </legend> 
+    <% form_for :account, :url => { :action => :edit } do |form| %> 
+      <p> 
+        <label for="name">Username:</label> 
+        <%= form.text_field :username %> 
+      </p>
+      <% if @account.requires_host? -%>
+      <p> 
+        <label for="password">Host:</label> 
+        <%= form.text_field :host %> 
+      </p> 
+      <% end %>
+      <% if @account.requires_password? -%>
+      <p> 
+        <label for="password">Password:</label> 
+        <%= form.text_field :password %> 
+      </p> 
+      <% end %>
+      <p> 
+        <%= submit_tag "Save" %> 
+        <%= link_to 'Delete', :action => :delete, :id => @account.id %>
+      </p> 
+    <% end %> 
+  </fieldset> 
+</div> 
