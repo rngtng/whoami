@@ -1,0 +1,8 @@
+BODY {
+  font-family: Verdana, Arial;
+  font-size: 10pt;
+}
+
+DIV.item IMG {
+  margin: 2px;
+} 
