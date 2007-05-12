@@ -13,8 +13,8 @@ class AccountController < ApplicationController
 	     @items = @account.get_items( :order => 'time DESC' )
       end
       
-      def get_items
-	 render :partial => "item", :collection => @account.get_items
+      def tags
+        @tags = Item.tag_counts
       end
       
       def add
@@ -48,6 +48,11 @@ class AccountController < ApplicationController
       def delete
               @account.destroy
               redirect_to :controller => "user", :action => "index"
+      end
+      
+      #Ajax Call #TODO combine with index??
+      def get_items
+	 render :partial => "item", :collection => @account.get_items
       end
       
       private 

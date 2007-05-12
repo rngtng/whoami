@@ -6,3 +6,8 @@ BODY {
 DIV.item IMG {
   margin: 2px;
 } 
+
+
+#tagcloud LI {
+ 	 display:inline;
+}

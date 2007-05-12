@@ -1,11 +1,13 @@
 class Item < ActiveRecord::Base
+	acts_as_taggable
+	
 	belongs_to :account, :counter_cache => true
         serialize :data
         
         validates_presence_of :time
-        validates_uniqueness_of :dataid
-	
-	
+	validates_presence_of :dataid
+        validates_uniqueness_of :dataid, :scope => 'account_id'
+		
 	def self.factory( type, *params )
 	   class_name = type.capitalize + "Item"
 	   raise unless defined? class_name.constantize
@@ -69,15 +71,22 @@ end
 ######################################################################################################
 
 class FlickrItem < Item
-	Struct.new( "MyPhoto", :url, :title, :text )
+	Struct.new( "MyPhoto", :url, :title, :text ) unless defined? Struct::MyPhoto
 	
 	def data=(d)
+	   return super(d) if self.dataid	
+	   self.dataid = [d.id, d.secret].join(':')
+	   self.time = Time.now 
+	end	
+		
+	def data_add( d )
           self.time = d.dates[:taken] || d.dates[:posted]
 	  self.complete = true
+	  add_tags( d.tags )
 	  # add notes, comments, date_posted
 	  d2 = Struct::MyPhoto.new( d.url, d.title, d.description )
 	  #d2 = Hash.new( :url => d.url, :title => d.title, :text => d.description );
-	  super(d2)
+	  self.data = d2
         end
 	
 	def thumbnail
@@ -91,6 +100,13 @@ class FlickrItem < Item
 	def color 
 		"#FF0000"
 	end
+	
+	private
+	def add_tags( tags )
+		tags.each do |tag|
+		  self.tag( tag.clean )
+		end
+	end
 end
 
 ######################################################################################################
@@ -100,6 +116,8 @@ class YoutubeItem < Item
           self.dataid = d.id
           self.time = d.upload_time || Time.now
 	  self.complete = true
+	  Tag.delimiter = ' '
+	  self.tag_list = d.tags.downcase
 	  super(d)
         end
 	
@@ -112,12 +130,18 @@ class YoutubeItem < Item
 	end
 	
 	def info
-             super +  "Comments:\nViews:\nVotes:\n" ###TODO more info here
+		super +  "Lengths:#{data.length_seconds}\nComments:#{data.comment_count}\n" +
+		"Views:#{data.view_count}\nRating:#{data.rating_avg}\n" +
+		"Votes:#{data.rating_count}\n" ###TODO more info here
 	end
-	
+			
 	def color 
 		"#00FF00"
 	end
+	
+	def html(width = 425, height = 350)
+	   data.embed_html(width, height )
+	end   
 end
 
 ######################################################################################################
@@ -174,6 +198,8 @@ class DeliciousItem < Item
           self.dataid = d.hash
           self.time = d.time
 	  self.complete = true
+	  Tag.delimiter = ' '
+	  self.tag_list = d.tag.downcase
 	  super( d )
         end
 	

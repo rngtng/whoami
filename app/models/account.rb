@@ -1,6 +1,6 @@
 class Account < ActiveRecord::Base
         belongs_to :user 
-        has_many   :items
+        has_many   :items, :extend => TagCountsExtension
 	serialize  :token
         
         #validates_presence_of :username
@@ -57,13 +57,16 @@ class Account < ActiveRecord::Base
 		items_count
 	end	
 	
-	def fetch_items( count = 0, step = 1)
+	def fetch_items( count = 0, max = 0 )
+	  return false if max > 0 and count == max 
 	  updated = false	
           raw_items(count).each do | item |
              i = Item.factory( type, :data => item )
              updated = self.items << i || updated
 	   end
-	   updated
+	   return updated unless updated ## no more to update, return
+	   sleep 0.3 ## prevent API DOS
+	   fetch_items( count + 1, max ) #checking if there are more..
 	   #### items(:refresh).size
 	end	
 
@@ -144,109 +147,21 @@ class Account < ActiveRecord::Base
         end 
 end
 
-###################################################################################################### 
-
-class FlickrAccount < Account
-	############    AUTH Part   ############
-	def requires_auth?
-		true
-        end
-	
-        def auth( params )
-	    api.auth.frob = params[:frob]  
-            api.auth.getToken
-	    self.token = api.auth.token
-            self.username = token.user.username 
-        end	
-	
-	def auth_link
-	  api.auth.getFrob
-	  api.auth.login_link	
-	end
-	
-	def auth?
-	  api.auth.token	
-	end
-	
-	############    Fetch Stuff   ############
-	def fetch_profile
-	end
-
-        def fetch_tags
-	   #tags.each do | item |
-	   #  i = Tag.new( )
-           #  updated = self.tags << i || updated
-	   #end	
-        end
-	
-	def fetch_items( count = 1, step = 1 )  #count = number of pages  
-	   updated = false
-	   raw_items( count ).each do | item |
-	     i = Item.factory( type, :dataid => [item.id, item.secret].join(':'), :time => Time.now )
-             updated = self.items << i || updated
-	   end
-	   return unless updated ## no more to update
-	   sleep 1 ## prevent API DOS
-	   fetch_items( count + step, step ) unless count == raw_items( count ).pages
-	end 
-	
-	############    Other Stuff   ############
-	def raw_items( count = 1 )  #count = number of pages  
-	    @photos ||= Array.new	
-	    user = token.user.nsid
-            tags = nil
-            tag_mode = nil
-            text = nil
-            min_upload_date = nil
-            max_upload_date = nil
-            min_taken_date = nil
-            max_taken_date = nil
-            license = nil
-            extras = nil
-            per_page = 15
-            sort = nil
-	    @photos[count] ||= api.photos.search( user, tags, tag_mode, text, min_upload_date, max_upload_date, min_taken_date, max_taken_date, license, extras, per_page, count, sort )
-        end
-	#alias photos raw_items
-	
-	def feed
-	   "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"	
-        end
-	
-	def tags
-	    api.tags.getListUser( user )
-	end
-	
-	private
-	def api
-	   @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
-	   @api.auth.token ||= token if token
-	   @api
-	end
-	#alias flickr api
-	
-	def fetch_details( limit = 100 )
-	    items.find_all_by_complete( false, :limit => limit ).each do | item |
-		item.data  = api.photos.getInfo( *item.dataid.split(/:/) ) #split to id,secret -> it is much faster!!
-		sleep 0.1 ## prevent API DOS
-		item.save
-	    end	
-	end
-end
+require 'FlickrAccount'
 
 ######################################################################################################
 
 class YoutubeAccount < Account
-        ############    Get Stuff   ############
-	def fetch_profile
+	############    Other Stuff   ############
+	def profile
 	   api.profile( username )
         end
 	
-	############    Other Stuff   ############
 	def raw_items(count = 0)
-	    api.videos_by_user( username )
+	    return api.videos_by_user( username ) if count == 0
+	    return Array.new
         end
-	#alias videos raw_items
+	alias videos raw_items
 	
 	def feed
 	   "http://youtube.com/rss/user/#{username}/videos.rss"
@@ -257,7 +172,7 @@ class YoutubeAccount < Account
 	def api
 	   @api ||= YouTube::Client.new 'G1Wl5IDX66M'
 	end
-	#alias youtube api
+	alias youtube api
 end	
 
 ######################################################################################################
@@ -275,24 +190,17 @@ class LastfmAccount < Account
 	  #url = "1.0/user/#{username}/profile.xml"
 	end  
 	
-	def fetch_items( count = 0)
-	   updated = super( count )	
-	   return unless updated ## no more to update, return even tracks ist empty
-	   sleep 1 ## prevent API DOS
-	   fetch_items( count + 1 )
-        end
-	
 	############    Other Stuff   ############
 	def raw_items(count = 0)
 		api.user_tracks( count )
 	end
-	#alias tracks raw_items
+	alias tracks raw_items
 	
 	private
 	def api
 	   @api ||= MyLastfm::Client.new username
 	end
-	#alias lastfm api
+	alias lastfm api
 	
 	def fetch_details( limit = 1000 )
 	   items.find_all_by_complete( false, :limit => limit ).each do | track |
@@ -311,7 +219,7 @@ class LastfmAccount < Account
 		     a = Cachedalbum.create!( :artist => album.artist, :title => album.title )
 		     a.album = api.album_info( album.artist, album.title )
 		     a.save
-		     sleep 1 
+		     sleep 0.3 
 		   rescue
 		    #puts "!### #{album.artist}, #{album.title} already cached"
 		   end
@@ -352,15 +260,17 @@ class DeliciousAccount < Account
 	
 	############    Other Stuff   ############
 	def raw_items(count = 0)
-            api.posts_all
+	    return api.posts_recent( nil, 100 ) if count == 0
+	    return api.posts_all if count == 1
+	    return Array.new
         end
-	#alias bookmarks raw_items
+	alias bookmarks raw_items
 	
 	private
 	def api
 	   @api ||= MyDelicious::Client.new username, password
 	end
-	#alias delicious api
+	alias delicious api
 end
 
 ######################################################################################################
@@ -378,7 +288,7 @@ class EbayAccount < Account
 		api.fetch_my_ebay_buying
                 #ebay.fetch_my_ebay_selling
 	end
-	#alias auctions raw_items
+	alias auctions raw_items
 	
 	private
 	def api
@@ -386,7 +296,7 @@ class EbayAccount < Account
 	  ebay_configure
 	  @api = Ebay::Api.new
 	end
-	#alias ebay api
+	alias ebay api
 
 
         def ebay_configure
@@ -421,13 +331,6 @@ class BlogAccount < Account
 	def fetch_profile
 	end  
 	
-	def fetch_items( count = 10, step = 10 )
-	   updated = super( count )
-	   return unless updated ## no more to update, return
-	   sleep 1 ## prevent API DOS
-	   fetch_items( count+step, step ) #checking if there are more..
-        end
-	
 	def requires_host?
 	    true
         end
@@ -447,16 +350,17 @@ class BlogAccount < Account
 	
 	############    Other Stuff   ############
 	
-	def raw_items( count = 10, blog_id = 1)
+	def raw_items( count = 0, blog_id = 1)
+		count = (count+1) * 10 
 		api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
 	end
-	#alias posts raw_items
+	alias posts raw_items
 	
 	private
 	def api
 	    @api ||= XMLRPC::Client.new2( host )
         end
-	#alias blog api
+	alias blog api
 	
 	def fetch_items_init
 	    fetch_items( 500, 100 ) #get 500 posting, increase by 100 if more..
