@@ -226,36 +226,6 @@ class DeliciousItem < Item
 end
 
 ######################################################################################################
-
-class EbayItem < Item
-        def data=(d)
-          self.dataid = d.hash
-          self.time = d.time
-	  self.complete = true
-	  super( d )
-        end
-	
-	def url
-		data.href
-	end
-
-        def title
-               data.description
-        end
-	
-	def text
-               data.extended
-        end
-	
-	def thumbnail
-	end
-	
-	def color 
-		"#FF00FF"
-	end
-end
-
-######################################################################################################
 class BlogItem < Item
         def data=(d)
           self.dataid = d['postid']

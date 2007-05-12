@@ -63,7 +63,7 @@ require 'open-uri' #open urls
 require 'feed-normalizer' #for rss, atom
 require 'flickr'
 require 'youtube'
-require 'ebay'
+#require 'ebay'
 require 'xmlrpc/client' ##blogs, like 'wordpress', 'blogger'
 
 require 'mylastfm' #created by myself
