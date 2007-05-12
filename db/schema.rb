@@ -2,7 +2,7 @@
 # migrations feature of ActiveRecord to incrementally modify your database, and
 # then regenerate this schema definition.
 
-ActiveRecord::Schema.define(:version => 5) do
+ActiveRecord::Schema.define(:version => 6) do
 
   create_table "accounts", :force => true do |t|
     t.column "user_id",     :integer
@@ -16,9 +16,9 @@ ActiveRecord::Schema.define(:version => 5) do
   end
 
   create_table "cachedalbums", :force => true do |t|
-    t.column "artist",      :string
-    t.column "track_title", :string
-    t.column "album",       :text
+    t.column "artist", :string
+    t.column "title",  :string
+    t.column "album",  :text
   end
 
   create_table "items", :force => true do |t|
@@ -38,6 +38,21 @@ ActiveRecord::Schema.define(:version => 5) do
 
   add_index "sessions", ["session_id"], :name => "index_sessions_on_session_id"
   add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
+
+  create_table "taggings", :force => true do |t|
+    t.column "tag_id",        :integer
+    t.column "taggable_id",   :integer
+    t.column "taggable_type", :string
+    t.column "created_at",    :datetime
+  end
+
+  add_index "taggings", ["tag_id", "taggable_id", "taggable_type"], :name => "index_taggings_on_tag_id_and_taggable_id_and_taggable_type"
+
+  create_table "tags", :force => true do |t|
+    t.column "name", :string
+  end
+
+  add_index "tags", ["name"], :name => "index_tags_on_name"
 
   create_table "users", :force => true do |t|
     t.column "name",            :string, :limit => 50
