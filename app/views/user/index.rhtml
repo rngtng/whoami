@@ -4,12 +4,16 @@
   <%= link_to account.username,   :controller => "account", :action => 'index',  :id => account.id %>
 <% end %>
 
+<ul id="tagcloud" >
+ <%= link_to 'All', :action => 'index' %> 
+ <%= render :partial => "tag", :collection => @tags %>
+</ul>
+
   <%= periodically_call_remote :update => 'items',
  :frequency => 10, 
- :url => { :action => 'update' },
  :before => %(Element.show('spinner')),
  :success => %(Element.hide('spinner')) %>
 
 <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
 
-<div id="items" ><%= render(:partial => "item", :collection => @items) %></div>
+<div id="items" ><%= render( :partial => "item", :collection => @items) %></div>

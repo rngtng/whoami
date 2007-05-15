@@ -14,7 +14,7 @@ class AccountController < ApplicationController
       end
       
       def tags
-        @tags = Item.tag_counts
+        @tags = @account.get_tags
       end
       
       def add

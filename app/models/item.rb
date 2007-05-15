@@ -28,7 +28,7 @@ class Item < ActiveRecord::Base
 	end
 	
 	def info
-		"Date: #{time.strftime("%Y-%m-%d")}\nTitle: #{title}\nText: #{text}\n"
+		"Id: #{id}\nDate: #{time.strftime("%Y-%m-%d")}\nTitle: #{title}\nText: #{text}\nTags: #{tag_list}\n"
 	end
 
 	def color 
@@ -36,8 +36,7 @@ class Item < ActiveRecord::Base
 	end
 	
 	def thumbnail
-	     return false unless data.thumbnail	
-	     data.thumbnail
+	     "http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"
 	end
 	
 	def type
@@ -215,11 +214,6 @@ class DeliciousItem < Item
                data.extended
         end
 	
-	def thumbnail
-	      "http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #extension to get rid of deprecation warning	
-	      #"http://open.thumbshots.org/image.pxf?url=#{data.url}"	
-	end
-	
 	def color 
 		"#00FFFF"
 	end
@@ -227,6 +221,8 @@ end
 
 ######################################################################################################
 class BlogItem < Item
+	attr_reader :images, :links 
+
         def data=(d)
           self.dataid = d['postid']
 	  time = d['dateCreated'].to_time
@@ -249,11 +245,34 @@ class BlogItem < Item
                data['description']
         end
 	
+	def info
+		super + "Links: #{@links.join(', ')}\nImages: #{@images.join(', ')}\n"
+	end
+	
 	def thumbnail
-		"http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #extension to get rid of deprecation warning
+		parse_data 
+		return @images.first if @images.first
+		super  #extension to get rid of deprecation warning
 	end
 	
 	def color 
 		"#FF0099"
+	end
+	
+	private
+	def parse_data
+	      return if @images || @links	
+	      @images ||= Array.new
+	      @links ||= Array.new
+	      d = data['description'].sub( / www\./, ' http://www.')
+	      URI::extract( d, 'http' ) do |url|
+	         if url =~ /\.(png|jpg|gif)/
+	      	   @images << url.sub( /['"]/, '')
+		   puts "image: #{url}"
+	      	   next
+	         end
+	         @links << url
+		 puts "url: #{url}"
+	      end
 	end
 end	

@@ -1,0 +1,3 @@
+<li> 
+ <%= link_to( tag.name, { :action => "tags", :id => tag.name}, :style => style_for_tag_cloud( tag.count , @tags.last.count, @tags.first.count ) ) %> 
+</li>

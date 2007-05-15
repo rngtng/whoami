@@ -87,6 +87,19 @@ class Account < ActiveRecord::Base
 		items.find_all_by_complete( true, *params )
 	end
 	
+	def get_tags
+		#items
+		Item.tag_counts( :conditions => [ "items.account_id = ? ", self.id ] )
+	end
+	
+##Select name, account_id, Count(*) AS o FROM tags AS t
+## INNER JOIN taggings As t2 
+##ON t.id = t2.tag_id
+##INNER JOIN items AS i
+##ON i.id = t2.taggable_id
+##GROUP BY name
+##ORDER BY o
+	
 	###################### REQUIRES STUFF   ####################
 	def requires_auth?
 	    false
@@ -147,7 +160,78 @@ class Account < ActiveRecord::Base
         end 
 end
 
-require 'FlickrAccount'
+###############################################################################
+
+class FlickrAccount < Account
+	############    AUTH Part   ############
+	def requires_auth?
+		true
+        end
+	
+        def auth( params )
+	    api.auth.frob = params[:frob]  
+            api.auth.getToken
+	    self.token = api.auth.token
+            self.username = token.user.username 
+        end	
+	
+	def auth_link
+	  api.auth.getFrob
+	  api.auth.login_link	
+	end
+	
+	def auth?
+	  api.auth.token	
+	end
+	
+	############    Fetch Stuff   ############
+	def fetch_profile
+	end
+
+	############    Other Stuff   ############
+	def raw_items( count = 0, per_page = 15 )  #count = number of pages - 1
+	    #@photos ||= Array.new #@photos[count] ||= 	
+	    user = token.user.nsid
+            tags = nil
+            tag_mode = nil
+            text = nil
+            min_upload_date = nil
+            max_upload_date = nil
+            min_taken_date = nil
+            max_taken_date = nil
+            license = nil
+            extras = "date_taken,tags"
+            sort = nil
+	    count += 1  #pageno start by 1
+	    api.photos.search( user, tags, tag_mode, text, min_upload_date, max_upload_date, min_taken_date, max_taken_date, license, extras, per_page, count, sort )
+        end
+	alias photos raw_items
+	
+	def feed
+	   "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"	
+        end
+	
+	#def tags
+	#    api.tags.getListUser( user )
+	#end
+	
+	#private
+	def api
+	   @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
+	   @api.auth.token ||= token if token
+	   @api
+	end
+	alias flickr api
+	
+	def fetch_details( limit = 100 )
+	    items.find_all_by_complete( false, :limit => limit ).each do | item |
+		item.data_add( api.photos.getInfo( *item.dataid.split(/:/) ) ) #split to id,secret -> it is much faster!!
+		sleep 0.3 ## prevent API DOS
+		item.save
+	    end	
+	end
+end
+
 
 ######################################################################################################
 
@@ -158,7 +242,8 @@ class YoutubeAccount < Account
         end
 	
 	def raw_items(count = 0)
-	    return api.videos_by_user( username ) if count == 0
+	    return api.favorite_videos( username ) if count == 0
+	    return api.videos_by_user( username ) if count == 1 #TODO pagin support??, count+1 )
 	    return Array.new
         end
 	alias videos raw_items
@@ -168,7 +253,7 @@ class YoutubeAccount < Account
         end
 	
 	############################################
-	private
+	#private
 	def api
 	   @api ||= YouTube::Client.new 'G1Wl5IDX66M'
 	end
@@ -309,7 +394,7 @@ class BlogAccount < Account
 	end
 	alias posts raw_items
 	
-	private
+	#private
 	def api
 	    @api ||= XMLRPC::Client.new2( host )
         end
@@ -320,4 +405,45 @@ class BlogAccount < Account
         end
 end	
 
+######################################################################################################
+
+class AmazonAccount < Account
+        ############    Get Stuff   ############
+	def fetch_feed
+	   #TODO parse( posts( 10 ) )
+        end
+	
+	def fetch_profile
+	end  
+	
+	def requires_host?
+	    false
+        end
+	
+	def requires_password?
+	    false
+        end
+	
+	############    Other Stuff   ############
+	
+	def raw_items( count = 0, blog_id = 1)
+		return if count > 0
+		api.customer_content_lookup( userid, { :response_group =>'CustomerFull'} )
+	end
+	alias reviews raw_items
+	
+	#private
+	def userid
+		return @userid if @userid
+		r = api.customer_content_search_by_email( username )
+		@userid = (r.doc/"customers/request/customercontentsearchrequest/email").inner_html
+	end
+	
+	def api
+	    #secret = '9AcMQU+m21fWVlTtGSQbqnNPchA8ddwX75XUIH6h'	
+	    Amazon::Ecs.options = {:aWS_access_key_id => '1MC9JDPY4WSNTJAEZX02', :country => 'de' }	
+	    @api ||= Amazon::Ecs
+        end
+	alias amazon api
+end
 

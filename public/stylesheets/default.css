@@ -11,3 +11,11 @@ DIV.item IMG {
 #tagcloud LI {
  	 display:inline;
 }
+
+#tagcloud A {
+ 	 text-decoration:none;
+}
+
+#tagcloud A:hover {
+ 	 text-decoration:underline;
+}
