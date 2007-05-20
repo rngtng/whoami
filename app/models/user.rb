@@ -1,14 +1,14 @@
 class User < ActiveRecord::Base
-        has_many :accounts
-        
-        validates_presence_of :name 
-        validates_uniqueness_of :name
+        has_many :accounts,    :include => :items
+        has_many :items,       :through => :accounts, :source => :items, :order => 'items.time DESC'
+	has_many :valid_items, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => [ 'items.complete = ?', true ]
+
+        validates_presence_of     :name 
+        validates_uniqueness_of   :name
         validates_confirmation_of :password
 	
         attr_accessor :password_confirmation 
         
-	#filter_parameter_loggin "password"
-
         def validate 
           errors.add_to_base("Missing password") if hashed_password.blank? 
         end 

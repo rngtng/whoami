@@ -1,0 +1,51 @@
+  <div class="item">
+   <table>
+    <tr>
+     <td width="100">
+       <%= @item.html if @item.html %>
+       <%= link_to( image_tag( @item.thumbnail, :size => "200x200", :style => "border: 1px solid #{@item.color};" ), @item.url ) unless @item.html %>
+       <div id="relations">
+        <b>Relations</b>
+        <ul>
+         <li>via Links:
+          <ul>
+            <%= render :partial => "relation", :collection => @item.get_relation_by_link %> 
+          </ul>
+	 <br clear="all"></li> 
+         <li>via Images:
+          <ul>
+           <%= render :partial => "relation", :collection => @item.get_relation_by_image %>
+          </ul>
+	 <br clear="all"></li>
+	<li>via Tags:
+          <ul>
+           <%= render :partial => "relation", :collection => @item.get_relation_by_tag %>
+          </ul>
+	 <br clear="all"></li>
+	<li>via Items after:
+          <ul>
+           <%= render :partial => "relation", :collection => @item.get_relation_to_items_after %>
+          </ul>
+	 <br clear="all"></li>
+	<li>via Items before:
+          <ul>
+           <%= render :partial => "relation", :collection => @item.get_relation_to_items_before %>
+          </ul>
+	 <br clear="all"></li> 
+	</ul> 
+       </div>
+     </td>
+     <td rowspan="2" valign="top">
+      <h3><%= @item.title %></h3>
+      <h4><%= @item.time.strftime("%Y-%m-%d") %></h4>
+      <%= @item.text %>
+      
+      <ul>
+       <li><b>Links:</b><ul><%= render :partial => "li", :collection => @item.links if @item.links %></ul></li>
+       <li><b>Images:</b><ul><%= render :partial => "li", :collection => @item.images  if @item.images %></ul></li>
+       <li><b>Tags:</b><ul><%= render :partial => "tag", :collection => @item.tags if @item.tags %></ul></li>
+      </ul> 
+     </td>
+    </tr>
+   </table>
+  </div>

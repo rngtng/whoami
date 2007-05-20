@@ -1,11 +1,14 @@
 class Account < ActiveRecord::Base
         belongs_to :user 
-        has_many   :items, :extend => TagCountsExtension
+        
+	has_many   :items,       :order => 'time DESC'
+	has_many   :valid_items, :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true ]  #:extend => TagCountsExtension, 
+	has_many   :tags,        :through => :items
+	
 	serialize  :token
         
         #validates_presence_of :username
 	#Accout.find( :all).each( &:items_count! )
-	
 	################### CALSS METHODS  ################################
 	def self.factory( type )
 	   class_name = type.capitalize + 'Account'
@@ -83,10 +86,6 @@ class Account < ActiveRecord::Base
 		parse_feed( open( feed ) )
         end
 	#################### GET STUFF #############################
-	def get_items( *params )
-		items.find_all_by_complete( true, *params )
-	end
-	
 	def get_tags
 		#items
 		Item.tag_counts( :conditions => [ "items.account_id = ? ", self.id ] )
@@ -99,6 +98,11 @@ class Account < ActiveRecord::Base
 ##ON i.id = t2.taggable_id
 ##GROUP BY name
 ##ORDER BY o
+        def info
+	   puts "Type: #{type} - #{username}"
+	   puts "User: #{user.name}"
+	   puts "Items: #{items.count} - #{valid_items.count} are valid "
+	end	
 	
 	###################### REQUIRES STUFF   ####################
 	def requires_auth?
@@ -390,7 +394,7 @@ class BlogAccount < Account
 	
 	def raw_items( count = 0, blog_id = 1)
 		count = (count+1) * 10 
-		api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
+		
 	end
 	alias posts raw_items
 	
@@ -407,43 +411,31 @@ end
 
 ######################################################################################################
 
-class AmazonAccount < Account
-        ############    Get Stuff   ############
-	def fetch_feed
-	   #TODO parse( posts( 10 ) )
-        end
-	
-	def fetch_profile
-	end  
-	
-	def requires_host?
-	    false
-        end
-	
+class YahoosearchAccount < Account
+       def raw_items( count = 1 )
+	       url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
+	       result = Net::HTTP.get_response( URI.parse( url ) ).body
+	       result = XmlSimple.xml_in( result,{ 'ForceArray' => [ 'Result' ] } )
+	       result[ 'Result' ]
+       end
+end
+
+
+class TwitterAccount < Account
+
 	def requires_password?
-	    false
-        end
+	    true
+        end	
 	
-	############    Other Stuff   ############
-	
-	def raw_items( count = 0, blog_id = 1)
-		return if count > 0
-		api.customer_content_lookup( userid, { :response_group =>'CustomerFull'} )
-	end
-	alias reviews raw_items
-	
-	#private
-	def userid
-		return @userid if @userid
-		r = api.customer_content_search_by_email( username )
-		@userid = (r.doc/"customers/request/customercontentsearchrequest/email").inner_html
-	end
-	
+       def raw_items( count = 0 )
+	   return api.user_timeline if count == 0
+	   Array.new
+       end
+       
+       	#private
 	def api
-	    #secret = '9AcMQU+m21fWVlTtGSQbqnNPchA8ddwX75XUIH6h'	
-	    Amazon::Ecs.options = {:aWS_access_key_id => '1MC9JDPY4WSNTJAEZX02', :country => 'de' }	
-	    @api ||= Amazon::Ecs
+	    @api ||= Twitter::Client.new(:login => username, :password => password)
         end
-	alias amazon api
+	alias blog api
 end
 

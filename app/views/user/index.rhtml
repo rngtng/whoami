@@ -1,19 +1,15 @@
-<h3>Your Accounts (<%= @user.accounts.count %>):</h3>
-<% for account in @user.accounts -%> 
-  <%= image_tag "/images/accounts/#{account.type}.png" %>
-  <%= link_to account.username,   :controller => "account", :action => 'index',  :id => account.id %>
-<% end %>
-
-<ul id="tagcloud" >
- <%= link_to 'All', :action => 'index' %> 
- <%= render :partial => "tag", :collection => @tags %>
-</ul>
-
   <%= periodically_call_remote :update => 'items',
- :frequency => 10, 
+ :frequency => 20, 
  :before => %(Element.show('spinner')),
  :success => %(Element.hide('spinner')) %>
 
+   <ul id="tagcloud" >
+     <%= link_to 'All', :action => 'index' %> 
+     <%= render :partial => "tag", :collection => @tags if @tags %>
+   </ul>
+    
 <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
 
-<div id="items" ><%= render( :partial => "item", :collection => @items) %></div>
+<% @items_month.keys.sort.reverse.each do |month| %>
+ <div id="items" ><%= render( :partial => "item", :collection => @items_month[month]) %></div>
+<% end %> 

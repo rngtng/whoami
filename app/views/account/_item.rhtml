@@ -5,5 +5,5 @@
           :title => item.info,
 	  :onmouseover => "this.width=100,this.height=100", 
 	  :onmouseout => "this.width=50,this.height=50" ), 
-	item.url ) %>
+	{ :controller => :item, :id => item.id } ) %>
   </div>

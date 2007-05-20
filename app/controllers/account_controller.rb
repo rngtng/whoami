@@ -1,20 +1,12 @@
-#require 'activemessaging/processor'
-
 class AccountController < ApplicationController
-      #include ActiveMessaging::MessageSender
-      
-      #publishes_to :item_update
       
       before_filter :authorize
       before_filter :set, :except => [ :add, :auth_finish]	
 	
       def index
 	     redirect_to :action => "auth", :id => @account.id and return if @account.requires_auth? and !@account.auth?     
-	     @items = @account.get_items( :order => 'time DESC' )
-      end
-      
-      def tags
-        @tags = @account.get_tags
+	     @items = @account.valid_items
+	     @tags =  @account.get_tags
       end
       
       def add
@@ -52,13 +44,13 @@ class AccountController < ApplicationController
       
       #Ajax Call #TODO combine with index??
       def get_items
-	 render :partial => "item", :collection => @account.get_items
+	 render :partial => "item", :collection => @account.valid_items
       end
       
       private 
       def set
           redirect_to(:controller => "user", :action => "index")  unless params[:id] 
-          @account = @user.accounts.find_by_id( params[:id] )
+          @account = @user.accounts.find( params[:id] )
       end
       
 end

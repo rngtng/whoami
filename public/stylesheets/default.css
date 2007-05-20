@@ -7,6 +7,11 @@ DIV.item IMG {
   margin: 2px;
 } 
 
+H3 {
+	 border: 0;
+	 padding: 0;
+	 margin: 0;	
+}
 
 #tagcloud LI {
  	 display:inline;
@@ -19,3 +24,31 @@ DIV.item IMG {
 #tagcloud A:hover {
  	 text-decoration:underline;
 }
+
+#relations,
+#relations UL {
+	 border: 0px;
+	 padding: 0px;
+	 margin: 5px;
+}
+
+#relations LI UL LI {
+ 	 display:inline;
+	 border: 0;
+	 padding: 0;
+	 margin: 0;
+}
+
+/*
+#relations UL {
+ 	 clear:both;
+}
+
+
+#tagcloud A {
+ 	 text-decoration:none;
+}
+
+#tagcloud A:hover {
+ 	 text-decoration:underline;
+} */
