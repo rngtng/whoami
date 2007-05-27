@@ -2,8 +2,8 @@ class UserController < ApplicationController
       before_filter :authorize, :except => :login
        
       def index 
-	    @items = get_items
-	    @tags = Item.tag_counts( :conditions => [ "items.account_id IN (?) ",  @user.account_ids ] ) #, :order => "count DESC" )
+	    @items = @user.valid_items #.find( :tag)
+	    @tags = @user.notes
 	    render_index   
       end
       
@@ -64,11 +64,6 @@ class UserController < ApplicationController
       end 
       
       private
-      def get_items( options = {} )
-	      return @user.valid_items.find( :all, @user.valid_items.find_tagged_with( options[:tag] ) ) if options[:tag]
-	      @user.valid_items
-       end
-      
     #  @user = User.new(params[:user]) 
     #  if request.post? and @user.save 
     #    flash.now[:notice] = "User #{@user.name} created" 

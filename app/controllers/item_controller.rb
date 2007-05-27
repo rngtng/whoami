@@ -3,6 +3,6 @@ class ItemController < ApplicationController
 	
 	def index
 		@item = Item.find( params[:id] )
-		@tags = @item.tags
+		#@tags = @item.tags
 	end	
 end

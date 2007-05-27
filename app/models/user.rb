@@ -8,6 +8,8 @@ class User < ActiveRecord::Base
         validates_confirmation_of :password
 	
         attr_accessor :password_confirmation 
+	
+	delegate *Item.tag_types.push( :tags, :to => :items )
         
         def validate 
           errors.add_to_base("Missing password") if hashed_password.blank? 

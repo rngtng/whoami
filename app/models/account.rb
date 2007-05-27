@@ -1,14 +1,18 @@
 class Account < ActiveRecord::Base
         belongs_to :user 
         
-	has_many   :items,       :order => 'time DESC'
-	has_many   :valid_items, :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true ]  #:extend => TagCountsExtension, 
-	has_many   :tags,        :through => :items
+	has_many   :items,         :order => 'time DESC'
+	has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true ]  #:extend => TagCountsExtension,
+	has_many   :invalid_items, :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', false ]  #:extend => TagCountsExtension,
 	
 	serialize  :token
         
         #validates_presence_of :username
 	#Accout.find( :all).each( &:items_count! )
+	
+	delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :daemon_sleep_time, :color, :to => :"self.class"
+	delegate *Item.tag_types.push( :tags, :to => :items )
+	
 	################### CALSS METHODS  ################################
 	def self.factory( type )
 	   class_name = type.capitalize + 'Account'
@@ -26,13 +30,32 @@ class Account < ActiveRecord::Base
 		account.find( :first, :conditions => [ 'updated_at < ?', time ], :include => :user ) 
 	end	
 	
+	###################### REQUIRES STUFF   ####################
+	def self.requires_auth?
+	    @requires_auth ||= false
+        end
+	
+	def self.requires_host?
+	   @requires_host ||= false
+        end
+	
+	#wheter account password
+	def self.requires_password?
+	    @requires_password ||= false
+        end
+	
 	def self.daemon_update_time
-		15.minutes
+	    @daemon_update_time ||= 15.minutes
 	end
 	
-	def daemon_sleep_time
-		15.seconds
+	def self.daemon_sleep_time
+	    @daemon_sleep_time ||= 15.seconds
 	end
+	
+	def self.color 
+		@color ||= "#000000"
+	end
+	
 	################### FETCH STUFF   ###################################
 	def fetch_all
 		fetch_profile
@@ -61,11 +84,14 @@ class Account < ActiveRecord::Base
 	end	
 	
 	def fetch_items( count = 0, max = 0 )
+	  cnt = 0	
 	  return false if max > 0 and count == max 
 	  updated = false	
           raw_items(count).each do | item |
              i = Item.factory( type, :data => item )
              updated = self.items << i || updated
+	     return if cnt > 15
+	     cnt = cnt + 1
 	   end
 	   return updated unless updated ## no more to update, return
 	   sleep 0.3 ## prevent API DOS
@@ -86,10 +112,6 @@ class Account < ActiveRecord::Base
 		parse_feed( open( feed ) )
         end
 	#################### GET STUFF #############################
-	def get_tags
-		#items
-		Item.tag_counts( :conditions => [ "items.account_id = ? ", self.id ] )
-	end
 	
 ##Select name, account_id, Count(*) AS o FROM tags AS t
 ## INNER JOIN taggings As t2 
@@ -104,20 +126,6 @@ class Account < ActiveRecord::Base
 	   puts "Items: #{items.count} - #{valid_items.count} are valid "
 	end	
 	
-	###################### REQUIRES STUFF   ####################
-	def requires_auth?
-	    false
-        end
-	
-	def requires_host?
-	    false
-        end
-	
-	#wheter account password
-	def requires_password?
-	    false
-        end
-	
 	############################################################
 	def type
 	   self.class.to_s.downcase.sub( /account/, '' )
@@ -126,18 +134,6 @@ class Account < ActiveRecord::Base
 	#items to process
 	def raw_items( count = 0)
 	end
-	
-	def tags
-	end
-	
-	def friends
-	end
-
-        def feed
-	end
-
-        def profile
-	end	
 	
 	############################################################
 	private 
@@ -162,15 +158,27 @@ class Account < ActiveRecord::Base
             self.items << i
           end
         end 
+	
+	#def conceptnet( post )
+	#      text =  post.text.gsub(/<(.*?)>/, '' )
+	#      res = nlp.call('generate_extraction', text )
+	#      r = nlp.call('jist_entities', res )
+	#      r.map! { |str| str.downcase }
+	#      r = r.join( ' ')
+	#      str = r.gsub( /[^a-z0-9 ]/, '' )
+	#      r = str.split( ' ' )
+	#      r.uniq!
+	#      Tag.delimiter = ' '
+	#      post.tag_list = r.join( ' ')
+        #end
 end
 
 ###############################################################################
 
 class FlickrAccount < Account
+	@color = "#FF0000"
 	############    AUTH Part   ############
-	def requires_auth?
-		true
-        end
+	@requires_auth = true
 	
         def auth( params )
 	    api.auth.frob = params[:frob]  
@@ -228,27 +236,40 @@ class FlickrAccount < Account
 	alias flickr api
 	
 	def fetch_details( limit = 100 )
-	    items.find_all_by_complete( false, :limit => limit ).each do | item |
-		item.data_add( api.photos.getInfo( *item.dataid.split(/:/) ) ) #split to id,secret -> it is much faster!!
-		sleep 0.3 ## prevent API DOS
+	    invalid_items.find( :all,  :limit => limit ).each do | item |
+		item.data_add( api.photos.getInfo( item.imgid, item.secret ) ) #split to id,secret -> it is much faster!!
+		item.geo_add( get_location( item ) )
+		sleep 0.1 ## prevent API DOS
 		item.save
 	    end	
 	end
+	
+	def get_location( item )
+	  begin 	
+            res = api.call_method('flickr.photos.geo.getLocation', 'photo_id'=> item.imgid )
+            res.elements['/photo'].each_element do |location|
+               return location.attributes
+            end
+	  rescue
+	   []
+	  end 
+	end 
 end
 
 
 ######################################################################################################
 
 class YoutubeAccount < Account
+	@color = "#00FF00"
 	############    Other Stuff   ############
 	def profile
 	   api.profile( username )
         end
 	
 	def raw_items(count = 0)
-	    return api.favorite_videos( username ) if count == 0
-	    return api.videos_by_user( username ) if count == 1 #TODO pagin support??, count+1 )
-	    return Array.new
+	    #return api.favorite_videos( username ) if count == 0
+	    return api.videos_by_user( username ) if count == 0 #TODO pagin support??, count+1 )
+	    return []
         end
 	alias videos raw_items
 	
@@ -267,9 +288,9 @@ end
 ######################################################################################################
 
 class LastfmAccount < Account
-	def self.daemon_update_time
-		5.minutes
-	end
+	@color = "#0000FF"
+	@daemon_update_time = 5.minutes
+		
 	############    Get Stuff   ############
 	def feed
 	   "http://ws.audioscrobbler.com/1.0/user/#{username}/recenttracks.rss"
@@ -292,7 +313,7 @@ class LastfmAccount < Account
 	alias lastfm api
 	
 	def fetch_details( limit = 1000 )
-	   items.find_all_by_complete( false, :limit => limit ).each do | track |
+	   invalid_items.find( :all,  :limit => limit ).each do | track |
 	      #puts "process track #{track.artist}, #{track.title}, #{track.time}"
 	      track.album = fetch_album( track.artist, track.title, track.time )
 	      track.save
@@ -334,7 +355,10 @@ end
 ######################################################################################################
 
 class DeliciousAccount < Account
-        ############    Get Stuff   ############
+	@color = "#0000dd"
+        @requires_password = true
+	
+	############    Get Stuff   ############
 	def feed
  	   "http://del.icio.us/rss/#{username}"	 
         end
@@ -342,10 +366,6 @@ class DeliciousAccount < Account
 	def fetch_profile
 	  #url = "1.0/user/#{username}/profile.xml"
 	end  
-	
-	def requires_password?
-	    true
-        end
 	
 	############    Other Stuff   ############
 	def raw_items(count = 0)
@@ -365,20 +385,13 @@ end
 ######################################################################################################
 
 class BlogAccount < Account
-        ############    Get Stuff   ############
+	@color = "#FF0099"
+        @requires_host = true
+	@requires_password = true
+	
+	############    Get Stuff   ############
 	def fetch_feed
 	   #TODO parse( posts( 10 ) )
-        end
-	
-	def fetch_profile
-	end  
-	
-	def requires_host?
-	    true
-        end
-	
-	def requires_password?
-	    true
         end
 	
 	def data
@@ -386,15 +399,10 @@ class BlogAccount < Account
 		@blog_types = { "wordpress" => "xmlrpc.php" }	
 	end	
 		
-	#def host
-	#	#{self.host}
-	#end
-	
 	############    Other Stuff   ############
-	
 	def raw_items( count = 0, blog_id = 1)
 		count = (count+1) * 10 
-		
+		api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
 	end
 	alias posts raw_items
 	
@@ -412,6 +420,8 @@ end
 ######################################################################################################
 
 class YahoosearchAccount < Account
+       @color = "#9BE5E9"
+	
        def raw_items( count = 1 )
 	       url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
 	       result = Net::HTTP.get_response( URI.parse( url ) ).body
@@ -420,22 +430,40 @@ class YahoosearchAccount < Account
        end
 end
 
+######################################################################################################
 
 class TwitterAccount < Account
-
-	def requires_password?
-	    true
-        end	
+       @color = "#9BE5E9"
+       @requires_password = true
 	
        def raw_items( count = 0 )
 	   return api.user_timeline if count == 0
-	   Array.new
+	   []
        end
+       alias timeline raw_items
        
-       	#private
-	def api
+       #private
+       def api
 	    @api ||= Twitter::Client.new(:login => username, :password => password)
-        end
-	alias blog api
+       end
+       alias twitter api
 end
 
+######################################################################################################
+
+class PlazesAccount < Account
+	@color = "#32648c"
+	@requires_password = true
+	
+	def raw_items( count = 0 )
+	      count = (count+1) * 50 #number of days 	
+	      api.trazes( count )
+        end
+	alias trazes raw_items
+	  
+	#private
+	def api
+	    @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')	
+        end
+	alias plazes api
+end	  

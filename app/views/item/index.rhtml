@@ -36,14 +36,15 @@
        </div>
      </td>
      <td rowspan="2" valign="top">
-      <h3><%= @item.title %></h3>
-      <h4><%= @item.time.strftime("%Y-%m-%d") %></h4>
+      <h3><%= @item.title %> - <%= @item.time.strftime("%H:%M %d.%m.%Y") %></h3>
       <%= @item.text %>
       
       <ul>
        <li><b>Links:</b><ul><%= render :partial => "li", :collection => @item.links if @item.links %></ul></li>
        <li><b>Images:</b><ul><%= render :partial => "li", :collection => @item.images  if @item.images %></ul></li>
-       <li><b>Tags:</b><ul><%= render :partial => "tag", :collection => @item.tags if @item.tags %></ul></li>
+       <li><b>Tags:</b><ul><%= render :partial => "li", :collection => @item.notes if @item.notes %></ul></li>
+       <li><b>People:</b><ul><%= render :partial => "li", :collection => @item.people if @item.people %></ul></li>
+       <li><b>Locations:</b><ul><%= render :partial => "li", :collection => @item.locations if @item.locations %></ul></li>
       </ul> 
      </td>
     </tr>

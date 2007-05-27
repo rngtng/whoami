@@ -69,6 +69,7 @@ require 'mylastfm' #created by myself
 require 'mydelicious' #created by myself
 require 'twitter'
 #require 'yahoo' by myself
+require 'plazes'
 
 #require 'ebay' #sucks
 #require 'amazon/ecs' #sucks
@@ -81,6 +82,5 @@ require 'twitter'
 #require 'facebook'
 #require 'myspace'
 #require 'qype'
-#require 'plazes'
 #require 'wiki'
 #...

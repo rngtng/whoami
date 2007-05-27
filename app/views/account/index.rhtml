@@ -13,7 +13,17 @@
      <%= link_to 'All', :action => 'index' %> 
      <%= render :partial => "tag", :collection => @tags if @tags %>
     </ul>
+    
+    <ul id="tagcloud" >
+     <%= link_to 'All', :action => 'index' %> 
+     <%= render :partial => "tag", :collection => @account.locations %>
+    </ul>
  
+    <ul id="tagcloud" >
+     <%= link_to 'All', :action => 'index' %> 
+     <%= render :partial => "tag", :collection => @account.people %>
+    </ul>
+    
 <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
 
 <div id="items" ><%= render(:partial => "item", :collection => @items) %> </div>

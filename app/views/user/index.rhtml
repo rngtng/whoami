@@ -1,15 +1,23 @@
   <%= periodically_call_remote :update => 'items',
- :frequency => 20, 
- :before => %(Element.show('spinner')),
- :success => %(Element.hide('spinner')) %>
+        :frequency => 20, 
+        :before => %(Element.show('spinner')),
+        :success => %(Element.hide('spinner')) 
+  %>
 
-   <ul id="tagcloud" >
+  <ul id="tagcloud" >
      <%= link_to 'All', :action => 'index' %> 
      <%= render :partial => "tag", :collection => @tags if @tags %>
-   </ul>
-    
-<%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+  </ul>
+  
+  <ul id="tagcloud" >
+     <%= link_to 'All', :action => 'index' %> 
+     <%= render :partial => "tag", :collection => @user.locations  %>
+  </ul>
+  
+  <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
 
-<% @items_month.keys.sort.reverse.each do |month| %>
- <div id="items" ><%= render( :partial => "item", :collection => @items_month[month]) %></div>
-<% end %> 
+<div id="items" >
+  <% @items_month.keys.sort.reverse.each do |month| %>
+      <%= render( :partial => "item", :collection => @items_month[month]) %>
+  <% end %> 
+</div>

@@ -6,9 +6,16 @@ class AccountController < ApplicationController
       def index
 	     redirect_to :action => "auth", :id => @account.id and return if @account.requires_auth? and !@account.auth?     
 	     @items = @account.valid_items
-	     @tags =  @account.get_tags
+	     @tags =  @account.notes
       end
       
+      def update
+	      Tag.destroy_all
+              Item.destroy_all
+              ItemsTag.destroy_all
+	      @account.fetch_items
+	end
+	
       def add
          @account = Account.factory params[:id]
          @user.accounts << @account  
@@ -25,7 +32,7 @@ class AccountController < ApplicationController
       def edit
           if params[:account]
             @account.attributes = params[:account] 
-            redirect_to :action => "index" and return if @account.save
+            redirect_to :controller => "user", :action => "index" and return if @account.save
           end  
       end
       
