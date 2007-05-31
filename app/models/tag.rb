@@ -1,8 +1,7 @@
 class Tag < ActiveRecord::Base
   TAG_DELIMITER = " " # how to separate tags in strings
 
-  # if speed becomes an issue, you could remove these validations 
-  # and rescue the AR index errors instead
+  # if speed becomes an issue, you could remove these validations and rescue the AR index errors instead
   validates_presence_of :name
   validates_uniqueness_of :name, :case_sensitive => false
   #validates_format_of :name, :with => /^[a-zA-Z0-9\_\-]+$/, 
@@ -13,12 +12,19 @@ class Tag < ActiveRecord::Base
   cattr_accessor :max_count
   self.max_count = 0
   
+  def self.types
+	    @types ||= subclasses.collect do |type|
+	        type.to_s.downcase.pluralize.intern
+	    end	
+	    @types.map ##return a copy!
+  end
+	
   def self.get( to_tag, split_by = nil )
      split_by = to_tag.delete(:split) if to_tag[:split]	  
      return self.split_and_get( to_tag, split_by ) if split_by	  
      key = :note
      key, to_tag = to_tag.shift if to_tag.is_a? Hash
-     #key, tag = process_tag( key, to_tag )
+     key, tag = process_tag( key, to_tag )
      tag = Tag.find_by_name( to_tag )
      tag = key.to_s.classify.constantize.create( :name => to_tag ) unless tag
      return tag
@@ -34,35 +40,27 @@ class Tag < ActiveRecord::Base
      return tags
   end   
   
-  def self.find_popular()
-    find(:all, :select => 'tags.*, count(*) as count', 
-      :joins => "JOIN taggings ON taggings.tag_id = tags.id",
-      :conditions => args[:conditions],
-      :group => "taggings.tag_id" ) #      :order => "popularity DESC" 
-  end
-  
-  #def self.to_s
-  #	tags.map(&:to_s).join( ', ')
-  #end
-     
   #############################################################################
   def before_create 
-    # if you allow editable tag names, you might want before_save instead 
-    self.name = name.downcase.strip.squeeze(" ")
+    self.name = name.downcase.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
   end
   
   def after_find
-	self.max_count = count if self.max_count < count
+	self.max_count = count if count && self.max_count < count
   end
   
   #############################################################################
+  def type
+     @type ||= self[:type].downcase
+  end
+	
   def ==(object)
     super || (object.is_a?(Tag) && name == object.name)
   end
   
-  #def to_s
-  #  name
-  #end
+  def to_s
+     name
+  end
   
   def count
     read_attribute(:count).to_i
@@ -79,7 +77,7 @@ class Tag < ActiveRecord::Base
   def is_person?
   end	
   
-  #private
+  private
   def self.process_tag( key, tag )
       return nil if tag =~/geo:l/ 	  
       return [ :location, "http://beta.plazes.com/plaze/#{$1}" ] if tag =~ /plaze([a-z0-9]{32})/ 	  
@@ -91,20 +89,28 @@ end
 class Note < Tag
 end
 
+#############################################################################
 class Image < Tag
 end
 
+#############################################################################
 class Person < Tag
 end
 
+#############################################################################
 class Location < Tag
-     	
-	#http://ws.geonames.org/postalCodeSearch?placename=kaiserslaute&maxRows=10
+     #http://ws.geonames.org/postalCodeSearch?placename=kaiserslaute&maxRows=10
      #http://local.yahooapis.com/MapsService/V1/geocode?appid=YahooDemo&street=701+First+Street&city=Sunnyvale&state=CA
 end	
 
+#############################################################################
 class Link < Tag
 	#is_blog?
 	#thumbnail
+end
+
+
+#############################################################################
+class Geotag < Tag
 end
 

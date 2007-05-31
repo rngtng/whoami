@@ -2,16 +2,15 @@ class Account < ActiveRecord::Base
         belongs_to :user 
         
 	has_many   :items,         :order => 'time DESC'
-	has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true ]  #:extend => TagCountsExtension,
+ 	has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true  ]  #:extend => TagCountsExtension,
 	has_many   :invalid_items, :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', false ]  #:extend => TagCountsExtension,
 	
 	serialize  :token
         
         #validates_presence_of :username
-	#Accout.find( :all).each( &:items_count! )
 	
 	delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :daemon_sleep_time, :color, :to => :"self.class"
-	delegate *Item.tag_types.push( :tags, :to => :items )
+	delegate *Tag.types.push( :tags, :to => :valid_items )
 	
 	################### CALSS METHODS  ################################
 	def self.factory( type )
@@ -21,7 +20,8 @@ class Account < ActiveRecord::Base
 	end
 	
         def self.types
-	    subclasses.collect(&:to_s).collect( &:downcase ).collect { |s| s.sub( /account/, '' ) }
+	    @types ||= subclasses.collect(&:to_s).collect( &:downcase ).collect { |s| s.sub( /account/, '' ) }
+	    @types.map ##return a copy!
         end
         
 	def self.find_to_update( account_name = '')
@@ -111,15 +111,8 @@ class Account < ActiveRecord::Base
 	def fetch_feed
 		parse_feed( open( feed ) )
         end
+
 	#################### GET STUFF #############################
-	
-##Select name, account_id, Count(*) AS o FROM tags AS t
-## INNER JOIN taggings As t2 
-##ON t.id = t2.tag_id
-##INNER JOIN items AS i
-##ON i.id = t2.taggable_id
-##GROUP BY name
-##ORDER BY o
         def info
 	   puts "Type: #{type} - #{username}"
 	   puts "User: #{user.name}"
@@ -158,23 +151,9 @@ class Account < ActiveRecord::Base
             self.items << i
           end
         end 
-	
-	#def conceptnet( post )
-	#      text =  post.text.gsub(/<(.*?)>/, '' )
-	#      res = nlp.call('generate_extraction', text )
-	#      r = nlp.call('jist_entities', res )
-	#      r.map! { |str| str.downcase }
-	#      r = r.join( ' ')
-	#      str = r.gsub( /[^a-z0-9 ]/, '' )
-	#      r = str.split( ' ' )
-	#      r.uniq!
-	#      Tag.delimiter = ' '
-	#      post.tag_list = r.join( ' ')
-        #end
 end
 
 ###############################################################################
-
 class FlickrAccount < Account
 	@color = "#FF0000"
 	############    AUTH Part   ############
@@ -258,7 +237,6 @@ end
 
 
 ######################################################################################################
-
 class YoutubeAccount < Account
 	@color = "#00FF00"
 	############    Other Stuff   ############
@@ -286,7 +264,6 @@ class YoutubeAccount < Account
 end	
 
 ######################################################################################################
-
 class LastfmAccount < Account
 	@color = "#0000FF"
 	@daemon_update_time = 5.minutes
@@ -353,7 +330,6 @@ class LastfmAccount < Account
 end
 
 ######################################################################################################
-
 class DeliciousAccount < Account
 	@color = "#0000dd"
         @requires_password = true
@@ -418,7 +394,6 @@ class BlogAccount < Account
 end	
 
 ######################################################################################################
-
 class YahoosearchAccount < Account
        @color = "#9BE5E9"
 	
@@ -431,7 +406,6 @@ class YahoosearchAccount < Account
 end
 
 ######################################################################################################
-
 class TwitterAccount < Account
        @color = "#9BE5E9"
        @requires_password = true
@@ -450,7 +424,6 @@ class TwitterAccount < Account
 end
 
 ######################################################################################################
-
 class PlazesAccount < Account
 	@color = "#32648c"
 	@requires_password = true

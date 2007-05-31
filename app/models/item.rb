@@ -1,18 +1,16 @@
 class Item < ActiveRecord::Base
-	belongs_to :account, :include => :user #, :counter_cache => true
+	belongs_to :account
 	
-	delegate :user, :color,        :to => :account
+	delegate :user,                :to => :account
 	delegate :url, :title, :text,  :to => :data
 	
-	@tag_types = :images, :locations, :links, :notes, :people 
-	
-	has_many_polymorphs :tags, :through => :taggings, :from =>  @tag_types
+	has_many_polymorphs :tags, :through => :taggings, :from =>  Tag.types
 	
         serialize  :data               
         
         validates_presence_of   :time
 	validates_presence_of   :dataid
-        validates_uniqueness_of :dataid, :scope => 'account_id' #we need that for testing if item is allready in DB
+        validates_uniqueness_of :dataid, :scope => 'account_id' #we need that to check if item is allready in DB
 	
         after_save :save_tags                         
 	
@@ -23,52 +21,103 @@ class Item < ActiveRecord::Base
 	end                                                                                                       
 	
 	def self.tags( options = {} )
+		opt = prepage_query( options )
+		opt[:from]   = 'items'
+		opt[:select] = 'tags.*, COUNT(tags.id) count'
+		opt[:group]  = 'tags.id' 
+		Tag.find( :all, opt )
+	end	
+	
+	def self.find_tagged_with( options = {}) 
+		opt = prepage_query( options, 'ftw' )  #set uniqe identgier ftw to be able to extend query...
+		opt[:select] = 'items.*'
+		opt[:group]  = 'items.id' 
+		result = find( :all, opt )
+		return result unless @tag_types
+		result.instance_variable_set( :@options, opt )
+		#add some helpfull methods
+		@tag_types.each do |tag|
+		   result.instance_eval <<-end_eval
+		     def #{tag.to_s}
+			     Item.#{tag.to_s}( @options.merge( {} ) )
+                     end
+		   end_eval
+		end
+		return result
+		# tags = Tag.parse(tags) if tags.is_a?(String)
+                # return [] if tags.empty?
+                # tags.map!(&:to_s)
+	         #:select => "DISTINCT #{table_name}.*",
+                 #group = "#{table_name}_taggings.taggable_id HAVING COUNT(#{table_name}_taggings.taggable_id) = #{tags.size}" if options.delete(:match_all)
+	 end
+	 
+	def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
 	    scope = scope(:find)
 	    cond = ["1"]
             cond << sanitize_sql(scope.delete(:conditions)) if scope && scope[:conditions]
-            cond << sanitize_sql(options.delete(:conditions)) unless options[:conditions].nil?
-	    cond << sanitize_sql( [ 'tags.type = ?', options.delete(:type) ] ) unless options[:type].nil?
-  
-	    join = []
-	    join << scope[:joins] if scope && scope[:joins]
-	    join << "LEFT OUTER JOIN taggings ON taggings.item_id = items.id"
-	    join << "LEFT OUTER JOIN tags ON taggings.tag_id = tags.id"
+            cond << sanitize_sql(options.delete(:conditions)) if options[:conditions]
+            cond << sanitize_sql( ['items.account_id=?', options.delete(:account_id) ] ) if options[:account_id]
+	    if options[:time]
+	      period = ( options[:period] ) ?  options.delete(:period) : 2.days
+	      past   = ( period <  0 ) ? period : 0
+	      future = ( period >= 0 ) ? period : 0
+	      time   = options.delete(:time)
+              cond << sanitize_sql( [ "items.time >= ? AND items.time <= ?", time+past, time+futre ] )
+	    end
 	    
-	    Tag.find( :all,
-	              :from => 'items',
-	              :select => 'tags.*, COUNT(tags.id) count',
-	              :joins => join.join( ' ' ),
-		      :conditions => cond.join( ' AND ' ),		 
-	              :group => "taggings.tag_id" )
+	    join = []
+	    join << scope.delete(:joins) if scope && scope[:joins]
+	    join << options.delete(:joins) if options[:joins]
+	    join << "INNER JOIN taggings AS taggings#{nr} ON taggings#{nr}.item_id = items.id" 
+	    join << "INNER JOIN tags     AS tags#{nr}     ON tags#{nr}.id          = taggings#{nr}.tag_id" 
+	    join << " AND " + sanitize_sql( ["tags#{nr}.type=?", options.delete(:type) ] ) if options[:type]
+            join << " AND " + sanitize_sql( ["tags#{nr}.name=?", options.delete(:tag)  ] ) if options[:tag]
+	    
+	    return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ) }
 	end
-	
-	def self.set_tag_types( tag_types )  # Add a new methods to the class.
-	      tag_types.each do |tag|	
-		class_eval %{ 
-		  def self.#{tag.to_s}
-                      self.tags( :type => "#{tag.to_s.classify}" )
+         
+	# Add a dynamic methods to class for getting tags for all items
+	def self.set_tag_types( tag_types )
+	      @tag_types = tag_types
+	      class_eval <<-end_eval1
+	          def self.tag_types
+	             @tag_types 
+		  end
+	      end_eval1
+	      tag_types.each do |tag|   	
+		class_eval <<-end_eval
+		  def self.#{tag.to_s}( options = {} )
+		      options[:type] = "#{tag.to_s.classify}"	  
+                      tags( options )
                    end
-		}
+		end_eval
 	      end	
 	end
-	set_tag_types @tag_types
-	
-	def self.tag_types
-		@tag_types.map #return copy!
-	end	
+	set_tag_types Tag.types
 	
 	###############################################################################################
+	#complete standard info of an item
 	def info
-		"Id: #{id}\nDate: #{time.strftime("%Y-%m-%d")}\nTitle: #{title}\nText: #{text}\n"
-		#TODO + "Tags: #{meta.to_s}\nLinks: #{links.to_s}\nImages: #{images.to_s}\nPeople: #{people.to_s}\nLocations: #{locations.to_s}"
+		info = ["Id:    #{id}"]
+                info << "Date:  #{time.strftime('%Y-%m-%d')}"
+                info << "Title: #{title}"
+		info << "Text:  #{text}"
+	        self.class.superclass.tag_types.each do |tag|
+		   tag = tag.to_s
+		   tags = send( tag ).join(', ')
+		   info << "#{tag.capitalize}: #{tags}" unless tags.empty?
+		end
+		info << "----------\n"
+		info.join("\n")
 	end
 
 	def thumbnail
-	     thumbshot( url)
+	       thumbshot( url)
 	end
 
+	#type of the item
 	def type
-	     self.class.to_s.downcase.sub( /item/, '' )
+	     @type ||= self.class.to_s.downcase.sub( /item/, '' )
 	end	
 	
 	#html code to diplay instead fo default code
@@ -76,6 +125,9 @@ class Item < ActiveRecord::Base
 		false
 	end
 	
+	def color #much faster than delegte to account.color!
+		"#{type}_account".classify.constantize.color
+	end 	
 	###############################################################################################
         def tag( tag, split_by = nil )  #can be a Sting, a Hash where :Tagtype => TagName or a tag        
 		@cached_tags ||= []
@@ -86,49 +138,31 @@ class Item < ActiveRecord::Base
 	def save_tags  
 		tags << @cached_tags if @cached_tags
 	end	
-	###############################################################################################
+	
+	###### TODO: implement and dynamic generate funtions ############################################
 	def get_relation_by_link
-		
-		[] #l = links.compact << url
-		#get_relation( l )
+		[] 
 	end	
 	
 	def get_relation_by_image
-		[] #i= images.compact
-		#get_relation( i )
+		[] 
 	end
 	
 	def get_relation_by_tag
 		[]
-		#return [] if self.tags.empty?
-		#h = user.valid_items.find_tagged_with( self.tags.compact )
-		#user.valid_items.find( :all, h )
 	end
 	
 	def get_relation_to_items_after( period = 2.days ) #future
-		get_relation_by_period( time, time + period )
+		[]
 	end
 	
 	def get_relation_to_items_before( period = 2.days)  #past
-		get_relation_by_period( time - period, time )
+		[]
 	end
 	
-	def get_relation_by_period( from, to )
-		user.valid_items.find( :all, :conditions => [ "items.id != ? AND items.time >= ? AND items.time <= ?", self.id, from, to ] )
-	end
 	
 	###############################################################################################
 	private
-	def get_relation( type )
-		return [] unless type.size > 0
-		type.map! do |t|                                                                                            
-		   t = $1 if t =~ /flickr.*\/([^\/]*)$/ #strip that flickr stuff!!
-		   "%#{t}%"; 
-		end
-		c = Array.new( type.size, "items.data LIKE ?" )
-		user.valid_items.find( :all, :conditions => [ "items.id != ? AND (#{c.join( ' OR ')})", self.id, *type])
-	end
-	
 	def thumbshot( url )
 		"http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #add /.png to get rif of error ms
 	end	

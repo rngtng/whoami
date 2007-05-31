@@ -39,7 +39,28 @@ H3 {
 	 margin: 0;
 }
 
+#items a img {
+ 	width:25px;
+	height: 25px;
+        vertical-align: middle;
+	margin-top:2px;
+	z-index: 10
+}
+
+
+#items a:hover img {
+	position: absolute;
+ 	width:60px;
+	height:60px;
+	z-index: 1000;
+	margin: -15px 0px 0px -15px;
+}
+
 /*
+	  :onmouseover => "this.width=75;this.height=75;this.style.zIndex = 1000", 
+	  :onmouseout => "this.width=25;this.height=25"
+
+
 #relations UL {
  	 clear:both;
 }

@@ -40,11 +40,11 @@
       <%= @item.text %>
       
       <ul>
-       <li><b>Links:</b><ul><%= render :partial => "li", :collection => @item.links if @item.links %></ul></li>
-       <li><b>Images:</b><ul><%= render :partial => "li", :collection => @item.images  if @item.images %></ul></li>
-       <li><b>Tags:</b><ul><%= render :partial => "li", :collection => @item.notes if @item.notes %></ul></li>
-       <li><b>People:</b><ul><%= render :partial => "li", :collection => @item.people if @item.people %></ul></li>
-       <li><b>Locations:</b><ul><%= render :partial => "li", :collection => @item.locations if @item.locations %></ul></li>
+       <li><b>Links:</b><ul><%= render :partial => "tag", :collection => @item.links if @item.links %></ul></li>
+       <li><b>Images:</b><ul><%= render :partial => "tag", :collection => @item.images  if @item.images %></ul></li>
+       <li><b>Tags:</b><ul><%= render :partial => "tag", :collection => @item.notes if @item.notes %></ul></li>
+       <li><b>People:</b><ul><%= render :partial => "tag", :collection => @item.people if @item.people %></ul></li>
+       <li><b>Locations:</b><ul><%= render :partial => "tag", :collection => @item.locations if @item.locations %></ul></li>
       </ul> 
      </td>
     </tr>

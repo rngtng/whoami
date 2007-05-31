@@ -19,6 +19,11 @@ ActionController::Routing::Routes.draw do |map|
 
   map.home '', :controller => 'user', :action => 'index'
   
+  map.connect 'find/account/:account_id', :controller => 'user', :action => 'index'
+  map.connect 'find/:type/:tag',      :controller => 'user', :action => 'index'
+  
+  #map.connect 'find/account/:account_id', :controller => 'user', :action => 'index'
+  
   # Install the default route as the lowest priority.
   map.connect ':controller/:action/:id.:format'
   map.connect ':controller/:action/:id'
