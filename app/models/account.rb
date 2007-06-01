@@ -436,7 +436,7 @@ class PlazesAccount < Account
 	  
 	#private
 	def api
-	    @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')	
+	    #@api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')	
         end
 	alias plazes api
 end	  

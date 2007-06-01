@@ -69,7 +69,7 @@ require 'mylastfm' #created by myself
 require 'mydelicious' #created by myself
 #require 'twitter'
 #require 'yahoo' by myself
-require 'plazes'
+#require 'plazes'
 
 #require 'ebay' #sucks
 #require 'amazon/ecs' #sucks
