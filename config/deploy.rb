@@ -32,6 +32,7 @@ role :db,  "whoami.warteschlange.de", :primary => true
 # OPTIONAL VARIABLES
 # =============================================================================
  set :deploy_to, "/kunden/warteschlange.de/produktiv/rails/whoami/" # defaults to "/u/apps/#{application}"
+ set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
  set :user, "ssh-21560"            # defaults to the currently logged in user
 # set :scm, :darcs               # defaults to :subversion
 # set :svn, "/path/to/svn"       # defaults to searching the PATH
