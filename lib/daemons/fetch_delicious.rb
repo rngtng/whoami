@@ -13,7 +13,9 @@ end
 while($running) do
   # Replace this with your code
   f = Account.find_to_update( 'Delicious')
-  ActiveRecord::Base.logger << "Updateing Account #{f.type} by #{f.user.name} at #{Time.now}.\n"
+ if f
+   ActiveRecord::Base.logger << "Updateing Account #{f.type} by #    {f.user.name} at #{Time.now}.\n"
   f.daemon_fetch_items
+  end 
   sleep f.daemon_sleep_time
 end

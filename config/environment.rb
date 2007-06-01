@@ -67,7 +67,7 @@ require 'youtube'
 require 'xmlrpc/client' ##blogs, like 'wordpress', 'blogger'
 require 'mylastfm' #created by myself
 require 'mydelicious' #created by myself
-require 'twitter'
+#require 'twitter'
 #require 'yahoo' by myself
 require 'plazes'
 

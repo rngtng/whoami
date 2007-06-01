@@ -5,14 +5,13 @@
 ActiveRecord::Schema.define(:version => 6) do
 
   create_table "accounts", :force => true do |t|
-    t.column "user_id",     :integer
-    t.column "type",        :string
-    t.column "username",    :string,   :limit => 20
-    t.column "password",    :string,   :limit => 20
-    t.column "host",        :string,   :limit => 100
-    t.column "token",       :text
-    t.column "items_count", :integer,                 :default => 0
-    t.column "updated_at",  :datetime
+    t.column "user_id",    :integer
+    t.column "type",       :string
+    t.column "username",   :string,   :limit => 20
+    t.column "password",   :string,   :limit => 20
+    t.column "host",       :string,   :limit => 100
+    t.column "token",      :text
+    t.column "updated_at", :datetime
   end
 
   create_table "cachedalbums", :force => true do |t|
@@ -40,16 +39,18 @@ ActiveRecord::Schema.define(:version => 6) do
   add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
 
   create_table "taggings", :force => true do |t|
-    t.column "tag_id",        :integer
-    t.column "taggable_id",   :integer
-    t.column "taggable_type", :string
-    t.column "created_at",    :datetime
+    t.column "item_id",  :integer
+    t.column "tag_id",   :integer
+    t.column "tag_type", :string
   end
 
-  add_index "taggings", ["tag_id", "taggable_id", "taggable_type"], :name => "index_taggings_on_tag_id_and_taggable_id_and_taggable_type"
+  add_index "taggings", ["tag_id", "item_id"], :name => "index_taggings_on_tag_id_and_item_id"
 
   create_table "tags", :force => true do |t|
-    t.column "name", :string
+    t.column "parent_id", :integer
+    t.column "name",      :string
+    t.column "type",      :string
+    t.column "data",      :text
   end
 
   add_index "tags", ["name"], :name => "index_tags_on_name"

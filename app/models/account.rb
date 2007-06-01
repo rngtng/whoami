@@ -27,7 +27,7 @@ class Account < ActiveRecord::Base
 	def self.find_to_update( account_name = '')
 		account = (account_name.capitalize + 'Account').constantize
 		time = Time.now - account.daemon_update_time
-		account.find( :first, :conditions => [ 'updated_at < ?', time ], :include => :user ) 
+		account.find( :first, :include => :user ) 
 	end	
 	
 	###################### REQUIRES STUFF   ####################
@@ -45,11 +45,11 @@ class Account < ActiveRecord::Base
         end
 	
 	def self.daemon_update_time
-	    @daemon_update_time ||= 15.minutes
+	    @daemon_update_time ||= 60.minutes
 	end
 	
 	def self.daemon_sleep_time
-	    @daemon_sleep_time ||= 15.seconds
+	    @daemon_sleep_time ||= 5.seconds
 	end
 	
 	def self.color 
@@ -84,14 +84,14 @@ class Account < ActiveRecord::Base
 	end	
 	
 	def fetch_items( count = 0, max = 0 )
-	  cnt = 0	
+	  #cnt = 0	
 	  return false if max > 0 and count == max 
 	  updated = false	
           raw_items(count).each do | item |
              i = Item.factory( type, :data => item )
              updated = self.items << i || updated
-	     return if cnt > 3
-	     cnt = cnt + 1
+	     #return if cnt > 3
+	     #cnt = cnt + 1
 	   end
 	   return updated unless updated ## no more to update, return
 	   sleep 0.3 ## prevent API DOS
@@ -217,7 +217,7 @@ class FlickrAccount < Account
 	def fetch_details( limit = 100 )
 	    invalid_items.find( :all,  :limit => limit ).each do | item |
 		item.data_add( api.photos.getInfo( item.imgid, item.secret ) ) #split to id,secret -> it is much faster!!
-		item.geo_add( get_location( item ) )
+		#item.geo_add( get_location( item ) )
 		sleep 0.1 ## prevent API DOS
 		item.save
 	    end	
@@ -406,22 +406,22 @@ class YahoosearchAccount < Account
 end
 
 ######################################################################################################
-class TwitterAccount < Account
-       @color = "#9BE5E9"
-       @requires_password = true
-	
-       def raw_items( count = 0 )
-	   return api.user_timeline if count == 0
-	   []
-       end
-       alias timeline raw_items
-       
-       #private
-       def api
-	    @api ||= Twitter::Client.new(:login => username, :password => password)
-       end
-       alias twitter api
-end
+#class TwitterAccount < Account
+#       @color = "#9BE5E9"
+#       @requires_password = true
+#	
+#       def raw_items( count = 0 )
+#	   return api.user_timeline if count == 0
+#	   []
+#      end
+#       alias timeline raw_items
+#       
+#       #private
+#       def api
+#	    @api ||= Twitter::Client.new(:login => username, :password => password)
+#       end
+#       alias twitter api
+#end
 
 ######################################################################################################
 class PlazesAccount < Account

@@ -20,12 +20,12 @@
 	<% end %> 
 	<li>via Items after:
           <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation( :period => 2.days ) %>
+           <%= render :partial => "relation", :collection => @item.related_items( :period => 2.days ) %>
           </ul>
 	 <br clear="all"></li>
 	<li>via Items before:
           <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation( :period => -2.days ) %>
+           <%= render :partial => "relation", :collection => @item.related_items( :period => -2.days ) %>
           </ul>
 	 <br clear="all"></li> 
 	</ul> 
