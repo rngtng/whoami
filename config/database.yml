@@ -33,9 +33,10 @@ test:
 
 production:
   adapter: mysql
-  database: whoami_production
-  username: root
-  password: 
+  database: db21560_17
+  username: db21560_17
+  password: dfki07open
+  host: mysql5.df.eu
   socket: /tmp/mysql.sock
   encoding: utf8 
 
