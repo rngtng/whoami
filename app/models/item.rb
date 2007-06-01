@@ -12,7 +12,7 @@ class Item < ActiveRecord::Base
 	validates_presence_of   :dataid
         validates_uniqueness_of :dataid, :scope => 'account_id' #we need that to check if item is allready in DB
 	
-        after_save :save_tags                         
+        after_save :save_tags   
 	
 	def self.factory( type, *params )
 	   class_name = type.capitalize + "Item"
@@ -51,6 +51,7 @@ class Item < ActiveRecord::Base
                  #group = "#{table_name}_taggings.taggable_id HAVING COUNT(#{table_name}_taggings.taggable_id) = #{tags.size}" if options.delete(:match_all)
 	 end
 	 
+	##TODO :location => 'esa' should work to
 	def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
 	    scope = scope(:find)
 	    cond = ["1"]
@@ -62,7 +63,7 @@ class Item < ActiveRecord::Base
 	      past   = ( period <  0 ) ? period : 0
 	      future = ( period >= 0 ) ? period : 0
 	      time   = options.delete(:time)
-              cond << sanitize_sql( [ "items.time >= ? AND items.time <= ?", time+past, time+futre ] )
+              cond << sanitize_sql( [ "items.time >= ? AND items.time <= ?", time+past, time+future ] )
 	    end
 	    
 	    join = []
@@ -70,21 +71,20 @@ class Item < ActiveRecord::Base
 	    join << options.delete(:joins) if options[:joins]
 	    join << "INNER JOIN taggings AS taggings#{nr} ON taggings#{nr}.item_id = items.id" 
 	    join << "INNER JOIN tags     AS tags#{nr}     ON tags#{nr}.id          = taggings#{nr}.tag_id" 
-	    join << " AND " + sanitize_sql( ["tags#{nr}.type=?", options.delete(:type) ] ) if options[:type]
-            join << " AND " + sanitize_sql( ["tags#{nr}.name=?", options.delete(:tag)  ] ) if options[:tag]
+	    join << " AND #{sanitize_sql( ["tags#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
+            join << " AND #{sanitize_sql( ["tags#{nr}.name=?", options.delete(:tag).to_s  ] )}" if options[:tag]
+	    join << " AND ( tags#{nr}.name='#{options.delete(:tags).join("' OR tags#{nr}.name='")}')"  if options[:tags]
 	    
-	    return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ) }
+	    return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC' }
 	end
          
+	def self.tag_types
+		@tag_types
+	end	
 	# Add a dynamic methods to class for getting tags for all items
-	def self.set_tag_types( tag_types )
+	def self.tag_types=( tag_types )
 	      @tag_types = tag_types
-	      class_eval <<-end_eval1
-	          def self.tag_types
-	             @tag_types 
-		  end
-	      end_eval1
-	      tag_types.each do |tag|   	
+	      @tag_types.each do |tag|   	
 		class_eval <<-end_eval
 		  def self.#{tag.to_s}( options = {} )
 		      options[:type] = "#{tag.to_s.classify}"	  
@@ -93,7 +93,7 @@ class Item < ActiveRecord::Base
 		end_eval
 	      end	
 	end
-	set_tag_types Tag.types
+	self.tag_types = Tag.types
 	
 	###############################################################################################
 	#complete standard info of an item
@@ -139,27 +139,11 @@ class Item < ActiveRecord::Base
 		tags << @cached_tags if @cached_tags
 	end	
 	
-	###### TODO: implement and dynamic generate funtions ############################################
-	def get_relation_by_link
-		[] 
+	def related_items( options = {} )
+		options[:time] = time if options[:period] && !options[:time]
+		options[:conditions] = ["items.id !=?",id]
+		account.user.items.find_tagged_with( options )
 	end	
-	
-	def get_relation_by_image
-		[] 
-	end
-	
-	def get_relation_by_tag
-		[]
-	end
-	
-	def get_relation_to_items_after( period = 2.days ) #future
-		[]
-	end
-	
-	def get_relation_to_items_before( period = 2.days)  #past
-		[]
-	end
-	
 	
 	###############################################################################################
 	private
@@ -183,13 +167,13 @@ class Item < ActiveRecord::Base
 	end
 	        
         def tag_the_net( from_url = nil  )                
-		from_url = ( url ) ? "url=#{from_url}" : "text=#{CGI::escape(text)}" 
+		from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text)}" 
 	        doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )     
 		(doc/"dim[@type='topic']/item").each    { |item| tag( item.inner_html ) } # return all gerneral tags
 		(doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
 		(doc/"dim[@type='location']/item").each { |item| tag( :location => item.inner_html ) } # return all locations
-		#(doc/"dim[@type='language']/item").each # return all people
-		#(doc/"dim[@type='author']/item").each # return all people
+		(doc/"dim[@type='language']/item").each { |item| tag( :language => item.inner_html ) } # return all languages
+		(doc/"dim[@type='author']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
 		#(doc/"dim[@type='title']/item").each # return all people 
 	end	
 	alias extract_meta_people_locations tag_the_net
@@ -351,7 +335,7 @@ class BlogItem < Item
 	  super( d )  
 	  extract_all
 	  tag( :link => url)
-	  self.complete = false
+	  self.complete = true
         end
 	
 	def url
@@ -367,8 +351,8 @@ class BlogItem < Item
         end
 	
 	def thumbnail
-		#return @images.first if @images.first
-		#return thumbshot( @links.first ) if @links.first
+		return images.first.name if images.first
+		return thumbshot( links.first.name ) if links.first
 		super  #extension to get rid of deprecation warning
 	end
 end	

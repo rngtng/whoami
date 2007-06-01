@@ -6,8 +6,8 @@ module ApplicationHelper
      # options
      maxf = options.delete( :max_font_size ) || 20
      minf = options.delete( :min_font_size ) || 10
-     maxc = options.delete( :max_color )     || [ 0, 0, 0 ]
-     minc = options.delete( :min_color )     || [ 156, 156, 156 ]
+     maxc = options.delete( :max_color )     || [ 50, 80, 90 ]
+     minc = options.delete( :min_color )     || [ 170, 196, 156 ]
      hide_sizes   = options.delete( :hide_sizes )
      hide_colours = options.delete( :hide_colours )
      #

@@ -18,7 +18,7 @@ class AddTagSupport < ActiveRecord::Migration
 
     # Index your tags/taggings
     add_index :tags, :name
-    add_index :taggings, [:tag_id, :taggable_id, :taggable_type]
+    add_index :taggings, [:tag_id, :taggable_id] #, :taggable_type
   end
 
   def self.down

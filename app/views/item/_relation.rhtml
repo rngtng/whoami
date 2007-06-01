@@ -1,8 +1,3 @@
 <li> 
-<%= link_to( 
-        image_tag( relation.thumbnail, :size => "25x25",
-          :style => "float:left; margin-right:2px; border: 1px solid #{relation.color};",
-	  :onmouseover => "this.width=75,this.height=75", 
-	  :onmouseout => "this.width=25,this.height=25" ), 
-	{ :controller => :item, :id => relation.id } ) %>
+  <%= link_to( image_tag( relation.thumbnail, :style => "border: 1px solid #{relation.color};" ), { :controller => :item, :id => relation.id } ) %>
 </li>

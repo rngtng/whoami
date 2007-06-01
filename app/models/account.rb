@@ -90,7 +90,7 @@ class Account < ActiveRecord::Base
           raw_items(count).each do | item |
              i = Item.factory( type, :data => item )
              updated = self.items << i || updated
-	     return if cnt > 15
+	     return if cnt > 3
 	     cnt = cnt + 1
 	   end
 	   return updated unless updated ## no more to update, return

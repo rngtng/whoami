@@ -9,7 +9,6 @@ class CreateUsers < ActiveRecord::Migration
     end
     
     directory = File.join(File.dirname(__FILE__), "data")
-    puts directory
     Fixtures.create_fixtures(directory, "users") 
   end
 

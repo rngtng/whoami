@@ -4,7 +4,7 @@ class UserController < ApplicationController
       def index 
 	    @items = @user.valid_items.find_tagged_with( params )
 	    #@items_month = @items.group_by { |i| i.time.beginning_of_month }
-	    return render :action => :index unless request.xhr? 
+	    return render( :action => :index ) unless request.xhr? 
 	    render :partial => "item", :collection => @items
       end
       

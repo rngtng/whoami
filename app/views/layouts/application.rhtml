@@ -12,22 +12,21 @@
       <h1 style="float:left; margin:0; border:0">Welcome
        <%= link_to @user.name, :controller => "user", :action => "index" %> 
        - <em>who are you?</em></h1> 
-      <div style="float:right">Add:
+      <div class="accounts" style="float:right;">Add:
         <% Account.types.each do |name| -%> 
-         <%= image_tag "/images/accounts/#{name}.png" %>
-         <%= link_to name, :controller => "account", :action => 'add', :id => name  %>  
+         <% n = image_tag "/images/accounts/#{name}.png" %>
+         <%= link_to n, :controller => "account", :action => 'add', :id => name  %>  
         <% end %>&nbsp;|&nbsp; 
 	<%= link_to "logout", :controller => "user", :action => "logout" %>
       </div>
     </div>  
     <br clear="all">
     
-    <h3 style="display:inline; margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
-      <% for account in @user.accounts -%> 
-        <%= image_tag "/images/accounts/#{account.type}.png" %>
-        <%= link_to account.username,   :controller => "account", :action => 'index',  :id => account.id %>
+    <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
+      <% @user.accounts.each do |account| -%> 
+       <% n = image_tag "/images/accounts/#{account.type}.png" %>  
+       <%= link_to n,   :controller => "account", :action => 'index',  :id => account.id %>
       <% end %>
-
     <p style="color: green"><%= flash[:notice] %></p>
     
      <%= yield  %>

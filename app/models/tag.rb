@@ -24,9 +24,14 @@ class Tag < ActiveRecord::Base
      return self.split_and_get( to_tag, split_by ) if split_by	  
      key = :note
      key, to_tag = to_tag.shift if to_tag.is_a? Hash
-     key, tag = process_tag( key, to_tag )
+     key, to_tag = process_tag( key, to_tag )   #fliter special tag/keys--
      tag = Tag.find_by_name( to_tag )
      tag = key.to_s.classify.constantize.create( :name => to_tag ) unless tag
+     if tag.type != key.to_s  ##force change of type
+	     puts "####################"
+	     puts "changing tagtype #{tag.name} from #{tag.type} to #{key.to_s}"
+	     tag = tag.change_type( key )
+     end     
      return tag
   end
   
@@ -34,7 +39,7 @@ class Tag < ActiveRecord::Base
      tags = []
      key = :note	  
      key, to_tag = to_tag.shift if to_tag.is_a? Hash
-     to_tag.downcase.split( split_by ).each do |item|
+     to_tag.split( split_by ).each do |item|
          tags << self.get( key => item)
      end
      return tags
@@ -42,7 +47,7 @@ class Tag < ActiveRecord::Base
   
   #############################################################################
   def before_create 
-    self.name = name.downcase.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
+    self.name = name.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
   end
   
   def after_find
@@ -53,7 +58,17 @@ class Tag < ActiveRecord::Base
   def type
      @type ||= self[:type].downcase
   end
-	
+
+  
+  def change_type( typ )
+	  typ = typ.to_s.downcase
+          return self if type == typ ##no need to change type
+          return self unless Tag.types.include?( typ.pluralize.to_sym ) 	  #check if allowed type
+          self[:type] = typ.classify
+	  save
+	  Tag.find id
+  end	  
+  
   def ==(object)
     super || (object.is_a?(Tag) && name == object.name)
   end
@@ -70,38 +85,55 @@ class Tag < ActiveRecord::Base
    
   end	 
   
-  def get_place_name( lat, lng )
-   #"http://ws.geonames.org/findNearbyPlaceName?lat=#{lat}&lng=#{lng}" 
-  end	
-  
   def is_person?
   end	
   
   private
   def self.process_tag( key, tag )
-      return nil if tag =~/geo:l/ 	  
+      #return nil if tag =~/geo:l/ 	  #TODO won't work
       return [ :location, "http://beta.plazes.com/plaze/#{$1}" ] if tag =~ /plaze([a-z0-9]{32})/ 	  
-      [key, tag.downcase]
+      [key, tag]
   end
 end
 
 #############################################################################
 class Note < Tag
-end
-
-#############################################################################
-class Image < Tag
+  def before_create 
+    self.name = name.downcase.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
+  end
 end
 
 #############################################################################
 class Person < Tag
+  def before_create 
+    self.name = name.downcase.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
+  end
+  #TODO only allow [^a-zA-z. ]
 end
 
 #############################################################################
 class Location < Tag
-     #http://ws.geonames.org/postalCodeSearch?placename=kaiserslaute&maxRows=10
-     #http://local.yahooapis.com/MapsService/V1/geocode?appid=YahooDemo&street=701+First+Street&city=Sunnyvale&state=CA
+   def before_create 
+     self.name = name.downcase.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
+   end
+   #http://ws.geonames.org/postalCodeSearch?placename=kaiserslaute&maxRows=10
+   #http://local.yahooapis.com/MapsService/V1/geocode?appid=YahooDemo&street=701+First+Street&city=Sunnyvale&state=CA
 end	
+
+#############################################################################
+class Image < Tag
+	
+end
+
+#############################################################################
+class Language < Tag
+	
+end
+
+#############################################################################
+class Nothing < Tag
+	
+end
 
 #############################################################################
 class Link < Tag
@@ -112,5 +144,9 @@ end
 
 #############################################################################
 class Geotag < Tag
+  def get_place_name( lat, lng )
+    #"http://ws.geonames.org/findNearbyPlaceName?lat=#{lat}&lng=#{lng}" 
+  end	
+	
 end
 

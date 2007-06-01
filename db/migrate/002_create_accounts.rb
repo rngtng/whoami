@@ -7,7 +7,7 @@ class CreateAccounts < ActiveRecord::Migration
       t.column :password,       :string,  :limit => 20
       t.column :host,           :string,  :limit => 100
       t.column :token,          :text
-      t.column :items_count,    :integer, :default => 0
+      #t.column :items_count,    :integer, :default => 0
       t.column :updated_at,     :datetime
     end
   end

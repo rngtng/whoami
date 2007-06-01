@@ -6,30 +6,26 @@
        <%= link_to( image_tag( @item.thumbnail, :size => "200x200", :style => "border: 1px solid #{@item.color};" ), @item.url ) unless @item.html %>
        <div id="relations">
         <b>Relations</b>
-        <ul>
-         <li>via Links:
-          <ul>
-            <%= render :partial => "relation", :collection => @item.get_relation_by_link %> 
-          </ul>
-	 <br clear="all"></li> 
-         <li>via Images:
-          <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation_by_image %>
-          </ul>
-	 <br clear="all"></li>
-	<li>via Tags:
-          <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation_by_tag %>
-          </ul>
-	 <br clear="all"></li>
+	 <ul id="items">
+	<% Item.tag_types.each do |tag_type| %>
+	  <% tags = @item.send( tag_type ) %>
+	  <% next if tags.empty? %>
+	  <% collection = @item.related_items( :type => tag_type.to_s.singularize, :tags => tags ) %>
+	  <% next if collection.empty? %>
+            <li>via <%= tag_type.to_s.capitalize %>:
+              <ul>
+              <%= render :partial => "relation", :collection => collection %> 
+              </ul>
+	    <br clear="all"></li>
+	<% end %> 
 	<li>via Items after:
           <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation_to_items_after %>
+           <%= render :partial => "relation", :collection => @item.get_relation( :period => 2.days ) %>
           </ul>
 	 <br clear="all"></li>
 	<li>via Items before:
           <ul>
-           <%= render :partial => "relation", :collection => @item.get_relation_to_items_before %>
+           <%= render :partial => "relation", :collection => @item.get_relation( :period => -2.days ) %>
           </ul>
 	 <br clear="all"></li> 
 	</ul> 
@@ -40,11 +36,11 @@
       <%= @item.text %>
       
       <ul>
-       <li><b>Links:</b><ul><%= render :partial => "tag", :collection => @item.links if @item.links %></ul></li>
-       <li><b>Images:</b><ul><%= render :partial => "tag", :collection => @item.images  if @item.images %></ul></li>
-       <li><b>Tags:</b><ul><%= render :partial => "tag", :collection => @item.notes if @item.notes %></ul></li>
-       <li><b>People:</b><ul><%= render :partial => "tag", :collection => @item.people if @item.people %></ul></li>
-       <li><b>Locations:</b><ul><%= render :partial => "tag", :collection => @item.locations if @item.locations %></ul></li>
+       <% Item.tag_types.each do |tag_type| %>
+         <% tags = @item.send( tag_type ) %>
+	 <% next if tags.empty? %>
+         <li><b><%= tag_type.to_s.capitalize %>:</b><ul><%= render :partial => "tag", :collection => tags %></ul></li>
+       <% end %>  
       </ul> 
      </td>
     </tr>

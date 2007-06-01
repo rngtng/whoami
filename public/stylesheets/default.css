@@ -1,6 +1,8 @@
 BODY {
   font-family: Verdana, Arial;
   font-size: 10pt;
+  color: #FFFFFF;
+  background: #333333;
 }
 
 DIV.item IMG {
@@ -10,7 +12,20 @@ DIV.item IMG {
 H3 {
 	 border: 0;
 	 padding: 0;
-	 margin: 0;	
+	 margin: 0;
+	 display:inline;
+}
+
+A {
+  color:#999999;
+}
+
+.accounts IMG {
+	vertical-align:middle;
+}
+
+#tagcloud {
+ 	 padding:0 40px 0px 40px;
 }
 
 #tagcloud LI {
@@ -39,6 +54,10 @@ H3 {
 	 margin: 0;
 }
 
+#items {
+	padding:0 40px 0 40px;
+}
+
 #items a img {
  	width:25px;
 	height: 25px;
@@ -57,10 +76,6 @@ H3 {
 }
 
 /*
-	  :onmouseover => "this.width=75;this.height=75;this.style.zIndex = 1000", 
-	  :onmouseout => "this.width=25;this.height=25"
-
-
 #relations UL {
  	 clear:both;
 }
