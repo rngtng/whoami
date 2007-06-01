@@ -2,13 +2,13 @@
 # for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
 
 f = File.join(File.dirname(__FILE__), 'config', 'boot')
-require( f )if File.exist?( f ) 
+require( f ) #if File.exist?( f ) 
 
 require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
-require 'tasks/rails' if defined?( RAILS_ROOT )
+require 'tasks/rails' #if defined?( RAILS_ROOT )
 
 task :install_gems do
    #echo "Install vendor gems:"
