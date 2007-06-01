@@ -8,7 +8,7 @@ require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
-require 'tasks/rails' if deinfed?( RAILS_ROOT )
+require 'tasks/rails' if defined?( RAILS_ROOT )
 
 task :install_gems do
    #echo "Install vendor gems:"
@@ -21,13 +21,7 @@ task :install_gems do
    sh "svn co https://whoami.opendfki.de/repos/gems gems"
    
    #echo "Build gems:"
-   sh "cd gems/delicious"
-   sh "gem build Rakefile" 
-   sh "gem install mydelicious"
-   sh "cd ../lastfm"
-   sh "gem build Rakefile" 
-   sh "gem install mylastfm"
-   sh "cd ../plazes"
-   sh "gem build Rakefile" 
-   sh "gem install plazes"
+   sh "cd gems/delicious; gem build Rakefile; gem install mydelicious"
+   sh "cd gems/lastfm; gem build Rakefile; gem install mylastfm"
+   sh "cd gems/plazes; gem build Rakefile; gem install plazes"
 end
