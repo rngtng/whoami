@@ -11,6 +11,11 @@ require 'rake/rdoctask'
 require 'tasks/rails' #if defined?( RAILS_ROOT )
 
 task :install_gems do
+   sh "gem install --include-dependencies termios" 
+   sh "gem install --include-dependencies capistrano" 
+   sh "gem install --include-dependencies mongrel" 
+   sh "gem install --include-dependencies mongrel_cluster" 
+   
    #echo "Install vendor gems:"
    sh "gem install --include-dependencies feed-normalizer" 
    sh "gem install --include-dependencies rflickr" 

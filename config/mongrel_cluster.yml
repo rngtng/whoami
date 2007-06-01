@@ -2,6 +2,6 @@
 cwd: /kunden/warteschlange.de/produktiv/rails/whoami/current
 port: "8000"
 environment: production
-address: 127.0.0.1
+address: warteschlange.de
 pid_file: log/mongrel.pid
 servers: 1
