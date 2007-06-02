@@ -13,8 +13,8 @@ end
 options = YAML.load(
   ERB.new(
   IO.read(
-  File.dirname(__FILE__) + "/../../config/daemons.yml"
+  File.dirname(__FILE__) + "/../config/daemons.yml"
   )).result).with_symbols!
 options[:dir_mode] = options[:dir_mode].to_sym
 
-Daemons.run File.dirname(__FILE__) + '/fetch_delicious.rb', options
+Daemons.run File.dirname(__FILE__) + '/../lib/daemons/fetch_items.rb', options

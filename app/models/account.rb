@@ -1,3 +1,5 @@
+require 'tag'
+
 class Account < ActiveRecord::Base
         belongs_to :user 
         
@@ -9,7 +11,7 @@ class Account < ActiveRecord::Base
         
         #validates_presence_of :username
 	
-	delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :daemon_sleep_time, :color, :to => :"self.class"
+	delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :color, :to => :"self.class"
 	delegate *Tag.types.push( :tags, :to => :valid_items )
 	
 	################### CALSS METHODS  ################################
@@ -24,10 +26,19 @@ class Account < ActiveRecord::Base
 	    @types.map ##return a copy!
         end
         
-	def self.find_to_update( account_name = '')
-		account = (account_name.capitalize + 'Account').constantize
-		time = Time.now - account.daemon_update_time
-		account.find( :first, :include => :user ) 
+	def self.find_to_update( account_name = '', username = '%')
+	    begin
+	       account = (account_name.capitalize + 'Account').constantize
+	       time     = Time.now - account.daemon_update_time
+	       time_min = Time.now - 30.seconds  #minimum of 30 update age
+	       Account.transaction do 
+	          a = account.find( :first, :conditions => [ 'accounts.updated_at < ? AND users.name LIKE ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', time_min, username, time ], :include => [ :user, :items ] )
+	          a.save if a
+	          return a
+	       end
+	    rescue
+	        raise "No such Account Type"
+	    end  
 	end	
 	
 	###################### REQUIRES STUFF   ####################
@@ -45,11 +56,7 @@ class Account < ActiveRecord::Base
         end
 	
 	def self.daemon_update_time
-	    @daemon_update_time ||= 60.minutes
-	end
-	
-	def self.daemon_sleep_time
-	    @daemon_sleep_time ||= 5.seconds
+	    @daemon_update_time ||= 5.minutes
 	end
 	
 	def self.color 
@@ -206,7 +213,7 @@ class FlickrAccount < Account
 	#    api.tags.getListUser( user )
 	#end
 	
-	#private
+	private
 	def api
 	   @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
 	   @api.auth.token ||= token if token
@@ -256,7 +263,7 @@ class YoutubeAccount < Account
         end
 	
 	############################################
-	#private
+	private
 	def api
 	   @api ||= YouTube::Client.new 'G1Wl5IDX66M'
 	end
@@ -382,7 +389,7 @@ class BlogAccount < Account
 	end
 	alias posts raw_items
 	
-	#private
+	private
 	def api
 	    @api ||= XMLRPC::Client.new2( host )
         end
@@ -406,22 +413,22 @@ class YahoosearchAccount < Account
 end
 
 ######################################################################################################
-#class TwitterAccount < Account
-#       @color = "#9BE5E9"
-#       @requires_password = true
-#	
-#       def raw_items( count = 0 )
-#	   return api.user_timeline if count == 0
-#	   []
-#      end
-#       alias timeline raw_items
-#       
-#       #private
-#       def api
-#	    @api ||= Twitter::Client.new(:login => username, :password => password)
-#       end
-#       alias twitter api
-#end
+class TwitterAccount < Account
+       @color = "#9BE5E9"
+       @requires_password = true
+	
+       def raw_items( count = 0 )
+	   return api.user_timeline if count == 0
+	   []
+      end
+       alias timeline raw_items
+       
+       private
+       def api
+	    @api ||= Twitter::Client.new(:login => username, :password => password)
+       end
+       alias twitter api
+end
 
 ######################################################################################################
 class PlazesAccount < Account
@@ -434,9 +441,9 @@ class PlazesAccount < Account
         end
 	alias trazes raw_items
 	  
-	#private
+	private
 	def api
-	    #@api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')	
+	    @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')	
         end
 	alias plazes api
 end	  
