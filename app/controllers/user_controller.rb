@@ -1,5 +1,5 @@
 class UserController < ApplicationController
-      before_filter :authorize, :except => :login
+      before_filter :authorize, :except => [:login, :create ]
        
       def index 
 	    @items = @user.valid_items.find_tagged_with( params )
@@ -30,6 +30,23 @@ class UserController < ApplicationController
           redirect_to(:action => "login") 
       end 
       
+      def create
+	  @user = User.new()    
+	  if params[:user]
+              @user.attributes = params[:user]
+	      begin
+	         @user.save!
+	         session[:user_id] = @user.id 
+                 redirect_to :action => "index"
+		 return
+	      rescue Exception => e 
+                 flash[:notice] = e.message 
+              end
+          end 
+	  render(:layout => "layouts/login")
+      end	      
+	      
+	      
       private
     #  @user = User.new(params[:user]) 
     #  if request.post? and @user.save 

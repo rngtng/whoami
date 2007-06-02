@@ -3,18 +3,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-    <title>Who Am I - <%= controller.action_name %></title>
+    <title>WhoAmI - who are you? | <%= controller.action_name %></title>
     <%= javascript_include_tag :defaults %>
     <%= stylesheet_link_tag 'default' %>
   </head>
   <body>
-    <div>
-      <h1 style="float:left; margin:0; border:0"><em>who are you?</em></h1>
+    <div style="margin:0px auto; width:700px; text-align:center;">
+      <h2 style="margin:0; padding:0; margin-top:    80px; font-weight: bolder; border:0; color:#0A5B66;  ">WhoAmI</h2>
+      <h1 style="margin:0; padding:0; margin-bottom: 40px; font-weight: 900;    border:0; font-size: 40pt;"><em>who are you?</em></h1>
+      
+      <p style="color: green"><%= flash[:notice] %></p>
+      <%= yield  %>
+      
     </div>  
-    <br clear="all">
-    <p style="color: green"><%= flash[:notice] %></p>
-    
-     <%= yield  %>
-   
   </body>
 </html>

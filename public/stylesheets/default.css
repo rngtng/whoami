@@ -2,7 +2,7 @@ BODY {
   font-family: Verdana, Arial;
   font-size: 10pt;
   color: #FFFFFF;
-  background: #333333;
+  background: #242D2E;
 }
 
 DIV.item IMG {
@@ -23,6 +23,31 @@ A {
 .accounts IMG {
 	vertical-align:middle;
 }
+
+
+
+FORM LABEL {
+        float: left;
+        text-align: left;
+	font-weight: bold;
+        width: 80px;
+        margin-right: 10px;
+}
+
+FORM INPUT,
+FORM TEXTAREA {
+        width: 130px;
+        margin: 2 0 2 0px;
+        border: 1px solid #666;
+        padding-left: 1px;
+}
+
+FORM INPUT[type=submit] {
+        width: 150px;
+        margin: 0px;
+        padding: 0px;
+}
+
 
 #tagcloud {
  	 padding:0 40px 0px 40px;
