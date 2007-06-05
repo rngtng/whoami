@@ -1,8 +1,0 @@
-<div style="margin:0 auto; border: 1px solid #555555; width: 230px; background:#444444; padding: 5px;">
-  <% form_tag do %> 
-    <label for="name">Name:</label><%= text_field_tag :name, params[:name] %>
-    <label for="password">Password:</label><%= password_field_tag :password, params[:password] %> 
-    <p><%= submit_tag "login" %></p>
-  <% end %>
-</div>  
-<%= link_to 'new', :action => 'create' %>

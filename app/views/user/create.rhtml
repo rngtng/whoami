@@ -1,8 +1,0 @@
-<div style="margin:0 auto; border: 1px solid #555555; width: 230px; background:#444444; padding: 5px;">
-  <% form_for :user, :url => { :action => :create } do |form| %> 
-    <label for="name">Name:</label><%= form.text_field :name %>
-    <label for="password">Password:</label><%= form.password_field :password %> 
-    <p><%= submit_tag "create new account" %></p>
-  <% end %>
-</div>  
-<%= link_to 'login', :action => 'login' %>
