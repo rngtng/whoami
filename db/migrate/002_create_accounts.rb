@@ -10,10 +10,11 @@ class CreateAccounts < ActiveRecord::Migration
       #t.column :items_count,    :integer, :default => 0
       t.column :updated_at,     :datetime
     end
-  end
-
+  
   add_index :accounts, [ :user_id, :type, :updated_at]
   
+  end
+
   def self.down
     drop_table :accounts
   end

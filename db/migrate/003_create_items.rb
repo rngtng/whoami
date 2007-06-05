@@ -8,9 +8,10 @@ class CreateItems < ActiveRecord::Migration
       t.column :data,       :text
       t.column :complete,   :boolean, :default => false
     end
-  end
- 
+  
   add_index :items, [ :account_id, :type]
+  
+  end
   
   def self.down
     drop_table :items
