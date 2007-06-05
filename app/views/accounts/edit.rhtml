@@ -1,0 +1,8 @@
+<div class="formbox">
+  <% form_for :account, @account, :url => account_path( @account ), :html => { :method => :put } do |form| %> 
+    <label for="name">Username:</label><%= form.text_field :username %>
+    <% if @account.requires_host? -%><label for="password">Host:</label><%= form.text_field :host %><% end %>
+    <% if @account.requires_password? -%><label for="password">Password:</label><%= form.text_field :password %><% end %>
+    <p><%= submit_tag "save", :disable_with => "saving&hellip;" %></p>
+  <% end %>
+</div>

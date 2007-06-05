@@ -1,0 +1,17 @@
+ <h4 style="float:left; border:0; margin:0; padding:0">Your content: - Items: <%= @items.size %> - <%= @items.size %> are valid </h4>
+ <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+ 
+   <%= periodically_call_remote( 
+       :update => 'tags_and_items',
+       :frequency => 10, 
+       :url => items_path,
+       :method => :get,
+       :before => %(Element.show('spinner')),
+       :success => %(Element.hide('spinner') ) )
+  %>
+  <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+
+  <div id="tags_and_items">
+    <%= render( :partial => "partials/tags_and_items" ) %>
+  </div>
+  

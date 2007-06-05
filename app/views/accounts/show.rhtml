@@ -1,0 +1,20 @@
+<h4 style="float:left; border:0; margin:0; padding:0">Your <%= @account.type %> content: (<%= @account.username %>) -
+ Items: <%= @account.items.count %> - <%= @account.valid_items.count %> are valid </h4>&nbsp;&nbsp;
+  <%= link_to 'edit',   edit_account_path( @account.id ) %>
+  <%= link_to 'delete', account_path( @account.id ), :method => :delete %>
+  
+  <%= periodically_call_remote( 
+       :update => 'tags_and_items',
+       :frequency => 30, 
+       :url => included_items_path( @account ),
+       :method => :get,
+       :before => %(Element.show('spinner')),
+       :type => :synchronous,
+       :success => %(Element.hide('spinner') ) )
+  %>
+  <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+
+  <div id="tags_and_items">
+    <%= render( :partial => "partials/tags_and_items" ) %>
+  </div>
+  

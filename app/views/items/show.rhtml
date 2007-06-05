@@ -1,0 +1,36 @@
+  <div class="item">
+   <table>
+    <tr>
+     <td width="100">
+       <%= @item.html if @item.html %>
+       <%= link_to( image_tag( @item.thumbnail, :size => "200x200", :style => "border: 1px solid #{@item.color};" ), @item.url ) unless @item.html %>
+       <div id="relations">
+        <b>Relations</b>
+	<ul id="items">
+	  <%= render :partial => "relation_group", :collection => Item.tag_types %>
+	  <li>via Items after:
+            <ul>
+             <%= render :partial => "relation", :collection => @item.related_items( :period => 2.days ) %>
+            </ul>
+	   <br clear="all">
+	  </li>
+	  <li>via Items before:
+            <ul>
+             <%= render :partial => "relation", :collection => @item.related_items( :period => -2.days ) %>
+            </ul>
+	   <br clear="all">
+	  </li> 
+	</ul> 
+       </div>
+     </td>
+     <td rowspan="2" valign="top">
+      <h3><%= @item.title %> - <%= @item.time.strftime("%H:%M %d.%m.%Y") %></h3>
+      <br clear="all">
+      <%= @item.text %>
+      
+      <%= render :partial => "partials/tag_group", :collection => Item.tag_types, :locals => { :from => @item } %>
+       
+     </td>
+    </tr>
+   </table>
+  </div>
