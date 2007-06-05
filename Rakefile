@@ -27,6 +27,7 @@ task :install_vendor_gems do
    sh "gem install --include-dependencies twitter4r"
    sh "gem install --include-dependencies rflickr" 
    sh "gem install --include-dependencies daemons"
+   sh "gem install --include-dependencies ruby-openid"
    put  ""
    puts "#######################################################"
    puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"
@@ -51,6 +52,11 @@ task :install_my_gems do
    sh "cd gems/delicious; gem build Rakefile; gem install mydelicious"
    sh "cd gems/lastfm; gem build Rakefile; gem install mylastfm"
    sh "cd gems/plazes; gem build Rakefile; gem install plazes"
+end
+
+task :install_gems do
+    install_vendor_gems
+    install_my_gems
 end
 
 task :cleanup_gems do

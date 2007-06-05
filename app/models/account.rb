@@ -121,9 +121,11 @@ class Account < ActiveRecord::Base
 
 	#################### GET STUFF #############################
         def info
-	   puts "Type: #{type} - #{username}"
-	   puts "User: #{user.name}"
-	   puts "Items: #{items.count} - #{valid_items.count} are valid "
+	   info = []
+	   info << "Type: #{type} - #{username}"
+	   info << "User: #{user.name}"
+	   info << "Items: #{items.count} - #{valid_items.count} are valid "
+	   info.join("\n")
 	end	
 	
 	############################################################

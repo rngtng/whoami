@@ -1,0 +1,4 @@
+<% url = ( @account ) ? account_url( :id => @account, :tag => tag.name ) : items_url( :tag => tag.name ) %>
+<li> 
+ <%= link_to( tag.name, url, :style => style_for_tag_cloud( tag.count , 1, Tag.max_count ) ) %> 
+</li>

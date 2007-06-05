@@ -1,0 +1,7 @@
+    <div id="tags">
+      <%= render( :partial => "partials/tag_group", :collection => (Item.tag_types - [:images, :links] ) ) %> 
+    </div>
+    
+    <div id="items">
+      <%= render( :partial => "partials/item", :collection => @items ) %>
+    </div>

@@ -113,6 +113,14 @@ end
 # all should be rolled back (for each task that specifies an on_rollback
 # handler).
 
+task :daemon_start, :roles => :web do
+   run "#{deploy_to}/current/script/fetch_items_daemon start"
+end
+
+task :daemon_stop, :roles => :web do
+   run "#{deploy_to}/current/script/fetch_items_daemon stop"
+end
+
 desc "A task demonstrating the use of transactions."
 task :long_deploy do
   transaction do
@@ -124,4 +132,14 @@ task :long_deploy do
 
   restart
   enable_web
+end
+
+desc "Stop daemons before deploying"
+task :before_deploy do
+       daemon_stop
+end
+
+desc "Start daemons after deploying"
+task :after_deploy do
+       daemon_start
 end

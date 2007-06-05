@@ -15,16 +15,18 @@ ActionController::Routing::Routes.draw do |map|
 
   # Allow downloading Web Service WSDL as a file with an extension
   # instead of a file named 'wsdl'
-  map.connect ':controller/service.wsdl', :action => 'wsdl'
-
-  map.home '', :controller => 'user', :action => 'index'
+  #map.connect ':controller/service.wsdl', :action => 'wsdl'
   
-  map.connect 'find/account/:account_id', :controller => 'user', :action => 'index'
-  map.connect 'find/:type/:tag',      :controller => 'user', :action => 'index'
+  map.resources :users
+  map.resource :session, :new => { :create_openid => :post,  :openid => :get }
+  map.open_id_complete 'session/new;create_openid', :controller => "session", :action => "create_openid", :requirements => { :method => :get }  
   
-  #map.connect 'find/account/:account_id', :controller => 'user', :action => 'index'
+  map.resources :accounts, :member => { :auth => :get }, :new => { :auth_finish => :get } do |accounts|
+       accounts.resources :included_items, :controller => 'items'
+  end
   
-  # Install the default route as the lowest priority.
-  map.connect ':controller/:action/:id.:format'
-  map.connect ':controller/:action/:id'
+  map.resources :items
+  
+  map.home '', :controller => 'items', :action => 'index'
+  
 end

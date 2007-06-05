@@ -1,0 +1,7 @@
+  <% from = @items if from.nil? %>
+  <% tags = from.send( tag_group ) %>
+  <% return if tags.empty? %>
+  <ul id="tagcloud" >
+     <b><%= link_to "All #{tag_group.to_s.capitalize}" %></b> 
+     <%= render :partial => "partials/tag", :collection => tags %>
+  </ul>

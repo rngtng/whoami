@@ -47,7 +47,7 @@ class Tag < ActiveRecord::Base
   
   #############################################################################
   def before_create 
-    self.name = name.strip.squeeze(" ") # if you allow editable tag names, you might want before_save instead
+    self.name = name.strip.gsub( '"', '').gsub("'", '' ).squeeze(" ") # if you allow editable tag names, you might want before_save instead
   end
   
   def after_find

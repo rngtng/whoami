@@ -10,15 +10,13 @@ class AddTagSupport < ActiveRecord::Migration
 
     create_table :taggings do |t|
       t.column :item_id, :integer
-      #id of tagged object
       t.column :tag_id, :integer
-      #type of object tagged
       t.column :tag_type, :string
     end
 
     # Index your tags/taggings
-    add_index :tags, :name
-    add_index :taggings, [:tag_id, :item_id] #, :taggable_type
+    add_index :tags, [ :name, :type]
+    add_index :taggings, [:tag_id, :item_id] 
   end
 
   def self.down

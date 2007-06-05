@@ -12,6 +12,8 @@ class CreateAccounts < ActiveRecord::Migration
     end
   end
 
+  add_index :accounts, [ :user_id, :type, :updated_at]
+  
   def self.down
     drop_table :accounts
   end

@@ -29,6 +29,25 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "complete",   :boolean,  :default => false
   end
 
+  create_table "open_id_authentication_associations", :force => true do |t|
+    t.column "server_url", :binary
+    t.column "handle",     :string
+    t.column "secret",     :binary
+    t.column "issued",     :integer
+    t.column "lifetime",   :integer
+    t.column "assoc_type", :string
+  end
+
+  create_table "open_id_authentication_nonces", :force => true do |t|
+    t.column "nonce",   :string
+    t.column "created", :integer
+  end
+
+  create_table "open_id_authentication_settings", :force => true do |t|
+    t.column "setting", :string
+    t.column "value",   :binary
+  end
+
   create_table "sessions", :force => true do |t|
     t.column "session_id", :string
     t.column "data",       :text
@@ -56,9 +75,17 @@ ActiveRecord::Schema.define(:version => 6) do
   add_index "tags", ["name"], :name => "index_tags_on_name"
 
   create_table "users", :force => true do |t|
-    t.column "name",            :string, :limit => 50
-    t.column "hashed_password", :string
-    t.column "salt",            :string
+    t.column "login",                     :string
+    t.column "email",                     :string
+    t.column "crypted_password",          :string,   :limit => 40
+    t.column "salt",                      :string,   :limit => 40
+    t.column "created_at",                :datetime
+    t.column "updated_at",                :datetime
+    t.column "remember_token",            :string
+    t.column "remember_token_expires_at", :datetime
+    t.column "activation_code",           :string,   :limit => 40
+    t.column "activated_at",              :datetime
+    t.column "identity_url",              :string
   end
 
 end

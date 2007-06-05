@@ -48,6 +48,14 @@ FORM INPUT[type=submit] {
         padding: 0px;
 }
 
+.formbox {
+	margin:0 auto; 
+	border: 1px solid #555555; 
+	width: 230px;
+	background:#444444; 
+	padding: 5px; 
+	text-align:center;
+}
 
 #tagcloud {
  	 padding:0 40px 0px 40px;
