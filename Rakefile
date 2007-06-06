@@ -1,8 +1,14 @@
+####################
+#
+# $LastChangedDate$
+# $Rev$
+# by $Author$
+
 # Add your own tasks in files placed in lib/tasks ending in .rake,
 # for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
 
 f = File.join(File.dirname(__FILE__), 'config', 'boot')
-require( f ) #if File.exist?( f ) 
+require( f ) #if File.exist?( f )
 
 require 'rake'
 require 'rake/testtask'
@@ -15,18 +21,19 @@ task :install_rails do
 end
 
 task :install_deploy_gems do
-   sh "gem install --include-dependencies termios" 
-   sh "gem install --include-dependencies capistrano" 
-   sh "gem install --include-dependencies mongrel" 
-   sh "gem install --include-dependencies mongrel_cluster" 
+   sh "gem install --include-dependencies termios"
+   sh "gem install --include-dependencies capistrano"
+   sh "gem install --include-dependencies mongrel"
+   sh "gem install --include-dependencies mongrel_cluster"
 end
 
-task :install_vendor_gems do   
-   sh "gem install --include-dependencies feed-normalizer" 
-   sh "gem install --include-dependencies youtube" 
+task :install_vendor_gems do
+   sh "gem install --include-dependencies feed-normalizer"
+   sh "gem install --include-dependencies youtube"
    sh "gem install --include-dependencies twitter4r"
-   sh "gem install --include-dependencies rflickr" 
+   sh "gem install --include-dependencies rflickr"
    sh "gem install --include-dependencies daemons"
+   sh "gem install --include-dependencies optiflag"
    sh "gem install --include-dependencies ruby-openid"
    put  ""
    puts "#######################################################"
@@ -43,9 +50,9 @@ task :install_vendor_gems do
    puts "  YOURGEMREPOS/gems/youtube-XXXX/lib/youtube.rb"
    put  " and change line 26: require 'xmlsimple'"
    put  " to require 'xmlsimple' unless defined? XmlSimple"
-end   
+end
 
-task :install_my_gems do      
+task :install_my_gems do
    puts "Install individual gems:"
    sh "svn co https://whoami.opendfki.de/repos/gems gems"
    puts "Build gems:"
@@ -55,8 +62,8 @@ task :install_my_gems do
 end
 
 task :install_gems do
-    install_vendor_gems
-    install_my_gems
+   install_vendor_gems
+   install_my_gems
 end
 
 task :cleanup_gems do
@@ -70,3 +77,4 @@ end
 task :update_gems do
    sh "gem update"
 end
+

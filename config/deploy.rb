@@ -1,8 +1,14 @@
+####################
+#
+# $LastChangedDate$
+# $Rev$
+# by $Author$
+
 # This defines a deployment "recipe" that you can feed to capistrano
 # (http://manuals.rubyonrails.com/read/book/17). It allows you to automate
 # (among other things) the deployment of your application.
 
-require 'mongrel_cluster/recipes' 
+require 'mongrel_cluster/recipes'
 
 # =============================================================================
 # REQUIRED VARIABLES
@@ -62,13 +68,13 @@ An imaginary backup task. (Execute the 'show_tasks' task to display all
 available tasks.)
 DESC
 task :backup, :roles => :db, :only => { :primary => true } do
-  # the on_rollback handler is only executed if this task is executed within
-  # a transaction (see below), AND it or a subsequent task fails.
-  on_rollback { delete "/tmp/dump.sql" }
+   # the on_rollback handler is only executed if this task is executed within
+   # a transaction (see below), AND it or a subsequent task fails.
+   on_rollback { delete "/tmp/dump.sql" }
 
-  run "mysqldump -u theuser -p thedatabase > /tmp/dump.sql" do |ch, stream, out|
-    ch.send_data "thepassword\n" if out =~ /^Enter password:/
-  end
+   run "mysqldump -u theuser -p thedatabase > /tmp/dump.sql" do |ch, stream, out|
+      ch.send_data "thepassword\n" if out =~ /^Enter password:/
+   end
 end
 
 # Tasks may take advantage of several different helper methods to interact
@@ -97,16 +103,16 @@ end
 
 desc "Demonstrates the various helper methods available to recipes."
 task :helper_demo do
-  # "setup" is a standard task which sets up the directory structure on the
-  # remote servers. It is a good idea to run the "setup" task at least once
-  # at the beginning of your app's lifetime (it is non-destructive).
-  setup
+   # "setup" is a standard task which sets up the directory structure on the
+   # remote servers. It is a good idea to run the "setup" task at least once
+   # at the beginning of your app's lifetime (it is non-destructive).
+   setup
 
-  buffer = render("maintenance.rhtml", :deadline => ENV['UNTIL'])
-  put buffer, "#{shared_path}/system/maintenance.html", :mode => 0644
-  sudo "killall -USR1 dispatch.fcgi"
-  run "#{release_path}/script/spin"
-  delete "#{shared_path}/system/maintenance.html"
+   buffer = render("maintenance.rhtml", :deadline => ENV['UNTIL'])
+   put buffer, "#{shared_path}/system/maintenance.html", :mode => 0644
+   sudo "killall -USR1 dispatch.fcgi"
+   run "#{release_path}/script/spin"
+   delete "#{shared_path}/system/maintenance.html"
 end
 
 # You can use "transaction" to indicate that if any of the tasks within it fail,
@@ -123,23 +129,24 @@ end
 
 desc "A task demonstrating the use of transactions."
 task :long_deploy do
-  transaction do
-    update_code
-    disable_web
-    symlink
-    migrate
-  end
+   transaction do
+      update_code
+      disable_web
+      symlink
+      migrate
+   end
 
-  restart
-  enable_web
+   restart
+   enable_web
 end
 
 desc "Stop daemons before deploying"
 task :before_deploy do
-       daemon_stop
+   daemon_stop
 end
 
 desc "Start daemons after deploying"
 task :after_deploy do
-       daemon_start
+   daemon_start
 end
+

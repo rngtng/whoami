@@ -1,0 +1,10 @@
+<p style="color: red; text-align:center;"><%= flash[:error] %></p>
+<div class="formbox">
+  <% form_tag accounts_path, :html => { :method => :post } do %> 
+    <label for="name">Username:</label><%= text_field_tag :username %>
+    <% if @account.requires_host? -%><label for="password">Host:</label><%= text_field_tag :host %><% end %>
+    <% if @account.requires_password? -%><label for="password">Password:</label><%= text_field_tag :password %><% end %>
+    <%= hidden_field_tag :name, @account.type %>
+    <p><%= submit_tag "save", :disable_with => "saving&hellip;" %></p>
+  <% end %>
+</div>

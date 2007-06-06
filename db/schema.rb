@@ -5,14 +5,17 @@
 ActiveRecord::Schema.define(:version => 6) do
 
   create_table "accounts", :force => true do |t|
-    t.column "user_id",    :integer
-    t.column "type",       :string
-    t.column "username",   :string,   :limit => 20
-    t.column "password",   :string,   :limit => 20
-    t.column "host",       :string,   :limit => 100
-    t.column "token",      :text
-    t.column "updated_at", :datetime
+    t.column "user_id",     :integer
+    t.column "type",        :string
+    t.column "username",    :string,   :limit => 20
+    t.column "password",    :string,   :limit => 20
+    t.column "host",        :string,   :limit => 100
+    t.column "token",       :text
+    t.column "items_count", :integer,                 :default => 0
+    t.column "updated_at",  :datetime
   end
+
+  add_index "accounts", ["user_id", "type", "items_count", "updated_at"], :name => "index"
 
   create_table "cachedalbums", :force => true do |t|
     t.column "artist", :string
@@ -28,6 +31,8 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "data",       :text
     t.column "complete",   :boolean,  :default => false
   end
+
+  add_index "items", ["account_id", "type"], :name => "index_items_on_account_id_and_type"
 
   create_table "open_id_authentication_associations", :force => true do |t|
     t.column "server_url", :binary
@@ -72,7 +77,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "data",      :text
   end
 
-  add_index "tags", ["name"], :name => "index_tags_on_name"
+  add_index "tags", ["name", "type"], :name => "index_tags_on_name_and_type"
 
   create_table "users", :force => true do |t|
     t.column "login",                     :string
@@ -87,5 +92,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "activated_at",              :datetime
     t.column "identity_url",              :string
   end
+
+  add_index "users", ["login"], :name => "index_users_on_login"
 
 end
