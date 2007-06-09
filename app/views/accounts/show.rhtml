@@ -1,7 +1,8 @@
-<h4 style="float:left; border:0; margin:0; padding:0">Your <%= @account.type %> content: (<%= @account.username %>) -
+<h4><%= image_tag "/images/accounts/#{@account.type}.png" %> Your <%= @account.type.capitalize %> - <em><%= @account.username %></em> -
  Items: <%= @account.items.count %> - <%= @account.valid_items.count %> are valid </h4>&nbsp;&nbsp;
-  <%= link_to 'edit',   edit_account_path( @account.id ) %>
-  <%= link_to 'delete', account_path( @account.id ), :method => :delete %>
+  <% #link_to 'fetch_items',   account_path( @account ), :method => :put %>
+  <%= link_to 'edit',   edit_account_path( @account ) %>
+  <%= link_to 'delete', account_path( @account ), :method => :delete, :confirm => "Are you sure?" %>
   
   <%= periodically_call_remote( 
        :update => 'tags_and_items',
@@ -9,7 +10,6 @@
        :url => included_items_path( @account ),
        :method => :get,
        :before => %(Element.show('spinner')),
-       :type => :synchronous,
        :success => %(Element.hide('spinner') ) )
   %>
   <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">

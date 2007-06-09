@@ -2,7 +2,7 @@
 #
 # $LastChangedDate$
 # $Rev$
-# by $Author$ 
+# by $Author$
 
 require 'tag'
 
@@ -53,11 +53,6 @@ class Item < ActiveRecord::Base
          end_eval
       end
       return result
-      # tags = Tag.parse(tags) if tags.is_a?(String)
-      # return [] if tags.empty?
-      # tags.map!(&:to_s)
-      #:select => "DISTINCT #{table_name}.*",
-      #group = "#{table_name}_taggings.taggable_id HAVING COUNT(#{table_name}_taggings.taggable_id) = #{tags.size}" if options.delete(:match_all)
    end
 
    ##TODO :location => 'esa' should work to
@@ -90,6 +85,7 @@ class Item < ActiveRecord::Base
    def self.tag_types
       @tag_types
    end
+
    # Add a dynamic methods to class for getting tags for all items
    def self.tag_types=( tag_types )
       @tag_types = tag_types
@@ -103,6 +99,10 @@ class Item < ActiveRecord::Base
       end
    end
    self.tag_types = Tag.types
+
+   def self.valid_condition( valid = true)
+      [ 'items.complete = ?', valid  ]
+   end
 
    ###############################################################################################
    #complete standard info of an item
@@ -121,8 +121,8 @@ class Item < ActiveRecord::Base
    end
 
    def thumbnail
-      return @images.first if @images.first
-      return thumbshot( @links.first ) if @links.first
+      return images.first unless images.empty?
+      return thumbshot( links.first ) unless links.empty?
       thumbshot( url)
    end
 
@@ -153,8 +153,8 @@ class Item < ActiveRecord::Base
    def feed=(f)
       self.dataid = f.id || f.urls.first
       self.time = f.date_published || Time.now
-      self.data = SimpleItem.new( :url => f.url.first, :title => d.title,  :text => d.description )
-      tag( :link => url )
+      self.data = SimpleItem.new( :url => f.url, :title => f.title,  :text => f.description )
+      tag( :link => url ) #TDODO specify better type here?
       extract_all
       self.complete = true
    end
@@ -208,16 +208,18 @@ class Item < ActiveRecord::Base
             send( "#{key.to_s}=", value)
          end
       end
+
+      def missing_method()
+
+      end
    end
 end
 
 ######################################################################################################
 class FlickrItem < Item
    ##TODO is url correct?????
-   #Struct.new( "MyPhoto", :url, :title, :text ) unless defined? Struct::MyPhoto ##TODO get rid of this stupid struct!!!
-
-   def data=(d)
-      return super(d) if self.dataid
+   def rawdata=(d)
+      return self.data = d if self.dataid
       self.dataid = [d.id, d.secret].join(':')
       self.time = Time.now
    end
@@ -228,8 +230,7 @@ class FlickrItem < Item
          tag( tag.clean )
       end
       # add notes, comments, date_posted
-      d2 = SimpleItem.new( :url => d.url, :title => d.title,  :text => d.description )
-      self.data = d2
+      self.data = SimpleItem.new( :url => d.url, :title => d.title,  :text => d.description )
       tag( :image => url )
       self.complete = true
    end
@@ -246,6 +247,11 @@ class FlickrItem < Item
       super +  "Comments:"  ##TODO: more info here!!
    end
 
+   def url
+      "http://www.flickr.com/photos/#{}/#{imgid}"
+   end
+
+
    def imgid
       @imgid, @secret = dataid.split(/:/) unless @imgid
       @imgid
@@ -259,11 +265,11 @@ end
 
 ######################################################################################################
 class YoutubeItem < Item
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d.id
       self.time = d.upload_time || Time.now
       tag( d.tags, ' ')
-      super(d)
+      self.data = d
       tag( :link => url )
       self.complete = true
    end
@@ -292,10 +298,10 @@ class LastfmItem < Item
    delegate :artist, :to => :data
    delegate :album,  :to => :data
 
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d.url  ##TODO: is id available???
       self.time = d.date
-      super( d )
+      self.data = d
       self.complete = !album.nil?
    end
 
@@ -322,56 +328,62 @@ end
 
 ######################################################################################################
 class DeliciousItem < Item
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d.hash
       self.time = d.time
       tag( d.tag, ' ' )
-      super( d )
+      self.data = d
       tag( :link => url)
+      self.complete = true
+   end
+
+   def rss=(r)
+      self.time = Time.parse( (r/"dc:date").inner_html )
+      r_url   = (r/"link").inner_html
+      r_title = (r/"title").inner_html
+      r_text  = (r/"description").inner_html
+      self.data = SimpleItem.new( :url => r_url, :title => r_title,  :text => r_text )
+      self.dataid = url
+      tags = (r/"dc:subject").inner_html
+      tag( tags, ' ' )
+      tag( :link => url)
+      self.complete = true
+   end
+
+   def json=(j)
+      self.time = Time.now #fix this!!
+      self.data = SimpleItem.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
+      self.dataid = url
+      tag( :link => url)
+      j['t'].each do |tag|
+         tag( tag )
+      end
       self.complete = true
    end
 end
 
 ######################################################################################################
 class BlogItem < Item
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d['postid']
       time = d['dateCreated'].to_time
-      return if time > Time.now #get rid of Furute posts
-      return unless time.to_i > 0  #get rid of Drafts
+      return if time > Time.now #get rid of future posts
+      return unless time.to_i > 0  #get rid of drafts
       self.time = time
-      super( d )
+      self.data = SimpleItem.new( :url => data['permaLink'], :title => data['title'],  :text => data['description'] )
       extract_all
-      tag( :link => url)
+      tag( :blog => url)
       self.complete = true
-   end
-
-   def url
-      data['permaLink']
-   end
-
-   def title
-      data['title']
-   end
-
-   def text
-      data['description']
-   end
-
-   def thumbnail
-      return images.first.name if images.first
-      return thumbshot( links.first.name ) if links.first
-      super  #extension to get rid of deprecation warning
    end
 end
 
 ######################################################################################################
 class YahoosearchItem < Item
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d['Url']
       self.time = Time.at( d['ModificationDate'].to_i )
       self.complete = true
-      super( d )
+      self.data = d
    end
 
    def url
@@ -393,10 +405,10 @@ end
 
 ######################################################################################################
 class TwitterItem < Item
-   def data=(d)
+   def rawdata=(d)
       self.dataid = d.id
       self.time = d.created_at
-      super( d )
+      self.data = d
       self.complete = true
    end
 
@@ -430,11 +442,11 @@ class PlazesItem < Item
    delegate :longitude,:to => :plaze
    delegate :blog_url, :to => :plaze
 
-   def data=(d)
+   def rawdata=(d)
       return unless d.plaze.name
       self.time = d.start.to_time
       self.dataid = "#{d.plaze.key}#{self.time.to_i}"
-      super( d )
+      self.data = d
       #extract_all
       extract_meta_people_locations( url )
       self.complete = true
@@ -455,19 +467,6 @@ class PlazesItem < Item
 end
 
 ############################################################################################################################################
-
-
-
-#def thumbnail
-#		return @images.first if @images.first
-#return thumbshot( @links.first ) if @links.first
-#super  #extension to get rid of deprecation warning
-#end
-
-#def info
-#		super
-#	end
-
 
 #private
 #a.items.each do | i | i.get_tags; i.save; end

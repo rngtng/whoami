@@ -1,5 +1,6 @@
 <div class="formbox">
-    <h3>authorize your account</h3>
-     You must authorize this application to user your  account first.<br>
+    <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Authorize  <%= "#{@account.type.capitalize}" %> Account</h3>
+     You have to authorize <em>WhoAmI</em> to use your <%= "#{@account.type.capitalize}" %> account. 
+     <br>
      Please <%= link_to 'follow this link', @account.auth_link %>
 </div> 

@@ -47,7 +47,7 @@ Rails::Initializer.run do |config|
    # Make Active Record use UTC-base instead of local time
    # config.active_record.default_timezone = :utc
 
-   config.connection_adapters = %w( mysql )
+   #config.connection_adapters = %w( mysql )
    # See Rails::Configuration for more options
 end
 
@@ -73,6 +73,7 @@ require 'youtube'
 require 'xmlrpc/client' ##blogs, like 'wordpress', 'blogger'
 require 'mylastfm' #created by myself
 require 'mydelicious' #created by myself
+#require 'json' #for delicious
 #require 'twitter'
 #require 'yahoo' by myself
 #require 'plazes'

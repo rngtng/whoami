@@ -8,7 +8,7 @@ class AddTagSupport < ActiveRecord::Migration
    def self.up
       #Table for your Tags
       create_table :tags do |t|
-         t.column :parent_id, :integer
+         t.column :parent_id, :integer, :references => nil
          t.column :name, :string
          t.column :type, :string
          t.column :data, :text

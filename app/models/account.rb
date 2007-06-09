@@ -4,24 +4,24 @@
 # $Rev$
 # by $Author$
 
-require 'tag'
+#require 'item'
 
 class Account < ActiveRecord::Base
    belongs_to :user
 
    has_many   :items,         :order => 'time DESC'
-   has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', true  ]  #:extend => TagCountsExtension,
-   has_many   :invalid_items, :order => 'time DESC', :class_name => 'Item', :conditions => [ 'items.complete = ?', false ]  #:extend => TagCountsExtension,
+   has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => Item.valid_condition  #:extend => TagCountsExtension,
+   has_many   :invalid_items, :order => 'time DESC', :class_name => 'Item', :conditions => Item.valid_condition( false )  #:extend => TagCountsExtension,
 
    serialize  :token
 
-   #validates_associated  :user
+   validates_associated  :user
    validates_presence_of :username
 
    delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :color, :to => :"self.class"
    delegate *Tag.types.push( :tags, :to => :valid_items )
 
-   #before_save :items_count #update item_counter
+   before_save :items_count #update item_counter
 
    ################### CALSS METHODS  ################################
    def self.factory( type )
@@ -41,7 +41,7 @@ class Account < ActiveRecord::Base
          time     = Time.now - account.daemon_update_time
          time_min = Time.now - 30.seconds  #minimum of 30 update age
          Account.transaction do
-            a = account.find( :first, :conditions => [ 'accounts.updated_at < ? AND users.name LIKE ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', time_min, username, time ], :include => [ :user, :items ] )
+            a = account.find( :first, :conditions => [ 'users.name LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
             a.save if a #update timestamp -> no other daemons get this feed
             return a
          end
@@ -102,31 +102,44 @@ class Account < ActiveRecord::Base
    end
 
    def fetch_items( count = 0, max = 0 )
-      # return !auth? #fallback to RSS feed which is free for everyone..
-      return fetch_feed if( !auth? )
+      return fetch_item_fallback unless auth?
       return false if max > 0 and count == max
       updated = false
       raw_items(count).each do | item |
-         i = Item.factory( type, :data => item )
+         i = Item.factory( type, :rawdata => item )
          updated = self.items << i || updated
       end
-      self.items_count = items.count
       return updated unless updated ## no more to update, return
       sleep 0.3 ## prevent API DOS
       fetch_items( count + 1, max ) #checking if there are more..
    end
 
+   def fetch_item_fallback
+      return fetch_feed #if user isn't auth
+   end
+
    def fetch_feed
-      return false unless valid?
       f = FeedNormalizer::FeedNormalizer.parse( open( feed ) )
       f.items.each  do |item|
          i = Item.factory( type, :feed => item )
          self.items << i
       end
-      self.items_count = items.count
+   end
+
+   def fetch_rss  ##like fetch feed but far more details!
+      result = Hpricot.XML( open( feed ) )
+      (result/:item).each  do |item|
+         i = Item.factory( type, :rss=> item )
+         self.items << i
+      end
    end
 
    #################### GET STUFF #############################
+   #type of the item
+   def type
+      @type ||= self.class.to_s.downcase.sub( /account/, '' )
+   end
+
    def info
       info = []
       info << "Type: #{type} - #{username}"
@@ -146,14 +159,15 @@ class Account < ActiveRecord::Base
    def feed
    end
 
-   #def valid?
-   #	!username.nil?
-   #	#check if username exists e.g. ping the feed!?
-   #end
-
    def auth?
-      !username.nil? and !password.nil?
+      !self.requires_password? or ( !password.nil? && !password.empty? )
       ##check if logged in
+   end
+
+   def uptodate?
+      time     = Time.now - daemon_update_time
+      time_min = Time.now - 30.seconds  #minimum of 30 update age
+      ((updated_at > time_min) or (items_count > 1 and updated_at > time))
    end
 
    ############################################################
@@ -349,6 +363,10 @@ class DeliciousAccount < Account
       "http://del.icio.us/rss/#{username}"
    end
 
+   def json
+      "http://del.icio.us/feeds/json/#{username}?count=100&raw"
+   end
+
    ############    Other Stuff   ############
    def raw_items(count = 0)
       return api.posts_recent( nil, 100 ) if count == 0
@@ -362,6 +380,20 @@ class DeliciousAccount < Account
       @api ||= MyDelicious::Client.new username, password
    end
    alias delicious api
+
+   def fetch_item_fallback
+      fetch_rss  #more infos but less items
+      #TODO: loop trough tags to get even more!
+      #fetch_json #more items but less infos
+   end
+
+   def fetch_json
+      data = open( json ).readline
+      JSON.parse(data).each  do |item|
+         i = Item.factory( type, :json => item )
+         self.items << i
+      end
+   end
 end
 
 ######################################################################################################
@@ -371,14 +403,8 @@ class BlogAccount < Account
    @requires_host = true
    @requires_password = true
 
-   ############    Get Stuff   ############
-   def fetch_feed
-      #TODO parse( posts( 10 ) )
-   end
-
-   def data
-      @blog_types = Hash.new
-      @blog_types = { "wordpress" => "xmlrpc.php" }
+   def feed
+      UrlChecker.get_feed_url( host )
    end
 
    ############    Other Stuff   ############
@@ -390,7 +416,8 @@ class BlogAccount < Account
 
    private
    def api
-      @api ||= XMLRPC::Client.new2( host )
+      url = UrlChecker.get_xmlrpc_url( host )
+      @api ||= XMLRPC::Client.new2( url )
    end
    alias blog api
 
@@ -405,9 +432,10 @@ class YahoosearchAccount < Account
 
    def raw_items( count = 1 )
       url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
-      result = Net::HTTP.get_response( URI.parse( url ) ).body
-      result = XmlSimple.xml_in( result,{ 'ForceArray' => [ 'Result' ] } )
-      result[ 'Result' ]
+      #TODO use hpricot here!
+      #result = Net::HTTP.get_response( URI.parse( url ) ).body
+      #result = XmlSimple.xml_in( result,{ 'ForceArray' => [ 'Result' ] } )
+      #result[ 'Result' ]
    end
 end
 

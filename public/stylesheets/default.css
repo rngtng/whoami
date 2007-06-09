@@ -2,7 +2,11 @@ BODY {
   font-family: Verdana, Arial;
   font-size: 10pt;
   color: #FFFFFF;
-  background: #242D2E;
+  background: #424b5f url('/images/bg.gif') top repeat-x;
+}
+
+A IMG {
+	border:0px;
 }
 
 DIV.item IMG {
@@ -16,6 +20,14 @@ H3 {
 	 display:inline;
 }
 
+H4 {
+	float:left;
+	border: 0;
+	 padding: 0;
+	 margin: 0;
+	 margin-left: 10px;
+}
+
 A {
   color:#999999;
 }
@@ -24,7 +36,19 @@ A {
 	vertical-align:middle;
 }
 
+.formbox {
+	margin:0 auto; 
+	border: 1px solid #555555; 
+	width: 240px;
+	background:#444444; 
+	padding: 5px; 
+	text-align:center;
+}
 
+FORM H3 {
+	 display: block;
+	 padding: 0px 0px 5px 0px;
+}
 
 FORM LABEL {
         float: left;
@@ -36,25 +60,21 @@ FORM LABEL {
 
 FORM INPUT,
 FORM TEXTAREA {
-        width: 130px;
         margin: 2 0 2 0px;
         border: 1px solid #666;
         padding-left: 1px;
+}
+
+FORM INPUT[type=text],
+FORM INPUT[type=password],
+FORM TEXTAREA {
+	       width: 130px;
 }
 
 FORM INPUT[type=submit] {
         width: 150px;
         margin: 0px;
         padding: 0px;
-}
-
-.formbox {
-	margin:0 auto; 
-	border: 1px solid #555555; 
-	width: 230px;
-	background:#444444; 
-	padding: 5px; 
-	text-align:center;
 }
 
 #tagcloud {

@@ -68,6 +68,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "tag_type", :string
   end
 
+  add_index "taggings", ["item_id"], :name => "item_id"
   add_index "taggings", ["tag_id", "item_id"], :name => "index_taggings_on_tag_id_and_item_id"
 
   create_table "tags", :force => true do |t|
@@ -94,5 +95,12 @@ ActiveRecord::Schema.define(:version => 6) do
   end
 
   add_index "users", ["login"], :name => "index_users_on_login"
+
+  add_foreign_key "accounts", ["user_id"], "users", ["id"], :name => "accounts_ibfk_1"
+
+  add_foreign_key "items", ["account_id"], "accounts", ["id"], :name => "items_ibfk_1"
+
+  add_foreign_key "taggings", ["item_id"], "items", ["id"], :name => "taggings_ibfk_1"
+  add_foreign_key "taggings", ["tag_id"], "tags", ["id"], :name => "taggings_ibfk_2"
 
 end

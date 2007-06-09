@@ -7,7 +7,7 @@
 class AddSessions < ActiveRecord::Migration
    def self.up
       create_table :sessions do |t|
-         t.column :session_id, :string
+         t.column :session_id, :string, :references => nil
          t.column :data, :text
          t.column :updated_at, :datetime
       end

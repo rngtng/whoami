@@ -27,7 +27,7 @@ ActionController::Routing::Routes.draw do |map|
    map.resource :session, :new => { :create_openid => :post,  :openid => :get }
    map.open_id_complete 'session/new;create_openid', :controller => "session", :action => "create_openid", :requirements => { :method => :get }
 
-   map.resources :accounts, :new => { :auth => :get, :auth_finish => :get } do |accounts|
+   map.resources :accounts, :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
       accounts.resources :included_items, :controller => 'items'
    end
 

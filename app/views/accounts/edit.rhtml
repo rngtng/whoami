@@ -1,8 +1,13 @@
+<p style="color: red; text-align:center;"><%= flash[:error] %></p>
 <div class="formbox">
-  <% form_for :account, @account, :url => account_path( @account ), :html => { :method => :put } do |form| %> 
-    <label for="name">Username:</label><%= form.text_field :username %>
+  <% form_for :account, @account, :url => account_path( @account ), :html => { :method => :put } do |form| %>
+    <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Edit  <%= "#{@account.type.capitalize}" %> Account:</h3>
     <% if @account.requires_host? -%><label for="password">Host:</label><%= form.text_field :host %><% end %>
-    <% if @account.requires_password? -%><label for="password">Password:</label><%= form.text_field :password %><% end %>
+    <label for="name">Username:</label><%= form.text_field :username %>
+    <% if @account.requires_password? -%>
+      <label for="password">Password:</label><%= form.text_field :password %>
+      <em>Password is optional - however, more data can be fetched if a password is provided</em> 
+    <% end %>
     <p><%= submit_tag "save", :disable_with => "saving&hellip;" %></p>
   <% end %>
 </div>

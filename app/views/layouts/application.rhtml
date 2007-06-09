@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-    <title>Who Am I - <%= controller.action_name %></title>
+    <title>WhoAmI - <%= controller.controller_name %> - <%= controller.action_name %></title>
     <%= javascript_include_tag :defaults %>
     <%= stylesheet_link_tag 'default' %>
   </head>
@@ -13,9 +13,9 @@
        <%= link_to @user.login, home_path %> 
        - <em>who are you?</em></h1> 
       <div class="accounts" style="float:right;">Add:
-        <% Account.types.each do |name| -%> 
-         <% n = image_tag "/images/accounts/#{name}.png" %>
-         <%= link_to n, accounts_path( :name => name ), :method => :post %>  
+        <% Account.types.each do |type| -%> 
+         <% n = image_tag "/images/accounts/#{type}.png" %>
+         <%= link_to n, new_account_path( :type => type ) %>  
         <% end %>&nbsp;|&nbsp; 
 	<%= link_to "logout", session_path, :method => :delete %>
       </div>
@@ -23,9 +23,11 @@
     <br clear="all">
     
     <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
-      <% @user.accounts.each do |account| -%> 
+      <% @user.accounts.each do |account| -%>
+       <% next unless account.id %>
        <% n = image_tag "/images/accounts/#{account.type}.png" %>  
-       <%= link_to n, account_path( account.id ) %>
+       <%= link_to n, account_path( account ) %>
+       <%= "!" unless account.uptodate? %>
       <% end %>
     <p style="color: green"><%= flash[:notice] %></p>
     

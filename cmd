@@ -34,3 +34,15 @@ require 'rubygems'
 require 'flickr'
 @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
 @api.photos.getInfo( "46939396", "cde8f9ce94" )
+
+
+
+i = BlogItem.new
+i.get_rss_url( url )
+url ="http://www.raus-aus-kl.de"
+url ="http://www.steffengoesoverseas.de/"
+url ="http://www.schockwellenreiter.de/"
+url ="http://blog.bensei.com"
+url2="http://ultra-asian-killing-machine.supersized.org"
+url3="http://vcvps587.vcdns.de/wienermelange/"
+url4="http://leobard.twoday.net/"

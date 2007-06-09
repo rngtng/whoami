@@ -1,10 +1,27 @@
 <p style="color: red; text-align:center;"><%= flash[:error] %></p>
 <div class="formbox">
-  <% form_tag accounts_path, :html => { :method => :post } do %> 
-    <label for="name">Username:</label><%= text_field_tag :username %>
-    <% if @account.requires_host? -%><label for="password">Host:</label><%= text_field_tag :host %><% end %>
-    <% if @account.requires_password? -%><label for="password">Password:</label><%= text_field_tag :password %><% end %>
-    <%= hidden_field_tag :name, @account.type %>
+  <% form_for :account, @account, :url => accounts_path, :html => { :method => :post } do |form| %>
+    <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Add  <%= "#{@account.type.capitalize}" %> Account:</h3>
+    <%= hidden_field_tag :type, @account.type %>
+    <% if @account.requires_host? -%>
+    <label for="password">Host:</label><%= form.text_field :host %><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %>
+         <%= observe_field :account_host, 
+      :frequency => 2, 
+      :update => 'checked_host', 
+      :before => "Element.show('spinner')", 
+      :complete => "Element.hide('spinner')", 
+      :url => check_host_new_account_path( :type => @account.type ),
+      :method => :get,
+      :with => "'host=' + encodeURIComponent(value)"
+     %> 
+    <br clear="all"><div id="checked_host"></div><% end %>
+     <% #<div id="userdata" style="display:none"> %>
+       <label for="name">Username:</label><%= form.text_field :username %>
+       <% if @account.requires_password? -%>
+          <label for="password">Password:</label><%= form.text_field :password %>
+          <em>Password is optional - however, more data can be fetched if password is provided</em>
+       <% end %>
+    <% #</div> %>   
     <p><%= submit_tag "save", :disable_with => "saving&hellip;" %></p>
   <% end %>
 </div>
