@@ -18,8 +18,20 @@ class ApplicationController < ActionController::Base
    private
    def login
       login_from_cookie
+      login_from_param unless logged_in?
       access_denied unless logged_in?
       @user = current_user
+      @tag  = params[:tag] # ? params[:tag] : ''
+      #@tag  = (params[:tag] && !params[:tag].empty?)  ? params[:tag] : nil
+   end
+
+   def login_from_param
+      return true if logged_in?
+      return false unless params[:auth]
+      user = User.find_by_crypted_password(params[:auth])
+      self.current_user = user if user
+      #user = User.find_by_crypted_password(params[:auth])
+      #self.current_user = user if user
    end
 
 end

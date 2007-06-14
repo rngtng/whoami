@@ -2,17 +2,17 @@
 #
 # $LastChangedDate$
 # $Rev$
-# by $Author$ 
+# by $Author$
 
-require 'tag'
+#require 'tag'
 require 'digest/sha1'
 
 class User < ActiveRecord::Base
    has_many :accounts,       :include => :items
-   has_many :valid_accounts, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true]
-   
+   has_many :valid_accounts, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true] ##TODO does his work?  
+
    has_many :items,       :through => :accounts, :source => :items, :order => 'items.time DESC'  #, :extend => FindByTagAccountDate
-   has_many :valid_items, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true]
+   has_many :valid_items, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true] ##TODO add Item.valid_condition??
 
    attr_accessor :password
 

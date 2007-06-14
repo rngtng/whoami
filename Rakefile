@@ -35,6 +35,7 @@ task :install_vendor_gems do
    sh "gem install --include-dependencies daemons"
    sh "gem install --include-dependencies optiflag"
    sh "gem install --include-dependencies ruby-openid"
+   sh "gem install --include-dependencies icalendar"
    put  ""
    puts "#######################################################"
    puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"

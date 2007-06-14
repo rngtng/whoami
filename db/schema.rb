@@ -27,7 +27,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "account_id", :integer
     t.column "type",       :string
     t.column "time",       :datetime
-    t.column "dataid",     :string
+    t.column "data_id",     :string
     t.column "data",       :text
     t.column "complete",   :boolean,  :default => false
   end

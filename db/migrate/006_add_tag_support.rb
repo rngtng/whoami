@@ -11,7 +11,9 @@ class AddTagSupport < ActiveRecord::Migration
          t.column :parent_id, :integer, :references => nil
          t.column :name, :string
          t.column :type, :string
+	 t.column :data_id, :string, :references => nil
          t.column :data, :text
+	 t.column :synonym, :text
       end
 
       create_table :taggings do |t|

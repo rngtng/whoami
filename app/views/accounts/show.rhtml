@@ -6,14 +6,16 @@
   
   <%= periodically_call_remote( 
        :update => 'tags_and_items',
-       :frequency => 30, 
+       :frequency => 3000, 
        :url => included_items_path( @account ),
        :method => :get,
        :before => %(Element.show('spinner')),
        :success => %(Element.hide('spinner') ) )
   %>
   <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
-
+  
+  <%= render( :partial => "partials/timechooser" ) %>
+  
   <div id="tags_and_items">
     <%= render( :partial => "partials/tags_and_items" ) %>
   </div>

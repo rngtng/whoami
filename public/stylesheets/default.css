@@ -68,28 +68,44 @@ FORM TEXTAREA {
 FORM INPUT[type=text],
 FORM INPUT[type=password],
 FORM TEXTAREA {
-	       width: 130px;
+	width: 130px;
 }
 
 FORM INPUT[type=submit] {
         width: 150px;
         margin: 0px;
         padding: 0px;
+	height: 20px;
+	background-color: #FFFFFF;
 }
 
-#tagcloud {
- 	 padding:0 40px 0px 40px;
+#tags {
+	text-align:left;
+	margin:0 40px 0 40px;
 }
 
-#tagcloud LI {
+#tags UL {
+	padding: 0px;
+}
+
+#tags UL LI {
  	 display:inline;
 }
 
-#tagcloud A {
+#tags UL LI .selected {
+ 	 display:inline;
+	 color:#FFFFFF;
+	 font-style:bold;
+	 font-size:16pt;
+	 text-decoration:underline;
+}
+
+
+#tags UL A {
  	 text-decoration:none;
 }
 
-#tagcloud A:hover {
+#tags UL A:hover {
  	 text-decoration:underline;
 }
 
@@ -108,7 +124,8 @@ FORM INPUT[type=submit] {
 }
 
 #items {
-	padding:0 40px 0 40px;
+	margin:0 40px 0 40px;
+	text-align:left;
 }
 
 #items a img {
@@ -126,18 +143,62 @@ FORM INPUT[type=submit] {
 	height:60px;
 	z-index: 1000;
 	margin: -15px 0px 0px -15px;
-}
-
-/*
-#relations UL {
- 	 clear:both;
+	text-align: center;
 }
 
 
-#tagcloud A {
- 	 text-decoration:none;
+#timechooser {
+	margin:10px auto;
+	width:850px;
 }
 
-#tagcloud A:hover {
- 	 text-decoration:underline;
-} */
+#timechooser INPUT{
+	height: 20px;
+	width:100px;
+	float: left;
+	text-align: center;
+	font-weight: bold;
+	font-size: 11pt;
+	color: #FFFFFF;
+	background: #333333;
+	border: 1px solid #666666;
+}
+
+#timechooser #container {
+	float: left;
+	width: 600px;
+        height: 20px;
+        background: #666666;
+        border: 0px solid #AAAAAA;
+        margin: 2px 6px 2px 6px;
+}
+
+#timechooser #clip_left {
+	    background: #333333;
+}
+
+#timechooser #clip_right {
+    background: #333333;
+}
+
+#timechooser #handle_min {
+    background: #FF7400;
+    height: 100%;
+    border: 1px solid black;
+}
+
+#timechooser #handle_max {
+    background: #FF7400;
+    height: 100%;
+    border: 1px solid black;
+}
+
+#timeline,
+#map {
+	border: 1px solid #333333; 
+	margin: 0px 40px 0px 40px;
+}
+
+#small_map {
+	border: 1px solid #333333; 
+}

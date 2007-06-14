@@ -50,6 +50,7 @@ class Account < ActiveRecord::Base
       end
    end
 
+   #debug
    def self.first
       find :first
    end
@@ -77,41 +78,30 @@ class Account < ActiveRecord::Base
    end
 
    ################### FETCH STUFF   ###################################
-   def fetch_all
-      fetch_profile
-      fetch_tags
-      fetch_items
-   end
-
-   #fecht items, fetch details, called by daemlin
+   #fecht items, fetch details, called by daemon
    def daemon_fetch_items
       (items_count > 0 ) ? fetch_items : fetch_items_init
       fetch_details
-      save
+      save #update time and items.count
    end
 
    #reset and get new items
-   def fetch_items!
+   def daemon_fetch_items!
       items.destroy_all
       save
-      fetch_items_init
+      daemon_fetch_items
    end
 
-   def items_count
-      self.items_count = items.count
-   end
-
-   def fetch_items( count = 0, max = 0 )
+   def fetch_items( max_runs = 0, run = 0, updated = false ) #if max == 0 go for unlimited runs
       return fetch_item_fallback unless auth?
-      return false if max > 0 and count == max
-      updated = false
-      raw_items(count).each do | item |
-         i = Item.factory( type, :rawdata => item )
+      return updated if max_runs > 0 and run == max_runs
+      raw_items(run).each do | item |
+         i = Item.factory( type, :raw_data => item )
          updated = self.items << i || updated
       end
-      return updated unless updated ## no more to update, return
+      return updated unless updated ## nothing more to fetch -> return
       sleep 0.3 ## prevent API DOS
-      fetch_items( count + 1, max ) #checking if there are more..
+      fetch_items( max_runs, run + 1 ) #check if there are more to fetch
    end
 
    def fetch_item_fallback
@@ -135,8 +125,11 @@ class Account < ActiveRecord::Base
    end
 
    #################### GET STUFF #############################
-   #type of the item
-   def type
+   def items_count
+      self.items_count = items.count
+   end
+
+   def type #type of the item
       @type ||= self.class.to_s.downcase.sub( /account/, '' )
    end
 
@@ -153,7 +146,7 @@ class Account < ActiveRecord::Base
    end
 
    #items to process
-   def raw_items( count = 0)
+   def raw_items( run = 0)
    end
 
    def feed
@@ -161,7 +154,7 @@ class Account < ActiveRecord::Base
 
    def auth?
       !self.requires_password? or ( !password.nil? && !password.empty? )
-      ##check if logged in
+      ##TODO check if logged in
    end
 
    def uptodate?
@@ -209,7 +202,7 @@ class FlickrAccount < Account
    end
 
    ############    Other Stuff   ############
-   def raw_items( count = 0, per_page = 15 )  #count = number of pages - 1
+   def raw_items( run = 0, per_page = 15 )  #run = number of pages - 1
       #@photos ||= Array.new #@photos[count] ||=
       user = token.user.nsid
       tags = nil
@@ -222,8 +215,7 @@ class FlickrAccount < Account
       license = nil
       extras = "date_taken,tags"
       sort = nil
-      count += 1  #pageno start by 1
-      api.photos.search( user, tags, tag_mode, text, min_upload_date, max_upload_date, min_taken_date, max_taken_date, license, extras, per_page, count, sort )
+      api.photos.search( user, tags, tag_mode, text, min_upload_date, max_upload_date, min_taken_date, max_taken_date, license, extras, per_page, run + 1, sort )
    end
    alias photos raw_items
 
@@ -231,7 +223,7 @@ class FlickrAccount < Account
       "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"
    end
 
-   private
+   #private
    def api
       @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
       @api.auth.token ||= token if token
@@ -240,22 +232,23 @@ class FlickrAccount < Account
    alias flickr api
 
    def fetch_details( limit = 100 )
-      invalid_items.find( :all,  :limit => limit ).each do | item |
-         item.data_add( api.photos.getInfo( item.imgid, item.secret ) ) #split to id,secret -> it is much faster!!
-         #item.geo_add( get_location( item ) )
+      invalid_items.find( :all, :limit => limit ).each do | item |
+         item.more_data = api.photos.getInfo( item.imgid, item.secret ) #split to id,secret -> it is much faster!!
+         begin
+            data = get_location( item.imgid )
+	    item.tag( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
+         rescue Exception =>  e
+	   puts e.message
+         end
          sleep 0.1 ## prevent API DOS
          item.save
       end
    end
 
-   def get_location( item )
-      begin
-         res = api.call_method('flickr.photos.geo.getLocation', 'photo_id'=> item.imgid )
-         res.elements['/photo'].each_element do |location|
-            return location.attributes
-         end
-      rescue
-         []
+   def get_location( id )
+      res = api.call_method('flickr.photos.geo.getLocation', 'photo_id'=> id )
+      res.elements['/photo'].each_element do |location|
+         return location.attributes
       end
    end
 end
@@ -264,26 +257,15 @@ end
 ######################################################################################################
 class YoutubeAccount < Account
    @color = "#00FF00"
-   ############    Other Stuff   ############
-   def profile
-      api.profile( username )
-   end
 
-   def raw_items(count = 0)
-      return [] if username.nil?
-      #return api.favorite_videos( username ) if count == 0
-      return api.videos_by_user( username ) if count == 0 #TODO pagin support??, count+1 )
-      return []
+   def raw_items(run = 0)
+      case run
+      when 0 : api.videos_by_user( username ) #TODO pagin support??, count+1 )
+         #when 1 : api.favorite_videos( username )
+      else []
+      end
    end
    alias videos raw_items
-
-   def auth?
-      true
-   end
-
-   def feed #no feed needed as there is always
-      "http://youtube.com/rss/user/#{username}/videos.rss"
-   end
 
    ############################################
    private
@@ -292,6 +274,15 @@ class YoutubeAccount < Account
    end
    alias youtube api
 end
+
+############    Other Stuff   ############
+#def profile
+#   api.profile( username )
+#end
+
+#def feed #no feed needed as there is always
+#   "http://youtube.com/rss/user/#{username}/videos.rss"
+#end
 
 ######################################################################################################
 class LastfmAccount < Account
@@ -303,8 +294,8 @@ class LastfmAccount < Account
    end
 
    ############    Other Stuff   ############
-   def raw_items(count = 0)
-      api.user_tracks( count )
+   def raw_items(run = 0)
+      api.user_tracks( run )
    end
    alias tracks raw_items
 
@@ -363,15 +354,17 @@ class DeliciousAccount < Account
       "http://del.icio.us/rss/#{username}"
    end
 
-   def json
-      "http://del.icio.us/feeds/json/#{username}?count=100&raw"
-   end
+   #def json
+   #   "http://del.icio.us/feeds/json/#{username}?count=100&raw"
+   #end
 
    ############    Other Stuff   ############
-   def raw_items(count = 0)
-      return api.posts_recent( nil, 100 ) if count == 0
-      return api.posts_all if count == 1
-      return Array.new
+   def raw_items(run = 0)
+      case run
+      when 0 : api.posts_recent( nil, 100 )
+      when 1 : api.posts_all if count == 1
+      else []
+      end
    end
    alias bookmarks raw_items
 
@@ -382,18 +375,16 @@ class DeliciousAccount < Account
    alias delicious api
 
    def fetch_item_fallback
-      fetch_rss  #more infos but less items
-      #TODO: loop trough tags to get even more!
-      #fetch_json #more items but less infos
+      fetch_rss  #more infos but less items  max. 31    #TODO: loop trough tags to get even more!
    end
 
-   def fetch_json
-      data = open( json ).readline
-      JSON.parse(data).each  do |item|
-         i = Item.factory( type, :json => item )
-         self.items << i
-      end
-   end
+   #def fetch_json  #more items but less infos e.g. no TIME!!
+   #   data = open( json ).readline
+   #   JSON.parse(data).each  do |item|
+   #      i = Item.factory( type, :json => item )
+   #      self.items << i
+   #   end
+   #end
 end
 
 ######################################################################################################
@@ -408,8 +399,8 @@ class BlogAccount < Account
    end
 
    ############    Other Stuff   ############
-   def raw_items( count = 0, blog_id = 1)
-      count = (count+1) * 10
+   def raw_items( run = 0, blog_id = 1)
+      count = (run+1) * 10
       api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
    end
    alias posts raw_items
@@ -422,7 +413,7 @@ class BlogAccount < Account
    alias blog api
 
    def fetch_items_init
-      fetch_items( 500, 100 ) #get 500 posting, increase by 100 if more..
+      fetch_items( 100, 50 ) #get 500 posting, until we got more than 1000
    end
 end
 
@@ -430,12 +421,11 @@ end
 class YahoosearchAccount < Account
    @color = "#9BE5E9"
 
-   def raw_items( count = 1 )
+   def raw_items( run = 0 )
+      count = (run+1 ) * 5
       url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
-      #TODO use hpricot here!
-      #result = Net::HTTP.get_response( URI.parse( url ) ).body
-      #result = XmlSimple.xml_in( result,{ 'ForceArray' => [ 'Result' ] } )
-      #result[ 'Result' ]
+      #result = Hpricot.XML( open( url ) )
+      #(result%"result")
    end
 end
 
@@ -444,9 +434,11 @@ class TwitterAccount < Account
    @color = "#9BE5E9"
    @requires_password = true
 
-   def raw_items( count = 0 )
-      return api.user_timeline if count == 0
-      []
+   def raw_items( run = 0 )
+      case run
+      when 0 : api.user_timeline
+      else []
+      end
    end
    alias timeline raw_items
 
@@ -462,8 +454,8 @@ class PlazesAccount < Account
    @color = "#32648c"
    @requires_password = true
 
-   def raw_items( count = 0 )
-      count = (count+1) * 50 #number of days
+   def raw_items( run = 0 )
+      count = (run+1) * 50 #number of days
       api.trazes( count )
    end
    alias trazes raw_items

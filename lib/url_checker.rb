@@ -51,7 +51,7 @@ class UrlChecker
    end
 
    def self.get_url( content, type )
-      content = Hpricot.XML( open( content ) ) if content.class == String
+      content = Hpricot.XML( open( content ) ) if content.is_a? String
       (content/"link[@rel='alternate']").each do |link|
          return link['href'] if link['type'] =~ Regexp.new("#{type}")
       end

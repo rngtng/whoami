@@ -1,0 +1,3 @@
+digraph structs {
+label = "black :belongs_to\nblue :has_many \nred :has_one \nmagenta :has_and_belongs_to "
+}

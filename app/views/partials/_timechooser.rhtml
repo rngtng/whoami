@@ -1,0 +1,67 @@
+<% url = ( @account ) ? account_url( :id => @account ) : items_url %>
+   <div id="timechooser"> 
+     <% form_tag url , :id => 'timechooser_form' do %>
+      <input name="tag" value="<%= @tag %>" type="hidden">
+      <input id="from" name="from" type="hidden"><input id="from_str">
+      <div id="container" style="width: 600px;">
+         <div id="clip_left">
+             <div id="handle_min" style="width: 10px;">&lt;</div>
+         </div>  
+         <div id="clip_right">
+             <div id="handle_max" style="width: 10px;">&gt;</div>
+         </div>
+      </div>
+      <input id="to" name="to" type="hidden"><input id="to_str">
+     <% end %>
+   </div>
+   <br clear="all">
+
+     <%= observe_form :timechooser_form, 
+      :frequency => 0.5, 
+      :update => 'tags_and_items', 
+      :before => "Element.show('spinner')", 
+      :complete => "Element.hide('spinner')", 
+      :url => url,
+      :method => :get
+     %>
+   
+<script>
+  var from = new Date( <%= @from * 8640000 %> )
+  var to   = new Date( <%= @to * 8640000 %> )
+  
+  function load() {
+     setRange( [<%= "#{@from},#{@to}" %>] );
+     d = new DoubleSlider({
+        container: $('container'),
+        clip_left: $('clip_left'),
+        clip_right: $('clip_right'),
+        handle_min: $('handle_min'),
+        handle_max: $('handle_max'),
+        range: [<%= "#{@min},#{@max}" %>],
+        change: setRange,
+        slide: setRange
+     });
+     d.setRange( <%= "#{@from},#{@to}" %> );
+     show_range();
+  }
+  
+   function setRange( range ) {
+	from.setTime( range[0] * 86400000 );
+	to.setTime(   range[1] * 86400000 );
+        $('from_str').value =  date2str( from )
+        $('to_str').value   =  date2str( to )
+	$('from').value    =  Math.floor( from.getTime() / 1000 )
+	$('to').value      =  Math.floor( to.getTime() / 1000 ) + 86400
+     }
+     
+  function date2str( date )  {
+    day =  date.getDate()
+    if( day < 10 ) day = '0' + day
+    month =  date.getMonth() + 1
+    if( month < 10 ) month = '0' + month
+    year = date.getFullYear()
+    return day+'.'+month+'.'+year
+  }
+  
+  window.onload = load();
+</script>

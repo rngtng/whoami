@@ -1,17 +1,19 @@
  <h4>Your collected Items: <%= @items.size %> - <%= @items.size %> are valid </h4>
- <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+  <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
  
    <%= periodically_call_remote( 
        :update => 'tags_and_items',
        :frequency => 30, 
-       :url => items_path,
+       :url => items_path( :tag => @tag ),
        :method => :get,
        :before => %(Element.show('spinner')),
        :success => %(Element.hide('spinner') ) )
   %>
   <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
 
-  <div id="tags_and_items">
+  <%= render( :partial => "partials/timechooser" ) %>
+  
+  <div id="tags_and_items" style="width:100%; text-align:center;">
     <%= render( :partial => "partials/tags_and_items" ) %>
   </div>
   

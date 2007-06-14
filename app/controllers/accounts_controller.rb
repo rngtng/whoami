@@ -16,8 +16,15 @@ class AccountsController < ApplicationController
       @account = @user.accounts.find( params[:id] )
       redirect_to auth_account_path( @account ) and return if @account.requires_auth? and !@account.auth?
       params[:account_id] = params.delete( :id )
+      @min  = @user.accounts.find( params[:account_id] ).valid_items.min_time.to_i / 1.day
+      @max  = @user.accounts.find( params[:account_id] ).valid_items.max_time.to_i / 1.day
       @items = @user.valid_items.find_tagged_with( params )
-      return render( :partial => "partials/tags_and_items" ) if request.xhr?
+      @from = params[:from] ? params[:from] : @min
+      @to   = params[:to] ? params[:to] : @max
+      respond_to do |format|
+         format.js { render :partial => "partials/tags_and_items" }
+         format.html
+      end
    end
 
    def new

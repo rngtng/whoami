@@ -4,7 +4,7 @@
 # $Rev$
 # by $Author$
 
-require 'tag'
+#require 'tag'
 
 class Item < ActiveRecord::Base
    belongs_to :account  #, :counter_cache => true
@@ -18,8 +18,8 @@ class Item < ActiveRecord::Base
 
    validates_associated    :account
    validates_presence_of   :time
-   validates_presence_of   :dataid
-   validates_uniqueness_of :dataid, :scope => 'account_id' #we need that to check if item is allready in DB
+   validates_presence_of   :data_id
+   validates_uniqueness_of :data_id, :scope => 'account_id' #we need that to check if item is allready in DB
 
    after_save :save_tags
 
@@ -55,6 +55,25 @@ class Item < ActiveRecord::Base
       return result
    end
 
+   def self.to_calendar( items )
+      cal = Icalendar::Calendar.new
+      cal.custom_property("METHOD","PUBLISH")
+      items.each do |i|
+         cal.add_event( i.to_event )
+      end
+      cal
+   end
+
+   def self.min_time
+      scope(:find)[:select] = 'MIN(items.time) AS time'
+      Item.find( :first ).time
+   end
+
+   def self.max_time
+      scope(:find)[:select] = 'MAX(items.time) AS time'
+      Item.find( :first ).time
+   end
+
    ##TODO :location => 'esa' should work to
    def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
       scope = scope(:find)
@@ -62,11 +81,16 @@ class Item < ActiveRecord::Base
       cond << sanitize_sql(scope.delete(:conditions)) if scope && scope[:conditions]
       cond << sanitize_sql(options.delete(:conditions)) if options[:conditions]
       cond << sanitize_sql( ['items.account_id=?', options.delete(:account_id) ] ) if options[:account_id]
+
+      if options[:from] and options[:to]
+         options[:time] = options.delete(:from )
+         options[:period] = options.delete(:to ).to_i - options[:time].to_i
+      end
       if options[:time]
          period = ( options[:period] ) ?  options.delete(:period) : 2.days
          past   = ( period <  0 ) ? period : 0
          future = ( period >= 0 ) ? period : 0
-         time   = options.delete(:time)
+         time   = Time.at( options.delete(:time).to_i )
          cond << sanitize_sql( [ "items.time >= ? AND items.time <= ?", time+past, time+future ] )
       end
 
@@ -76,8 +100,8 @@ class Item < ActiveRecord::Base
       join << "INNER JOIN taggings AS taggings#{nr} ON taggings#{nr}.item_id = items.id"
       join << "INNER JOIN tags     AS tags#{nr}     ON tags#{nr}.id          = taggings#{nr}.tag_id"
       join << " AND #{sanitize_sql( ["tags#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
-      join << " AND #{sanitize_sql( ["tags#{nr}.name=?", options.delete(:tag).to_s  ] )}" if options[:tag]
-      join << " AND ( tags#{nr}.name='#{options.delete(:tags).join("' OR tags#{nr}.name='")}')"  if options[:tags]
+      join << " AND #{sanitize_sql( ["tags#{nr}.data_id=?", options.delete(:tag).to_s  ] )}" if options[:tag]
+      join << " AND ( tags#{nr}.data_id='#{options.delete(:tags).join("' OR tags#{nr}.data_id='")}')"  if options[:tags]
 
       return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC' }
    end
@@ -126,6 +150,22 @@ class Item < ActiveRecord::Base
       thumbshot( url)
    end
 
+   def to_event
+      event = Icalendar::Event.new
+      event.dtstart = time.strftime("%Y%m%dT%H%M%S")
+      event.summary = title
+      event.url = url
+      event.description = text
+      event.categories = [type]
+      #event.related_to
+      event.geo =   Icalendar::Geo.new( geos.first.lat, geos.first.lng ) unless geos.empty?
+      event.location = locations.map!( &:name).join(',' ) 
+      #event contacts
+      #event.klass = "PUBLIC"  
+      #event.attachment
+      event
+   end
+
    #type of the item
    def type
       @type ||= self.class.to_s.downcase.sub( /item/, '' )
@@ -142,7 +182,7 @@ class Item < ActiveRecord::Base
    ###############################################################################################
    def tag( tag, split_by = nil )  #can be a Sting, a Hash where :Tagtype => TagName or a tag
       @cached_tags ||= []
-      tag = Tag.get( tag, split_by )  unless tag.is_a? Tag
+      tag = Tag.split_and_get( tag, split_by )  unless tag.is_a? Tag
       @cached_tags  <<  tag
    end
 
@@ -151,7 +191,7 @@ class Item < ActiveRecord::Base
    end
 
    def feed=(f)
-      self.dataid = f.id || f.urls.first
+      self.data_id = f.id || f.urls.first
       self.time = f.date_published || Time.now
       self.data = SimpleItem.new( :url => f.url, :title => f.title,  :text => f.description )
       tag( :link => url ) #TDODO specify better type here?
@@ -193,7 +233,7 @@ class Item < ActiveRecord::Base
       (doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
       (doc/"dim[@type='location']/item").each { |item| tag( :location => item.inner_html ) } # return all locations
       (doc/"dim[@type='language']/item").each { |item| tag( :language => item.inner_html ) } # return all languages
-      (doc/"dim[@type='author']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
+      (doc/"dim[@type='author']/item").each   { |item| tag( :author => item.inner_html ) } # return all people
       #(doc/"dim[@type='title']/item").each # return all people
    end
    alias extract_meta_people_locations tag_the_net
@@ -218,25 +258,22 @@ end
 ######################################################################################################
 class FlickrItem < Item
    ##TODO is url correct?????
-   def rawdata=(d)
-      return self.data = d if self.dataid
-      self.dataid = [d.id, d.secret].join(':')
+   def raw_data=(d)
+      return self.data = d if self.data_id
+      self.data_id = [d.id, d.secret, d.owner_id].join(':')
       self.time = Time.now
    end
 
-   def data_add( d )
+   def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
       d.tags.each do |tag|
          tag( tag.clean )
       end
       # add notes, comments, date_posted
-      self.data = SimpleItem.new( :url => d.url, :title => d.title,  :text => d.description )
-      tag( :image => url )
+      self.data = SimpleItem.new( :url => d.url, :title => d.title, :text => d.description )
+      tag( :image => data.url )
+      tag( :link => url )
       self.complete = true
-   end
-
-   def geotag( d )
-
    end
 
    def thumbnail
@@ -248,12 +285,11 @@ class FlickrItem < Item
    end
 
    def url
-      "http://www.flickr.com/photos/#{}/#{imgid}"
+      "http://www.flickr.com/photos/#{owner}/#{imgid}"  #TODO add user param here
    end
 
-
    def imgid
-      @imgid, @secret = dataid.split(/:/) unless @imgid
+      @imgid, @secret, @owner = data_id.split(/:/) unless @imgid
       @imgid
    end
 
@@ -261,12 +297,21 @@ class FlickrItem < Item
       imgid unless @secret
       @secret
    end
+
+   def owner
+      imgid unless @owner
+      @owner
+   end
+
+   def html
+      "<img src='#{data.url.sub( /\.jpg/, '_m.jpg')}'>"
+   end
 end
 
 ######################################################################################################
 class YoutubeItem < Item
-   def rawdata=(d)
-      self.dataid = d.id
+   def raw_data=(d)
+      self.data_id = d.id
       self.time = d.upload_time || Time.now
       tag( d.tags, ' ')
       self.data = d
@@ -298,8 +343,8 @@ class LastfmItem < Item
    delegate :artist, :to => :data
    delegate :album,  :to => :data
 
-   def rawdata=(d)
-      self.dataid = d.url  ##TODO: is id available???
+   def raw_data=(d)
+      self.data_id = d.url  ##TODO: is id available???
       self.time = d.date
       self.data = d
       self.complete = !album.nil?
@@ -328,8 +373,8 @@ end
 
 ######################################################################################################
 class DeliciousItem < Item
-   def rawdata=(d)
-      self.dataid = d.hash
+   def raw_data=(d)
+      self.data_id = d.hash
       self.time = d.time
       tag( d.tag, ' ' )
       self.data = d
@@ -343,7 +388,7 @@ class DeliciousItem < Item
       r_title = (r/"title").inner_html
       r_text  = (r/"description").inner_html
       self.data = SimpleItem.new( :url => r_url, :title => r_title,  :text => r_text )
-      self.dataid = url
+      self.data_id = url
       tags = (r/"dc:subject").inner_html
       tag( tags, ' ' )
       tag( :link => url)
@@ -353,7 +398,7 @@ class DeliciousItem < Item
    def json=(j)
       self.time = Time.now #fix this!!
       self.data = SimpleItem.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
-      self.dataid = url
+      self.data_id = url
       tag( :link => url)
       j['t'].each do |tag|
          tag( tag )
@@ -364,8 +409,8 @@ end
 
 ######################################################################################################
 class BlogItem < Item
-   def rawdata=(d)
-      self.dataid = d['postid']
+   def raw_data=(d)
+      self.data_id = d['postid']
       time = d['dateCreated'].to_time
       return if time > Time.now #get rid of future posts
       return unless time.to_i > 0  #get rid of drafts
@@ -379,8 +424,8 @@ end
 
 ######################################################################################################
 class YahoosearchItem < Item
-   def rawdata=(d)
-      self.dataid = d['Url']
+   def raw_data=(d)
+      self.data_id = d['Url']
       self.time = Time.at( d['ModificationDate'].to_i )
       self.complete = true
       self.data = d
@@ -405,8 +450,8 @@ end
 
 ######################################################################################################
 class TwitterItem < Item
-   def rawdata=(d)
-      self.dataid = d.id
+   def raw_data=(d)
+      self.data_id = d.id
       self.time = d.created_at
       self.data = d
       self.complete = true
@@ -442,10 +487,10 @@ class PlazesItem < Item
    delegate :longitude,:to => :plaze
    delegate :blog_url, :to => :plaze
 
-   def rawdata=(d)
+   def raw_data=(d)
       return unless d.plaze.name
       self.time = d.start.to_time
-      self.dataid = "#{d.plaze.key}#{self.time.to_i}"
+      self.data_id = "#{d.plaze.key}#{self.time.to_i}"
       self.data = d
       #extract_all
       extract_meta_people_locations( url )

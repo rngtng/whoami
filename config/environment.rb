@@ -78,6 +78,9 @@ require 'mydelicious' #created by myself
 #require 'yahoo' by myself
 #require 'plazes'
 
+require 'icalendar'
+
+
 #require 'ebay' #sucks
 #require 'amazon/ecs' #sucks
 #require 'google/api/web' #sucks
@@ -91,3 +94,5 @@ require 'mydelicious' #created by myself
 #require 'qype'
 #require 'wiki'
 #...
+
+#include Icalendar

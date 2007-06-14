@@ -1,5 +1,9 @@
 # Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
 one:
   id: 1
+  user_id: 1
+  type: FlickrAccount
+  username: TobiTobes
+  token: --- !ruby/object:Flickr::Token \nperms: :delete\ntoken: 72157600118867617-aafa2bbd8b232867\nuser: !ruby/object:Flickr::Person\n  flickr:\n  info_fetched: false\n  nsid: 72138060@N00\n  realname: Tobi Tobes\n  upload_fetched: false\n  username: TobiTobes
 two:
   id: 2

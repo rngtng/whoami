@@ -1,0 +1,7 @@
+<div class="formbox" style="width:600px">
+To import your content to a calendar, download the
+<%= link_to 'items.ics', formatted_items_url( :ics ) %> file.<br/>
+<br/>
+To subscribe to your content and get updates regulary, use this url:<br/>
+<%= formatted_items_url( :ics ) + "?auth=#{@user.crypted_password}#{@user.identity_url}"%>
+</div>

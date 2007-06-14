@@ -31,7 +31,7 @@ ActionController::Routing::Routes.draw do |map|
       accounts.resources :included_items, :controller => 'items'
    end
 
-   map.resources :items
+   map.resources :items, :collection => { :map => :get, :timeline => :get, :ical => :get }
 
    map.home '', :controller => 'items', :action => 'index'
 

@@ -5,13 +5,14 @@
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title>WhoAmI - <%= controller.controller_name %> - <%= controller.action_name %></title>
     <%= javascript_include_tag :defaults %>
+    <%= GMap.header if @map %> 
+    <%= javascript_include_tag 'http://simile.mit.edu/timeline/api/timeline-api.js' if @timeline %>
+    <%= javascript_include_tag 'double_slider' %>
     <%= stylesheet_link_tag 'default' %>
   </head>
-  <body>
+  <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline %> >
     <div>
-      <h1 style="float:left; margin:0; border:0">Welcome
-       <%= link_to @user.login, home_path %> 
-       - <em>who are you?</em></h1> 
+      <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path %> - <em>who are you?</em></h1> 
       <div class="accounts" style="float:right;">Add:
         <% Account.types.each do |type| -%> 
          <% n = image_tag "/images/accounts/#{type}.png" %>
@@ -22,16 +23,24 @@
     </div>  
     <br clear="all">
     
-    <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
-      <% @user.accounts.each do |account| -%>
+    <div>
+     <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
+     <% @user.accounts.each do |account| -%>
        <% next unless account.id %>
        <% n = image_tag "/images/accounts/#{account.type}.png" %>  
        <%= link_to n, account_path( account ) %>
        <%= "!" unless account.uptodate? %>
-      <% end %>
+     <% end %>
+    </div>
+    <div>
+      view as:
+      <%= link_to 'map', map_items_path %>
+      <%= link_to 'timeline', timeline_items_path %>
+      <%= link_to 'iCal', ical_items_path %>
+    </div>
     <p style="color: green"><%= flash[:notice] %></p>
     
-     <%= yield  %>
+      <%= yield  %>
    
      <br clear="all">
   </body>

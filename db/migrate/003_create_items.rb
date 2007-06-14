@@ -10,7 +10,7 @@ class CreateItems < ActiveRecord::Migration
          t.column :account_id, :integer
          t.column :type,       :string
          t.column :time,       :datetime
-         t.column :dataid,     :string
+         t.column :data_id,     :string, :references => nil
          t.column :data,       :text
          t.column :complete,   :boolean, :default => false
       end
