@@ -1,0 +1,28 @@
+#Fill here the API keys for your application
+
+development:
+ flickr: 
+    key: 4e49a06e0e815680660e1e37ae4a1a2d
+    secret: 9390237b2c854292
+ youtube:
+    key: G1Wl5IDX66M
+ plazes:
+    key: 7d4d6ecd009b4d135375457403f5231f
+
+test:
+ flickr: 
+    key: 4e49a06e0e815680660e1e37ae4a1a2d
+    secret: 9390237b2c854292
+ youtube:
+    key: G1Wl5IDX66M
+ plazes:
+    key: 7d4d6ecd009b4d135375457403f5231f
+
+production:
+ flickr: 
+    key: 4e49a06e0e815680660e1e37ae4a1a2d
+    secret: 9390237b2c854292
+ youtube:
+    key: G1Wl5IDX66M
+ plazes:
+    key: 7d4d6ecd009b4d135375457403f5231f    

@@ -27,7 +27,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "account_id", :integer
     t.column "type",       :string
     t.column "time",       :datetime
-    t.column "data_id",     :string
+    t.column "data_id",    :string
     t.column "data",       :text
     t.column "complete",   :boolean,  :default => false
   end
@@ -75,7 +75,9 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "parent_id", :integer
     t.column "name",      :string
     t.column "type",      :string
+    t.column "data_id",   :string
     t.column "data",      :text
+    t.column "synonym",   :text
   end
 
   add_index "tags", ["name", "type"], :name => "index_tags_on_name_and_type"

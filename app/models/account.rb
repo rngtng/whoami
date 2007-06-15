@@ -177,6 +177,14 @@ class Account < ActiveRecord::Base
    #api to call
    def api
    end
+
+   def api_key( what = :key )
+      begin
+         ApiKeys.get( type => what )
+      rescue
+         nil
+      end
+   end
 end
 
 ###############################################################################
@@ -203,7 +211,6 @@ class FlickrAccount < Account
 
    ############    Other Stuff   ############
    def raw_items( run = 0, per_page = 15 )  #run = number of pages - 1
-      #@photos ||= Array.new #@photos[count] ||=
       user = token.user.nsid
       tags = nil
       tag_mode = nil
@@ -225,7 +232,7 @@ class FlickrAccount < Account
 
    #private
    def api
-      @api ||= Flickr.new( 'dummy', '4e49a06e0e815680660e1e37ae4a1a2d', '9390237b2c854292' )
+      @api ||= Flickr.new( 'dummy', api_key, api_key( :secret ) )
       @api.auth.token ||= token if token
       @api
    end
@@ -236,9 +243,9 @@ class FlickrAccount < Account
          item.more_data = api.photos.getInfo( item.imgid, item.secret ) #split to id,secret -> it is much faster!!
          begin
             data = get_location( item.imgid )
-	    item.tag( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
+            item.tag( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
          rescue Exception =>  e
-	   puts e.message
+            puts e.message
          end
          sleep 0.1 ## prevent API DOS
          item.save
@@ -270,19 +277,10 @@ class YoutubeAccount < Account
    ############################################
    private
    def api
-      @api ||= YouTube::Client.new 'G1Wl5IDX66M'
+      @api ||= YouTube::Client.new api_key
    end
    alias youtube api
 end
-
-############    Other Stuff   ############
-#def profile
-#   api.profile( username )
-#end
-
-#def feed #no feed needed as there is always
-#   "http://youtube.com/rss/user/#{username}/videos.rss"
-#end
 
 ######################################################################################################
 class LastfmAccount < Account
@@ -354,10 +352,6 @@ class DeliciousAccount < Account
       "http://del.icio.us/rss/#{username}"
    end
 
-   #def json
-   #   "http://del.icio.us/feeds/json/#{username}?count=100&raw"
-   #end
-
    ############    Other Stuff   ############
    def raw_items(run = 0)
       case run
@@ -377,14 +371,6 @@ class DeliciousAccount < Account
    def fetch_item_fallback
       fetch_rss  #more infos but less items  max. 31    #TODO: loop trough tags to get even more!
    end
-
-   #def fetch_json  #more items but less infos e.g. no TIME!!
-   #   data = open( json ).readline
-   #   JSON.parse(data).each  do |item|
-   #      i = Item.factory( type, :json => item )
-   #      self.items << i
-   #   end
-   #end
 end
 
 ######################################################################################################
@@ -462,7 +448,7 @@ class PlazesAccount < Account
 
    private
    def api
-      @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => '7d4d6ecd009b4d135375457403f5231f')
+      @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => api_key)
    end
    alias plazes api
 end

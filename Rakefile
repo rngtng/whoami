@@ -8,13 +8,13 @@
 # for example lib/tasks/capistrano.rake, and they will automatically be available to Rake.
 
 f = File.join(File.dirname(__FILE__), 'config', 'boot')
-require( f ) #if File.exist?( f )
+require( f ) if File.exist?( "#{f}.rb" )
 
 require 'rake'
 require 'rake/testtask'
 require 'rake/rdoctask'
 
-require 'tasks/rails' #if defined?( RAILS_ROOT ) <- doesn't work?!
+require 'tasks/rails' if defined?( RAILS_ROOT )
 
 task :install_rails do
    sh "gem install --include-dependencies rails"
@@ -36,21 +36,21 @@ task :install_vendor_gems do
    sh "gem install --include-dependencies optiflag"
    sh "gem install --include-dependencies ruby-openid"
    sh "gem install --include-dependencies icalendar"
-   put  ""
+   puts ""
    puts "#######################################################"
    puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"
    puts "#######################################################"
-   put  ""
+   puts ""
    puts "to fix it, go to:"
    puts "  YOURGEMREPOS/gems/rflickr-2006.02.01/lib/flickr/base.rb"
    puts " and change line 644: def from_xml(xml,photo=nil)"
    puts " to  def self.from_xml(xml,photo=nil)"
-   put  ""
-   put  ""
-   put  "to get rid of the xmlsimple warnings go to:"
+   puts ""
+   puts ""
+   puts "to get rid of the xmlsimple warnings go to:"
    puts "  YOURGEMREPOS/gems/youtube-XXXX/lib/youtube.rb"
-   put  " and change line 26: require 'xmlsimple'"
-   put  " to require 'xmlsimple' unless defined? XmlSimple"
+   puts " and change line 26: require 'xmlsimple'"
+   puts " to require 'xmlsimple' unless defined? XmlSimple"
 end
 
 task :install_my_gems do

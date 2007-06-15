@@ -64,8 +64,7 @@ set :use_sudo, false
 # must match the options given for the servers to select (like :primary => true)
 
 desc <<DESC
-An imaginary backup task. (Execute the 'show_tasks' task to display all
-available tasks.)
+An imaginary backup task. (Execute the 'show_tasks' task to display all available tasks.)
 DESC
 task :backup, :roles => :db, :only => { :primary => true } do
    # the on_rollback handler is only executed if this task is executed within
@@ -140,13 +139,5 @@ task :long_deploy do
    enable_web
 end
 
-desc "Stop daemons before deploying"
-task :before_deploy do
-   daemon_stop
-end
-
-desc "Start daemons after deploying"
-task :after_deploy do
-   daemon_start
-end
-
+before :deploy, :daemon_stop
+after  :deploy, :daemon_start
