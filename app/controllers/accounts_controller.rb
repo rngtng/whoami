@@ -22,8 +22,8 @@ class AccountsController < ApplicationController
       @from = params[:from] ? params[:from] : @min
       @to   = params[:to] ? params[:to] : @max
       respond_to do |format|
-         format.js { render :partial => "partials/tags_and_items" }
          format.html
+         format.js { render :partial => "partials/tags_and_items" }
       end
    end
 

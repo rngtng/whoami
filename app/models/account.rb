@@ -41,7 +41,7 @@ class Account < ActiveRecord::Base
          time     = Time.now - account.daemon_update_time
          time_min = Time.now - 30.seconds  #minimum of 30 update age
          Account.transaction do
-            a = account.find( :first, :conditions => [ 'users.name LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
+            a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
             a.save if a #update timestamp -> no other daemons get this feed
             return a
          end

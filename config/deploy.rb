@@ -136,12 +136,12 @@ namespace :daemon do
    namespace :fetch do
       desc "Start the fetch daemon"
       task :start, :roles => :app do
-         run "#{deploy_to}current/script/fetch_items_daemon start"
+         run "#{deploy_to}current/script/fetch_items_daemon start -- -e production"
       end
 
       desc "Stop the fetch daemon"
       task :stop, :roles => :app do
-         run "#{deploy_to}current/script/fetch_items_daemon stop"
+         run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
       end
    end
 end
