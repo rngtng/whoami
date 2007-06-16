@@ -60,7 +60,7 @@ while($running) do
    f = Account.find_to_update( type, user )
    if f
       ActiveRecord::Base.logger << "Updateing Account #{f.type} owned by #{f.user.login} at #{Time.now}.\n"
-      # f.daemon_fetch_items
+      f.daemon_fetch_items
    end
    sleep seconds
 end
