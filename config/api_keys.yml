@@ -20,8 +20,8 @@ test:
 
 production:
  flickr: 
-    key: 4e49a06e0e815680660e1e37ae4a1a2d
-    secret: 9390237b2c854292
+    key: d0ee78b28474ed59b2129b0de8ee857c
+    secret: 52ed81b7578ad725
  youtube:
     key: G1Wl5IDX66M
  plazes:
