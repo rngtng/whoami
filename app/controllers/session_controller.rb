@@ -8,7 +8,7 @@ class SessionController < ApplicationController
    before_filter :login, :except => [ :new, :openid, :create, :create_openid ]
 
    def show
-      redirect_to items_path
+      redirect_to home_path
    end
 
    def new

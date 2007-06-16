@@ -2,7 +2,7 @@
    <div id="timechooser"> 
      <% form_tag url , :id => 'timechooser_form' do %>
       <input name="tag" value="<%= @tag %>" type="hidden">
-      <input id="from" name="from" type="hidden"><input id="from_str">
+      <input id="from" name="from"  value="<%= @from * 86400 %>"type="hidden"><input id="from_str" value="<%= (Time.at(@from * 86400)).strftime( "%d.%m.%Y") %>">
       <div id="container" style="width: 600px;">
          <div id="clip_left">
              <div id="handle_min" style="width: 10px;">&lt;</div>
@@ -11,26 +11,24 @@
              <div id="handle_max" style="width: 10px;">&gt;</div>
          </div>
       </div>
-      <input id="to" name="to" type="hidden"><input id="to_str">
+      <input id="to" name="to" type="hidden" value="<%= (@to + 1) * 86400 %>"><input id="to_str" value="<%= (Time.at( (@to+1) * 86400)).strftime( "%d.%m.%Y") %>">
      <% end %>
    </div>
    <br clear="all">
 
      <%= observe_form :timechooser_form, 
-      :frequency => 0.5, 
+      :frequency => 2, 
       :update => 'tags_and_items', 
       :before => "Element.show('spinner')", 
       :complete => "Element.hide('spinner')", 
       :url => url,
       :method => :get
-     %>
-   
+     -%>
 <script>
-  var from = new Date( <%= @from * 8640000 %> )
-  var to   = new Date( <%= @to * 8640000 %> )
+  var from = new Date()
+  var to   = new Date()
   
   function load() {
-     setRange( [<%= "#{@from},#{@to}" %>] );
      d = new DoubleSlider({
         container: $('container'),
         clip_left: $('clip_left'),

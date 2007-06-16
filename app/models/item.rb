@@ -41,6 +41,7 @@ class Item < ActiveRecord::Base
       opt = prepage_query( options, 'ftw' )  #set uniqe identgier ftw to be able to extend query...
       opt[:select] = 'items.*'
       opt[:group]  = 'items.id'
+      #opt[:include] = :tags
       result = find( :all, opt )
       return result unless @tag_types
       result.instance_variable_set( :@options, opt )
@@ -159,9 +160,9 @@ class Item < ActiveRecord::Base
       event.categories = [type]
       #event.related_to
       event.geo =   Icalendar::Geo.new( geos.first.lat, geos.first.lng ) unless geos.empty?
-      event.location = locations.map!( &:name).join(',' ) 
+      event.location = locations.map!( &:name).join(',' )
       #event contacts
-      #event.klass = "PUBLIC"  
+      #event.klass = "PUBLIC"
       #event.attachment
       event
    end
@@ -382,6 +383,10 @@ class DeliciousItem < Item
       self.complete = true
    end
 
+   def thumbnail
+      thumbshot( url)
+   end
+
    def rss=(r)
       self.time = Time.parse( (r/"dc:date").inner_html )
       r_url   = (r/"link").inner_html
@@ -466,9 +471,8 @@ class TwitterItem < Item
    end
 
    def thumbnail
-      #return @images.first if @images.first
-      #return thumbshot( @links.first ) if @links.first
-      super  #extension to get rid of deprecation warning
+      return thumbshot( @links.first ) if @links.first
+      thumbshot( url )
    end
 
    def info

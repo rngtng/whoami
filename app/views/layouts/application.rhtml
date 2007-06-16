@@ -23,7 +23,7 @@
     </div>  
     <br clear="all">
     
-    <div>
+    <div style="float: left">
      <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
      <% @user.accounts.each do |account| -%>
        <% next unless account.id %>
@@ -32,12 +32,13 @@
        <%= "!" unless account.uptodate? %>
      <% end %>
     </div>
-    <div>
+    <div style="float:right">
       view as:
       <%= link_to 'map', map_items_path %>
       <%= link_to 'timeline', timeline_items_path %>
       <%= link_to 'iCal', ical_items_path %>
     </div>
+    <br clear="all">
     <p style="color: green"><%= flash[:notice] %></p>
     
       <%= yield  %>

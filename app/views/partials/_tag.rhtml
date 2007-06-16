@@ -1,6 +1,5 @@
-<% return if tag_group and tag.type != tag_group.to_s.singularize %>
-<% url = ( @account ) ? account_url( :id => @account, :tag => tag.data_id ) : items_url( :tag => tag.data_id ) %>
-<li> 
- <%= link_to( tag.name, url, :style =>  style_for_tag_cloud( tag.count , 1, tag.class.max_count )  ) unless @tag == tag.data_id %>
- <%= link_to( tag.name, url, :class => 'selected'  ) if @tag == tag.data_id %>
+<% return if tag_group and tag.type != tag_group.to_s.singularize -%>
+<% url = ( @account ) ? account_url( :id => @account, :tag => tag.data_id ) : items_url( :tag => tag.data_id ) -%>
+<li><%= link_to( tag.name, url, :style =>  style_for_tag_cloud( tag.count , 1, tag.class.max_count )  ) unless @tag == tag.data_id -%>
+ <%= link_to( tag.name, url, :class => 'selected'  ) if @tag == tag.data_id -%>
 </li>

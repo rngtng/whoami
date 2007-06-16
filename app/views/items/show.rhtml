@@ -1,7 +1,7 @@
-  <div class="item">
-   <table>
+  <div class="item" style="width:90%; border: 0px solid #333333; margin: 0px auto">
+   <table width="100%">
     <tr>
-     <td width="100">
+     <td width="200" valign="top">
        <%= @item.html if @item.html %>
        <%= link_to( image_tag( @item.thumbnail, :size => "200x200", :style => "border: 1px solid #{@item.color};" ), @item.url ) unless @item.html %>
        <% if @map %>
@@ -11,6 +11,17 @@
           <%= @map.div(:width => 300, :height => 200) %>
 	</div>
        <% end %>
+     </td>
+     <td valign="top">
+      <h3><%= @item.title %> - <%= @item.time.strftime("%H:%M %d.%m.%Y") %></h3>
+      <br clear="all">
+      <%= @item.text.gsub!(/\n/, '<br/>') if @item.text %>
+      
+      <div id="tags">
+        <%= render :partial => "partials/tag_group", :collection => Item.tag_types, :locals => { :from => @item } %>
+      </div>
+     </td>
+     <td valign="top" width="200">
        <div id="relations">
         <b>related items</b>
 	<ul id="items">
@@ -29,15 +40,6 @@
 	  </li> 
 	</ul> 
        </div>
-     </td>
-     <td rowspan="2" valign="top">
-      <h3><%= @item.title %> - <%= @item.time.strftime("%H:%M %d.%m.%Y") %></h3>
-      <br clear="all">
-      <%= @item.text.gsub!(/\n/, '<br/>') %>
-      
-      <div id="tags">
-        <%= render :partial => "partials/tag_group", :collection => Item.tag_types, :locals => { :from => @item } %>
-      </div>
      </td>
     </tr>
    </table>

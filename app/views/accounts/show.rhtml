@@ -14,7 +14,7 @@
   %>
   <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
   
-  <%= render( :partial => "partials/timechooser" ) %>
+  <%= render( :partial => "partials/timechooser" ) if @items %>
   
   <div id="tags_and_items">
     <%= render( :partial => "partials/tags_and_items" ) %>

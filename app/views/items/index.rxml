@@ -6,8 +6,7 @@ xml.data do
    :title => item.title,
    :link =>  item_path( item), 
    :image => item.thumbnail,
+   :thumbnail=> item.thumbnail,
    :color => item.color )
  end
 end
-
-#:icon => item.thumbnail,

@@ -14,7 +14,7 @@ module AuthenticatedSystem
 
    # Accesses the current user from the session.
    def current_user
-      @current_user ||= (session[:user] && User.find_by_id(session[:user])) || false
+      @current_user ||= (session[:user] && User.find_by_id(session[:user], :include => :accounts )) || false
    end
 
    # Store the given user in the session.
@@ -107,7 +107,7 @@ module AuthenticatedSystem
    def login_from_cookie
       return true if logged_in?
       return false unless cookies[:auth_token]
-      user = User.find_by_remember_token(cookies[:auth_token])
+      user = User.find_by_remember_token(cookies[:auth_token], :include => :accounts)
       if user && user.remember_token?
          user.remember_me
          self.current_user = user

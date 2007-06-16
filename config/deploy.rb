@@ -8,7 +8,7 @@
 # (http://manuals.rubyonrails.com/read/book/17). It allows you to automate
 # (among other things) the deployment of your application.
 
-require 'mongrel_cluster/recipes'
+require 'lib/mongrel_cluster_recipes.rb'
 
 # =============================================================================
 # REQUIRED VARIABLES
@@ -100,44 +100,53 @@ end
 #   are treated as local variables, which are made available to the (ERb)
 #   template.
 
-desc "Demonstrates the various helper methods available to recipes."
-task :helper_demo do
-   # "setup" is a standard task which sets up the directory structure on the
-   # remote servers. It is a good idea to run the "setup" task at least once
-   # at the beginning of your app's lifetime (it is non-destructive).
-   setup
-
-   buffer = render("maintenance.rhtml", :deadline => ENV['UNTIL'])
-   put buffer, "#{shared_path}/system/maintenance.html", :mode => 0644
-   sudo "killall -USR1 dispatch.fcgi"
-   run "#{release_path}/script/spin"
-   delete "#{shared_path}/system/maintenance.html"
-end
+#desc "Demonstrates the various helper methods available to recipes."
+#task :helper_demo do
+#   # "setup" is a standard task which sets up the directory structure on the
+#   # remote servers. It is a good idea to run the "setup" task at least once
+#   # at the beginning of your app's lifetime (it is non-destructive).
+#   setup
+#
+#   buffer = render("maintenance.rhtml", :deadline => ENV['UNTIL'])
+#   put buffer, "#{shared_path}/system/maintenance.html", :mode => 0644
+#   sudo "killall -USR1 dispatch.fcgi"
+#   run "#{release_path}/script/spin"
+#   delete "#{shared_path}/system/maintenance.html"
+#end
 
 # You can use "transaction" to indicate that if any of the tasks within it fail,
 # all should be rolled back (for each task that specifies an on_rollback
 # handler).
 
-task :daemon_start, :roles => :web do
-   run "#{deploy_to}/current/script/fetch_items_daemon start"
-end
 
-task :daemon_stop, :roles => :web do
-   run "#{deploy_to}/current/script/fetch_items_daemon stop"
-end
+#desc "A task demonstrating the use of transactions."
+#task :long_deploy do
+#   transaction do
+#      update_code
+#      disable_web
+#      symlink
+#      migrate
+#   end
+#
+#   restart
+#   enable_web
+#end
 
-desc "A task demonstrating the use of transactions."
-task :long_deploy do
-   transaction do
-      update_code
-      disable_web
-      symlink
-      migrate
+namespace :daemon do
+   namespace :fetch do
+      desc "Start the fetch daemon"
+      task :start, :roles => :app do
+         run "#{deploy_to}current/script/fetch_items_daemon start"
+      end
+
+      desc "Stop the fetch daemon"
+      task :stop, :roles => :app do
+         run "#{deploy_to}current/script/fetch_items_daemon stop"
+      end
    end
-
-   restart
-   enable_web
 end
 
-before :deploy, :daemon_stop
-after  :deploy, :daemon_start
+before 'mongrel:cluster:stop', 'daemon:fetch:stop'
+#before 'mongrel:cluster:start', 'daemon:fetch:stop'
+after  'mongrel:cluster:start', 'daemon:fetch:start'
+

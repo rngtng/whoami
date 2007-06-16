@@ -123,6 +123,7 @@ FORM INPUT[type=submit] {
 	 margin: 0;
 }
 
+#item,
 #items {
 	margin:0 40px 0 40px;
 	text-align:left;
