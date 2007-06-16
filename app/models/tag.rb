@@ -231,10 +231,6 @@ end
 
 #############################################################################
 class Image < Vague
-   def name=(n)
-      self.name = name
-   end
-
    def thumbnail
       self.name
    end

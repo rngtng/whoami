@@ -17,11 +17,7 @@ class Hash
    end
 end
 
-options = YAML.load(
-ERB.new(
-IO.read(
-File.dirname(__FILE__) + "/../../config/daemons.yml"
-)).result).with_symbols!
+options = YAML.load( ERB.new( IO.read( File.dirname(__FILE__) + "/../../config/daemons.yml" )).result).with_symbols!
 options[:dir_mode] = options[:dir_mode].to_sym
 
-Daemons.run File.dirname(__FILE__) + '/fetch_any.rb', options
+Daemons.run File.dirname(__FILE__) + '/fetch_items.rb', options
