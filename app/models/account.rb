@@ -39,7 +39,7 @@ class Account < ActiveRecord::Base
       begin
          account = (account_name.capitalize + 'Account').constantize
          time     = Time.now - account.daemon_update_time
-         time_min = Time.now - 30.seconds  #minimum of 30 update age
+         time_min = Time.now - 3.minutes #30.seconds  #minimum of 30 update age
          Account.transaction do
             a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
             a.save if a #update timestamp -> no other daemons get this feed
@@ -304,9 +304,6 @@ class LastfmAccount < Account
    end
    alias lastfm api
 
-   
-   
-   
    def fetch_details( limit = 1000 )
       invalid_items.find( :all,  :limit => limit ).each do | track |
          #puts "process track #{track.artist}, #{track.title}, #{track.time}"

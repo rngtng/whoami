@@ -348,6 +348,7 @@ class LastfmItem < Item
       self.data_id = d.url  ##TODO: is id available???
       self.time = d.date
       self.data = d
+      tag( :link => url)
       self.complete = !album.nil?
    end
 
@@ -360,7 +361,7 @@ class LastfmItem < Item
    end
 
    def thumbnail
-      return thumbshot( 'http://www.last.fm' ) if album.nil?
+      return thumbshot( url ) if album.nil? or album.coverart.nil? or album.coverart.empty?
       data.album.coverart['small']
    end
 

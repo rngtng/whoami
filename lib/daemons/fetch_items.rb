@@ -17,7 +17,7 @@ module Daemon extend OptiFlagSet
    optional_flag "sleep" do
       description "Time in seconds how long Daemon should sleep"
       alternate_forms "s"
-      default 60
+      default 15
    end
 
    optional_flag "env" do
