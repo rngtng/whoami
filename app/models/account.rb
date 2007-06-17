@@ -293,7 +293,8 @@ class LastfmAccount < Account
 
    ############    Other Stuff   ############
    def raw_items(run = 0)
-      api.user_tracks( run )
+      api.user_recenttracks()
+      #api.user_tracks( run - 1 )
    end
    alias tracks raw_items
 
@@ -303,6 +304,9 @@ class LastfmAccount < Account
    end
    alias lastfm api
 
+   
+   
+   
    def fetch_details( limit = 1000 )
       invalid_items.find( :all,  :limit => limit ).each do | track |
          #puts "process track #{track.artist}, #{track.title}, #{track.time}"

@@ -63,8 +63,8 @@ class ItemsController < ApplicationController
          marker = GMarker.new( geotag.ll, :title => item.title , :icon => Variable.new( "i#{item.id}" ) ) #, :info_window => info )#, :icon => icon )
          map.overlay_init(marker)
          #end
-	 i = (-i) + 1  
-	 map.overlay_init( GPolyline.new( get_arrow([geotag.ll,ll]), color[i],2,0.7) )
+         i = (-i) + 1
+         map.overlay_init( GPolyline.new( get_arrow([geotag.ll,ll]), color[i],2,0.7) )
          ll = geotag.ll
       end
       map.center_zoom_init(ll, 2 )
@@ -72,6 +72,7 @@ class ItemsController < ApplicationController
    end
 
    def get_small_map(item)
+      return nil if item.geos.empty?
       map = GMap.new("small_map")
       map.control_init( :small_zoom => true, :map_type => true ) #:small_map => true, :map_type => true )
       ll = nil
