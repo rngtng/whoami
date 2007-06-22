@@ -30,12 +30,19 @@ test:
   socket: /tmp/mysql.sock
   encoding: utf8 
 
+#production:
+#  adapter: mysql
+#  database: db21560_17
+#  username: db21560_17
+#  password: 123456
+#  host: mysql5.warteschlange.de
+#  encoding: utf8 
+
 
 production:
   adapter: mysql
-  database: db21560_17
-  username: db21560_17
-  password: 123456
-  host: mysql5.warteschlange.de
-  encoding: utf8 
-
+  database: whoami
+  username: bielohla
+  password: !07who!
+  host: localhost
+  encoding: utf8  

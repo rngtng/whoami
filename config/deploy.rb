@@ -34,12 +34,23 @@ role :web, "whoami.warteschlange.de"
 role :app, "whoami.warteschlange.de"
 role :db,  "whoami.warteschlange.de", :primary => true
 
+#set :default_shell, "/usr/bin/tcsh"
+#role :web, "serv-4103.kl.dfki.de"
+#role :app, "serv-4103.kl.dfki.de"
+#role :db,  "serv-4103.kl.dfki.de", :primary => true
+
 # =============================================================================
 # OPTIONAL VARIABLES
 # =============================================================================
 set :deploy_to,    "/kunden/warteschlange.de/produktiv/rails/whoami/"           # defaults to "/u/apps/#{application}"
 set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
 set :user,         "ssh-21560-rails"    # defaults to the currently logged in user
+
+
+#set :deploy_to,    "/home/bielohla/rails/whoami/"           # defaults to "/u/apps/#{application}"
+#set :mongrel_conf, "/home/bielohla/rails/whoami/current/config/mongrel_cluster_dfki.yml"
+#set :user,         "bielohla"    # defaults to the currently logged in user
+
 # set :scm, :darcs                      # defaults to :subversion
 # set :svn, "/path/to/svn"              # defaults to searching the PATH
 # set :darcs, "/path/to/darcs"          # defaults to searching the PATH
@@ -63,18 +74,18 @@ set :use_sudo, false
 # narrow the set of servers to a subset of a role by specifying options, which
 # must match the options given for the servers to select (like :primary => true)
 
-desc <<DESC
-An imaginary backup task. (Execute the 'show_tasks' task to display all available tasks.)
-DESC
-task :backup, :roles => :db, :only => { :primary => true } do
-   # the on_rollback handler is only executed if this task is executed within
-   # a transaction (see below), AND it or a subsequent task fails.
-   on_rollback { delete "/tmp/dump.sql" }
-
-   run "mysqldump -u theuser -p thedatabase > /tmp/dump.sql" do |ch, stream, out|
-      ch.send_data "thepassword\n" if out =~ /^Enter password:/
-   end
-end
+#desc <<DESC
+#An imaginary backup task. (Execute the 'show_tasks' task to display all available tasks.)
+#DESC
+#task :backup, :roles => :db, :only => { :primary => true } do
+#   # the on_rollback handler is only executed if this task is executed within
+#   # a transaction (see below), AND it or a subsequent task fails.
+#   on_rollback { delete "/tmp/dump.sql" }
+#
+#   run "mysqldump -u theuser -p thedatabase > /tmp/dump.sql" do |ch, stream, out|
+#      ch.send_data "thepassword\n" if out =~ /^Enter password:/
+#   end
+#end
 
 # Tasks may take advantage of several different helper methods to interact
 # with the remote server(s). These are:
@@ -144,6 +155,13 @@ namespace :daemon do
          run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
       end
    end
+end
+
+task :test1, :roles => :app do
+   stamp = Time.now.utc.strftime("%Y%m%d%H%M.%S")
+   #run 'find test -exec touch -t 200706182203.56 {} \;' #, :env => { "TZ" => "UTC" }
+   run 'which sh' #+'\''+';'
+   #run 'echo \ '
 end
 
 before 'mongrel:cluster:stop', 'daemon:fetch:stop'

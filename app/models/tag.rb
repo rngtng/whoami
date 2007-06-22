@@ -151,10 +151,13 @@ class Tag < ActiveRecord::Base
 end
 
 #############################################################################
-class Vague < Tag
+class Unknown < Tag
    def name=(name)
       super(name.downcase)
    end
+end
+
+class Vague < Unknown
 end
 
 class Nonsense < Tag
@@ -172,8 +175,10 @@ class Person < Vague
    #TODO only allow [^a-zA-z. ]
 end
 
-class Author < Person
+class Artist < Person
+end
 
+class Author < Person
 end
 
 #############################################################################

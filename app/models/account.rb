@@ -9,7 +9,7 @@
 class Account < ActiveRecord::Base
    belongs_to :user
 
-   has_many   :items,         :order => 'time DESC'
+   has_many   :items,         :order => 'time DESC', :dependent => :destroy
    has_many   :valid_items,   :order => 'time DESC', :class_name => 'Item', :conditions => Item.valid_condition  #:extend => TagCountsExtension,
    has_many   :invalid_items, :order => 'time DESC', :class_name => 'Item', :conditions => Item.valid_condition( false )  #:extend => TagCountsExtension,
 
@@ -81,7 +81,7 @@ class Account < ActiveRecord::Base
    #fecht items, fetch details, called by daemon
    def daemon_fetch_items
       (items_count > 0 ) ? fetch_items : fetch_items_init
-      fetch_details
+      fetch_items_detail
       save #update time and items.count
    end
 
@@ -93,7 +93,7 @@ class Account < ActiveRecord::Base
    end
 
    def fetch_items( max_runs = 0, run = 0, updated = false ) #if max == 0 go for unlimited runs
-      return fetch_item_fallback unless auth?
+      return fetch_items_fallback unless auth?
       return updated if max_runs > 0 and run == max_runs
       raw_items(run).each do | item |
          i = Item.factory( type, :raw_data => item )
@@ -104,7 +104,7 @@ class Account < ActiveRecord::Base
       fetch_items( max_runs, run + 1 ) #check if there are more to fetch
    end
 
-   def fetch_item_fallback
+   def fetch_items_fallback
       return fetch_feed #if user isn't auth
    end
 
@@ -171,7 +171,7 @@ class Account < ActiveRecord::Base
    end
 
    #get more details about the items
-   def fetch_details
+   def fetch_items_detail
    end
 
    #api to call
@@ -230,7 +230,7 @@ class FlickrAccount < Account
       "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"
    end
 
-   #private
+   private
    def api
       @api ||= Flickr.new( 'dummy', api_key, api_key( :secret ) )
       @api.auth.token ||= token if token
@@ -238,7 +238,7 @@ class FlickrAccount < Account
    end
    alias flickr api
 
-   def fetch_details( limit = 100 )
+   def fetch_items_detail( limit = 100 )
       invalid_items.find( :all, :limit => limit ).each do | item |
          item.more_data = api.photos.getInfo( item.imgid, item.secret ) #split to id,secret -> it is much faster!!
          begin
@@ -284,7 +284,7 @@ end
 
 ######################################################################################################
 class LastfmAccount < Account
-   @color = "#0000FF"
+   @color = "#D01F3C"
    @daemon_update_time = 5.minutes
 
    def feed
@@ -293,8 +293,9 @@ class LastfmAccount < Account
 
    ############    Other Stuff   ############
    def raw_items(run = 0)
-      api.user_recenttracks()
-      #api.user_tracks( run - 1 )
+      #api.user_recenttracks()
+      return [] if run > 2
+      api.user_tracks( run - 1 )
    end
    alias tracks raw_items
 
@@ -304,9 +305,9 @@ class LastfmAccount < Account
    end
    alias lastfm api
 
-   def fetch_details( limit = 1000 )
+   def fetch_items_detail( limit = 1000 )
       invalid_items.find( :all,  :limit => limit ).each do | track |
-         #puts "process track #{track.artist}, #{track.title}, #{track.time}"
+         puts "process track #{track.artist}, #{track.title}, #{track.time}"
          track.album = fetch_album( track.artist, track.title, track.time )
          track.save
       end
@@ -346,7 +347,7 @@ end
 
 ######################################################################################################
 class DeliciousAccount < Account
-   @color = "#0000dd"
+   @color = "#0000FF"
    @requires_password = true
 
    def feed
@@ -369,7 +370,7 @@ class DeliciousAccount < Account
    end
    alias delicious api
 
-   def fetch_item_fallback
+   def fetch_items_fallback
       fetch_rss  #more infos but less items  max. 31    #TODO: loop trough tags to get even more!
    end
 end
@@ -377,7 +378,7 @@ end
 ######################################################################################################
 
 class BlogAccount < Account
-   @color = "#FF0099"
+   @color = "#000000"
    @requires_host = true
    @requires_password = true
 
@@ -405,52 +406,52 @@ class BlogAccount < Account
 end
 
 ######################################################################################################
-class YahoosearchAccount < Account
-   @color = "#9BE5E9"
+#class YahoosearchAccount < Account
+#   @color = "#9BE5E9"
+#
+#   def raw_items( run = 0 )
+#      count = (run+1 ) * 5
+#      url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
+#      #result = Hpricot.XML( open( url ) )
+#      #(result%"result")
+#   end
+#end
 
-   def raw_items( run = 0 )
-      count = (run+1 ) * 5
-      url = "http://api.search.yahoo.com/WebSearchService/V1/webSearch?appid=YahooDemo&query=#{CGI::escape(username)}&results=#{count}"
-      #result = Hpricot.XML( open( url ) )
-      #(result%"result")
-   end
-end
-
-######################################################################################################
-class TwitterAccount < Account
-   @color = "#9BE5E9"
-   @requires_password = true
-
-   def raw_items( run = 0 )
-      case run
-      when 0 : api.user_timeline
-      else []
-      end
-   end
-   alias timeline raw_items
-
-   private
-   def api
-      @api ||= Twitter::Client.new(:login => username, :password => password)
-   end
-   alias twitter api
-end
-
-######################################################################################################
-class PlazesAccount < Account
-   @color = "#32648c"
-   @requires_password = true
-
-   def raw_items( run = 0 )
-      count = (run+1) * 50 #number of days
-      api.trazes( count )
-   end
-   alias trazes raw_items
-
-   private
-   def api
-      @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => api_key)
-   end
-   alias plazes api
-end
+#######################################################################################################
+#class TwitterAccount < Account
+#   @color = "#9BE5E9"
+#   @requires_password = true
+#
+#   def raw_items( run = 0 )
+#      case run
+#      when 0 : api.user_timeline
+#      else []
+#      end
+#   end
+#   alias timeline raw_items
+#
+#   private
+#   def api
+#      @api ||= Twitter::Client.new(:login => username, :password => password)
+#   end
+#   alias twitter api
+#end
+#
+#######################################################################################################
+#class PlazesAccount < Account
+#   @color = "#32648c"
+#   @requires_password = true
+#
+#   def raw_items( run = 0 )
+#      count = (run+1) * 50 #number of days
+#      api.trazes( count )
+#   end
+#   alias trazes raw_items
+#
+#   private
+#   def api
+#      @api ||= Plazes::API.new( :username => username, :password => password, :developer_key => api_key)
+#   end
+#   alias plazes api
+#end
 

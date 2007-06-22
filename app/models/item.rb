@@ -104,7 +104,7 @@ class Item < ActiveRecord::Base
       join << " AND #{sanitize_sql( ["tags#{nr}.data_id=?", options.delete(:tag).to_s  ] )}" if options[:tag]
       join << " AND ( tags#{nr}.data_id='#{options.delete(:tags).join("' OR tags#{nr}.data_id='")}')"  if options[:tags]
 
-      return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC' }
+      return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC'}
    end
 
    def self.tag_types
@@ -146,8 +146,8 @@ class Item < ActiveRecord::Base
    end
 
    def thumbnail
-      return images.first unless images.empty?
-      return thumbshot( links.first ) unless links.empty?
+      return images.first.thumbnail unless images.empty?
+      return thumbshot( links.first.thumbnail ) unless links.empty?
       thumbshot( url)
    end
 
@@ -202,7 +202,7 @@ class Item < ActiveRecord::Base
 
    def related_items( options = {} )
       options[:time] = time if options[:period] && !options[:time]
-      options[:conditions] = ["items.id !=?",id]
+      options[:conditions] = ["items.id !=? AND items.complete=1",id]
       account.user.items.find_tagged_with( options )
    end
 
@@ -230,7 +230,7 @@ class Item < ActiveRecord::Base
    def tag_the_net( from_url = nil  )
       from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text)}"
       doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
-      (doc/"dim[@type='topic']/item").each    { |item| tag( item.inner_html ) } # return all gerneral tags
+      (doc/"dim[@type='topic']/item").each    { |item| tag( :unknown => item.inner_html ) } # return all gerneral tags
       (doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
       (doc/"dim[@type='location']/item").each { |item| tag( :location => item.inner_html ) } # return all locations
       (doc/"dim[@type='language']/item").each { |item| tag( :language => item.inner_html ) } # return all languages
@@ -349,6 +349,7 @@ class LastfmItem < Item
       self.time = d.date
       self.data = d
       tag( :link => url)
+      tag( :artist => artist)
       self.complete = !album.nil?
    end
 
@@ -421,7 +422,7 @@ class BlogItem < Item
       return if time > Time.now #get rid of future posts
       return unless time.to_i > 0  #get rid of drafts
       self.time = time
-      self.data = SimpleItem.new( :url => data['permaLink'], :title => data['title'],  :text => data['description'] )
+      self.data = SimpleItem.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
       extract_all
       tag( :blog => url)
       self.complete = true

@@ -28,13 +28,13 @@
 	  <%= render :partial => "relation_group", :collection => Item.tag_types %>
 	  <li>via Items after:
             <ul>
-             <%= render :partial => "relation", :collection => @item.related_items( :period => 2.days ) %>
+             <%= render :partial => "relation", :collection => @item.related_items( :period => 2.days, :limit => 10 ) %>
             </ul>
 	   <br clear="all">
 	  </li>
 	  <li>via Items before:
             <ul>
-             <%= render :partial => "relation", :collection => @item.related_items( :period => -2.days ) %>
+             <%= render :partial => "relation", :collection => @item.related_items( :period => -2.days, :limit => 10 ) %>
             </ul>
 	   <br clear="all">
 	  </li> 

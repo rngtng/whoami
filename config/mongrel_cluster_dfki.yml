@@ -1,0 +1,7 @@
+--- 
+cwd: /home/bielohla/rails/whoami/current
+port: "8000"
+environment: production
+address: serv-4103.kl.dfki.de
+pid_file: log/mongrel.pid
+servers: 1
