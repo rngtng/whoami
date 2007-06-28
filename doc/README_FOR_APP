@@ -1,2 +1,12 @@
-Use this README file to introduce your application and point to useful places in the API for learning more.
-Run "rake appdoc" to generate API documentation for your models and controllers.
+Welcome to WhoAmI
+
+WhoAmI aggregates you personal data from various social communities. 
+By now. flickr, youtube, delicious, last.fm, wordpress blogs and rss/atom feed are
+supported.
+
+TO get started, visit http://whoami.opendfki.de
+
+This project was developed from my final thesis '' at he DFKI Kaiserslautern in Germany. Futher infromations
+ca be found at: http://www.vIdentity.de
+
+2007 Tobias Bielohlawek
