@@ -60,9 +60,8 @@ class UrlChecker
 
 
    def check_system( content )
-      #:wordpress: <meta name="generator" content="WordPress 2.2" />
+      #wordpress: <meta name="generator" content="WordPress 2.2" />
       #<meta name="Powered-By" content="Serendipity v.0.9.1" />
       #<meta name="generator" content="Blogger" />
    end
 end
-

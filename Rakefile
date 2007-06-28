@@ -22,7 +22,8 @@ end
 
 task :install_deploy_gems do
    sh "gem install --include-dependencies termios"
-   sh "gem install --include-dependencies capistrano"
+   #sh "gem install --include-dependencies capistrano"
+   sh "gem install --include-dependencies -s http://gems.rubyonrails.org capistrano" #capsitrano 2.0
    sh "gem install --include-dependencies mongrel"
    sh "gem install --include-dependencies mongrel_cluster"
 end
@@ -63,7 +64,7 @@ task :install_my_gems do
 end
 
 task :install do
-   svn co https://whoami.opendfki.de/repos/trunk whoami
+   sh "svn co https://whoami.opendfki.de/repos/trunk whoami"
 end
 
 task :install_gems do
