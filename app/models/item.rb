@@ -4,8 +4,8 @@
 # $Rev$
 # by $Author$
 
-#require 'tag'
-
+# Class representing an item
+#-- require 'tag'
 class Item < ActiveRecord::Base
    belongs_to :account  #, :counter_cache => true
 
@@ -23,12 +23,14 @@ class Item < ActiveRecord::Base
 
    after_save :save_tags
 
+   #Returns Items subclass of type type
    def self.factory( type, *params )
       class_name = type.capitalize + "Item"
       raise unless defined? class_name.constantize
       class_name.constantize.new( *params )
    end
 
+   #Tags of the items
    def self.tags( options = {} )
       opt = prepage_query( options )
       opt[:from]   = 'items'
@@ -37,15 +39,27 @@ class Item < ActiveRecord::Base
       Tag.find( :all, opt )
    end
 
+   #Find items tagged with the given options. This can be:
+   #  * :account_id => ID - only items from a specific account
+   #  * :from => time - items not older than time
+   #  * :to => time - items not younger then time
+   #  * :time => time - items not older than time
+   #  * :period => timespan - items not younger then time + period
+   #  * :tag => name - items which match this tag
+   #  * :tags => array of names - items which match a least one of the tags
+   #  * :TAGTYPE => name
    def self.find_tagged_with( options = {})
-      opt = prepage_query( options, 'ftw' )  #set uniqe identgier ftw to be able to extend query...
-      opt[:select] = 'items.*'
-      opt[:group]  = 'items.id'
-      #opt[:include] = :tags
-      result = find( :all, opt )
+      opt = prepage_query( options, 'ftw' )  #set uniqe identifier -ftw- to be able to extend query...
+      scope( :find )[:select] = 'items.*, COUNT(items.id) as count'
+      opt[:group]  = 'items.id HAVING count > 0'
+      #opt[:having]  = 'count > 0'
+      puts '##############################'
+      pp opt 
+      pp scope( :find )
+      result = Item.find( :all, opt )
       return result unless @tag_types
       result.instance_variable_set( :@options, opt )
-      #add some helpfull methods
+      #add some helpfull methods to array
       @tag_types.each do |tag|
          result.instance_eval <<-end_eval
          def #{tag.to_s}
@@ -56,6 +70,7 @@ class Item < ActiveRecord::Base
       return result
    end
 
+   #Returns an array of items as iCal Format
    def self.to_calendar( items )
       cal = Icalendar::Calendar.new
       cal.custom_property("METHOD","PUBLISH")
@@ -65,17 +80,137 @@ class Item < ActiveRecord::Base
       cal
    end
 
+   # Find oldest items
    def self.min_time
       scope(:find)[:select] = 'MIN(items.time) AS time'
       Item.find( :first ).time
    end
 
+   # Find youngest (lastest) items
    def self.max_time
       scope(:find)[:select] = 'MAX(items.time) AS time'
       Item.find( :first ).time
    end
 
-   ##TODO :location => 'esa' should work to
+   # List of tag types
+   def self.tag_types
+      @tag_types
+   end
+
+   # Add a dynamic methods to class for getting tags for all items
+   def self.tag_types=( tag_types )
+      @tag_types = tag_types
+      @tag_types.each do |tag|
+         class_eval <<-end_eval
+         def self.#{tag.to_s}( options = {} )
+            options[:type] = "#{tag.to_s.classify}"
+            tags( options )
+         end
+         end_eval
+      end
+   end
+   self.tag_types = Tag.types
+
+   # Condition for a valid item
+   def self.valid_condition( valid = true)
+      [ 'items.complete = ?', valid  ]
+   end
+
+   ###############################################################################################
+   # Complete info of an item
+   def info
+      info = ["Id:    #{id}"]
+      info << "Date:  #{time.strftime('%Y-%m-%d')}"
+      info << "Title: #{title}"
+      info << "Text:  #{text}"
+      self.class.superclass.tag_types.each do |tag|
+         tag = tag.to_s
+         tags = send( tag ).join(', ')
+         info << "#{tag.capitalize}: #{tags}" unless tags.empty?
+      end
+      info << "----------\n"
+      info.join("\n")
+   end
+
+   # Returns thumbnail. If available the first tagged image is returned, if not thumbshot of the first
+   # link, if this fails to, the thumbshot of url is taken
+   def thumbnail
+      return images.first.thumbnail unless images.empty?
+      return thumbshot( links.first.thumbnail ) unless links.empty?
+      thumbshot( url)
+   end
+
+   # Returns item as iCal event
+   def to_event
+      event = Icalendar::Event.new
+      event.dtstart = time.strftime("%Y%m%dT%H%M%S")
+      event.summary = title
+      event.url = url
+      event.description = text
+      event.categories = [type]
+      #event.related_to
+      event.geo =   Icalendar::Geo.new( geos.first.lat, geos.first.lng ) unless geos.empty?
+      event.location = locations.map!( &:name).join(',' )
+      #event contacts
+      #event.klass = "PUBLIC"
+      #event.attachment
+      event
+   end
+
+   # Type of the item
+   def type
+      @type ||= self.class.to_s.downcase.sub( /item/, '' )
+   end
+
+   # Html code to diplay instead fo default code
+   def html( width = 50, height = 50 )
+      false
+   end
+
+   # Get the account color for the item.
+   def color #much faster than delegte to account.color!
+      "#{type}_account".classify.constantize.color
+   end
+   
+   ###############################################################################################
+   # Tags item with tag. If split_by is provided, tag is splited in server tags
+   # tag can be a Sting, a Hash where :Tagtype => TagName or a Tag
+   def tag( tag, split_by = nil )  
+      @cached_tags ||= []
+      tag = Tag.split_and_get( tag, split_by )  unless tag.is_a? Tag
+      @cached_tags  <<  tag
+   end
+
+   # Save tags
+   def save_tags
+      tags << @cached_tags if @cached_tags
+   end
+
+   # Set item data taken from a feed entry
+   def feed=(f)
+      self.data_id = f.id || f.urls.first
+      self.time = f.date_published || Time.now
+      self.data = SimpleItem.new( :url => f.url, :title => f.title,  :text => f.description )
+      tag( :link => url ) #TDODO specify better type here?
+      extract_all
+      self.complete = true
+   end
+
+   # Get related items. This can be via:
+   # * tags:
+   # * time:
+   def related_items( options = {} )
+      options[:time] = time if options[:period] && !options[:time]
+      options[:conditions] = ["items.id !=? AND items.complete=1", id ]
+      options[:having] = "cnt > 2"
+      account.user.items.find_tagged_with( options )
+   end
+
+   ###############################################################################################
+   private
+   # Prepares the query for finding tags and tagged items
+   #-- 
+   # TODO :location => 'esa' should work to
    def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
       scope = scope(:find)
       cond = ["1"]
@@ -106,119 +241,21 @@ class Item < ActiveRecord::Base
 
       return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC'}
    end
-
-   def self.tag_types
-      @tag_types
-   end
-
-   # Add a dynamic methods to class for getting tags for all items
-   def self.tag_types=( tag_types )
-      @tag_types = tag_types
-      @tag_types.each do |tag|
-         class_eval <<-end_eval
-         def self.#{tag.to_s}( options = {} )
-            options[:type] = "#{tag.to_s.classify}"
-            tags( options )
-         end
-         end_eval
-      end
-   end
-   self.tag_types = Tag.types
-
-   def self.valid_condition( valid = true)
-      [ 'items.complete = ?', valid  ]
-   end
-
-   ###############################################################################################
-   #complete standard info of an item
-   def info
-      info = ["Id:    #{id}"]
-      info << "Date:  #{time.strftime('%Y-%m-%d')}"
-      info << "Title: #{title}"
-      info << "Text:  #{text}"
-      self.class.superclass.tag_types.each do |tag|
-         tag = tag.to_s
-         tags = send( tag ).join(', ')
-         info << "#{tag.capitalize}: #{tags}" unless tags.empty?
-      end
-      info << "----------\n"
-      info.join("\n")
-   end
-
-   def thumbnail
-      return images.first.thumbnail unless images.empty?
-      return thumbshot( links.first.thumbnail ) unless links.empty?
-      thumbshot( url)
-   end
-
-   def to_event
-      event = Icalendar::Event.new
-      event.dtstart = time.strftime("%Y%m%dT%H%M%S")
-      event.summary = title
-      event.url = url
-      event.description = text
-      event.categories = [type]
-      #event.related_to
-      event.geo =   Icalendar::Geo.new( geos.first.lat, geos.first.lng ) unless geos.empty?
-      event.location = locations.map!( &:name).join(',' )
-      #event contacts
-      #event.klass = "PUBLIC"
-      #event.attachment
-      event
-   end
-
-   #type of the item
-   def type
-      @type ||= self.class.to_s.downcase.sub( /item/, '' )
-   end
-
-   #html code to diplay instead fo default code
-   def html( width = 50, height = 50 )
-      false
-   end
-
-   def color #much faster than delegte to account.color!
-      "#{type}_account".classify.constantize.color
-   end
-   ###############################################################################################
-   def tag( tag, split_by = nil )  #can be a Sting, a Hash where :Tagtype => TagName or a tag
-      @cached_tags ||= []
-      tag = Tag.split_and_get( tag, split_by )  unless tag.is_a? Tag
-      @cached_tags  <<  tag
-   end
-
-   def save_tags
-      tags << @cached_tags if @cached_tags
-   end
-
-   def feed=(f)
-      self.data_id = f.id || f.urls.first
-      self.time = f.date_published || Time.now
-      self.data = SimpleItem.new( :url => f.url, :title => f.title,  :text => f.description )
-      tag( :link => url ) #TDODO specify better type here?
-      extract_all
-      self.complete = true
-   end
-
-   def related_items( options = {} )
-      options[:time] = time if options[:period] && !options[:time]
-      options[:conditions] = ["items.id !=? AND items.complete=1",id]
-      account.user.items.find_tagged_with( options )
-   end
-
-   ###############################################################################################
-   private
+   
+   # URL to get thumbshot
    def thumbshot( url )
       "http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #add /.png to get rif of error ms
    end
 
-   ######################################################################################################
-   def extract_all  #finds tags, people and locations
+   #---------------------------------------------------------------------------------------------------------------------
+   # Extracts tags, people and locations
+   def extract_all 
       extract_links_and_images
       extract_meta_people_locations
    end
 
-   def extract_links_and_images( from = nil ) #finds links_and_images
+   # Extract links and images
+   def extract_links_and_images( from = nil )
       from = text unless from
       d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
       URI::extract( d, 'http' ) do |url|
@@ -227,18 +264,20 @@ class Item < ActiveRecord::Base
       end
    end
 
+   # Extracts everthing fomr http://tagthe.net
    def tag_the_net( from_url = nil  )
       from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text)}"
       doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
-      (doc/"dim[@type='topic']/item").each    { |item| tag( :unknown => item.inner_html ) } # return all gerneral tags
+      (doc/"dim[@type='topic']/item").each    { |item| tag( :unknown => item.inner_html ) } # return all unkown tags
       (doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
       (doc/"dim[@type='location']/item").each { |item| tag( :location => item.inner_html ) } # return all locations
       (doc/"dim[@type='language']/item").each { |item| tag( :language => item.inner_html ) } # return all languages
       (doc/"dim[@type='author']/item").each   { |item| tag( :author => item.inner_html ) } # return all people
       #(doc/"dim[@type='title']/item").each # return all people
    end
-   alias extract_meta_people_locations tag_the_net
+   alias extract_meta_people_locations tag_the_net ##TODO it isn't called meta anymore
 
+   # A simple datastructure to store title, url and text for an item
    class SimpleItem
       attr_accessor :title
       attr_accessor :url
@@ -249,16 +288,15 @@ class Item < ActiveRecord::Base
             send( "#{key.to_s}=", value)
          end
       end
-
-      def missing_method()
-
-      end
    end
 end
 
 ######################################################################################################
+# Represents an image from Flickr - http://www.flickr.com
+#--
+# TODO is url correct?????
 class FlickrItem < Item
-   ##TODO is url correct?????
+   
    def raw_data=(d)
       return self.data = d if self.data_id
       self.data_id = [d.id, d.secret, d.owner_id].join(':')
@@ -310,13 +348,14 @@ class FlickrItem < Item
 end
 
 ######################################################################################################
+# Represents a video from YouTube - http://www.youtube.com
 class YoutubeItem < Item
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
       tag( d.tags, ' ')
       self.data = d
-      tag( :link => url )
+      tag( :video => url )
       self.complete = true
    end
 
@@ -334,12 +373,14 @@ class YoutubeItem < Item
       "Votes:#{data.rating_count}\n" ###TODO more info here
    end
 
+   # Return the html code for embedding the video
    def html(width = 425, height = 350)
       data.embed_html(width, height )
    end
 end
 
 ######################################################################################################
+# Represents a music Last.fm - http://www.last.fm
 class LastfmItem < Item
    delegate :artist, :to => :data
    delegate :album,  :to => :data
@@ -366,7 +407,7 @@ class LastfmItem < Item
       data.album.coverart['small']
    end
 
-   ##############
+   # Set the album
    def album=(album)
       return if album.nil?
       data.album = album
@@ -375,13 +416,14 @@ class LastfmItem < Item
 end
 
 ######################################################################################################
+# Represents a bookmark from Del.icious - http://del.icio.us
 class DeliciousItem < Item
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
       tag( d.tag, ' ' )
       self.data = d
-      tag( :link => url)
+      tag( :bookmark => url)
       self.complete = true
    end
 
@@ -415,6 +457,7 @@ class DeliciousItem < Item
 end
 
 ######################################################################################################
+# Represents a posting from a blog
 class BlogItem < Item
    def raw_data=(d)
       self.data_id = d['postid']
@@ -430,6 +473,7 @@ class BlogItem < Item
 end
 
 ######################################################################################################
+# Represents a search result by yahoo
 class YahoosearchItem < Item
    def raw_data=(d)
       self.data_id = d['Url']
@@ -456,6 +500,7 @@ class YahoosearchItem < Item
 end
 
 ######################################################################################################
+# Represents a posting from Twitter - http://www.twitter.com
 class TwitterItem < Item
    def raw_data=(d)
       self.data_id = d.id
@@ -483,6 +528,7 @@ class TwitterItem < Item
 end
 
 ######################################################################################################
+# Represents a location by Plazes  http://www.plazes.com
 class PlazesItem < Item
    delegate :plaze,    :to => :data
    delegate :street,   :to => :plaze

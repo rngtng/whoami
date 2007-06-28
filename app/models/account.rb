@@ -4,8 +4,8 @@
 # $Rev$
 # by $Author$
 
-#require 'item'
-
+# Class representing an account
+#-- require 'item'
 class Account < ActiveRecord::Base
    belongs_to :user
 
@@ -39,7 +39,7 @@ class Account < ActiveRecord::Base
       begin
          account = (account_name.capitalize + 'Account').constantize
          time     = Time.now - account.daemon_update_time
-         time_min = Time.now - 3.minutes #30.seconds  #minimum of 30 update age
+         time_min = Time.now - 3.minutes #30.seconds
          Account.transaction do
             a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
             a.save if a #update timestamp -> no other daemons get this feed
@@ -56,42 +56,47 @@ class Account < ActiveRecord::Base
    end
 
    ###################### REQUIRES STUFF   ####################
+   # Wheter account requires auth
    def self.requires_auth?
       @requires_auth ||= false
    end
 
+   # Wheter account requires host
    def self.requires_host?
       @requires_host ||= false
    end
 
-   #wheter account password
+   # Wheter account requires password
    def self.requires_password?
       @requires_password ||= false
    end
 
+   # Time account needs update
    def self.daemon_update_time
       @daemon_update_time ||= 5.minutes
    end
 
+   # The color to use for this account
    def self.color
       @color ||= "#000000"
    end
 
    ################### FETCH STUFF   ###################################
-   #fecht items, fetch details, called by daemon
+   # Fetch items, fetch details, called by daemon
    def daemon_fetch_items
       (items_count > 0 ) ? fetch_items : fetch_items_init
       fetch_items_detail
       save #update time and items.count
    end
 
-   #reset and get new items
+   # Destroy account items and get them new
    def daemon_fetch_items!
       items.destroy_all
       save
       daemon_fetch_items
    end
 
+   # Get items from this account
    def fetch_items( max_runs = 0, run = 0, updated = false ) #if max == 0 go for unlimited runs
       return fetch_items_fallback unless auth?
       return updated if max_runs > 0 and run == max_runs
@@ -104,10 +109,12 @@ class Account < ActiveRecord::Base
       fetch_items( max_runs, run + 1 ) #check if there are more to fetch
    end
 
+   # What to do if items can not be fetched e.g. in case of wrong auth
    def fetch_items_fallback
       return fetch_feed #if user isn't auth
    end
 
+   # Get the feed data rss/atom
    def fetch_feed
       f = FeedNormalizer::FeedNormalizer.parse( open( feed ) )
       f.items.each  do |item|
@@ -115,8 +122,10 @@ class Account < ActiveRecord::Base
          self.items << i
       end
    end
-
-   def fetch_rss  ##like fetch feed but far more details!
+   
+   # Get the RSS data
+   # This is like fetch feed but far more details!
+   def fetch_rss  
       result = Hpricot.XML( open( feed ) )
       (result/:item).each  do |item|
          i = Item.factory( type, :rss=> item )
@@ -129,10 +138,12 @@ class Account < ActiveRecord::Base
       self.items_count = items.count
    end
 
-   def type #type of the item
+   # Type of the account
+   def type 
       @type ||= self.class.to_s.downcase.sub( /account/, '' )
    end
 
+   # All information about this account
    def info
       info = []
       info << "Type: #{type} - #{username}"
@@ -141,11 +152,7 @@ class Account < ActiveRecord::Base
       info.join("\n")
    end
 
-   def type
-      self.class.to_s.downcase.sub( /account/, '' )
-   end
-
-   #items to process
+   # Items to process
    def raw_items( run = 0)
    end
 
@@ -157,7 +164,8 @@ class Account < ActiveRecord::Base
       ##TODO check if logged in
    end
 
-   def uptodate?
+   # Checks if account is up to date
+   def up_to_date?
       time     = Time.now - daemon_update_time
       time_min = Time.now - 30.seconds  #minimum of 30 update age
       ((updated_at > time_min) or (items_count > 1 and updated_at > time))
@@ -178,6 +186,7 @@ class Account < ActiveRecord::Base
    def api
    end
 
+   # Get api key from config file
    def api_key( what = :key )
       begin
          ApiKeys.get( type => what )
@@ -190,7 +199,6 @@ end
 ###############################################################################
 class FlickrAccount < Account
    @color = "#FF0000"
-   ############    AUTH Part   ############
    @requires_auth = true
 
    def auth( params )
@@ -209,7 +217,6 @@ class FlickrAccount < Account
       api.auth.token
    end
 
-   ############    Other Stuff   ############
    def raw_items( run = 0, per_page = 15 )  #run = number of pages - 1
       user = token.user.nsid
       tags = nil
@@ -267,14 +274,13 @@ class YoutubeAccount < Account
 
    def raw_items(run = 0)
       case run
-      when 0 : api.videos_by_user( username ) #TODO pagin support??, count+1 )
+      when 0 : api.videos_by_user( username ) #TODO paging support??, count+1 )
          #when 1 : api.favorite_videos( username )
       else []
       end
    end
    alias videos raw_items
 
-   ############################################
    private
    def api
       @api ||= YouTube::Client.new api_key
@@ -291,7 +297,6 @@ class LastfmAccount < Account
       "http://ws.audioscrobbler.com/1.0/user/#{username}/recenttracks.rss"
    end
 
-   ############    Other Stuff   ############
    def raw_items(run = 0)
       #api.user_recenttracks()
       return [] if run > 2
@@ -354,7 +359,6 @@ class DeliciousAccount < Account
       "http://del.icio.us/rss/#{username}"
    end
 
-   ############    Other Stuff   ############
    def raw_items(run = 0)
       case run
       when 0 : api.posts_recent( nil, 100 )
@@ -386,7 +390,6 @@ class BlogAccount < Account
       UrlChecker.get_feed_url( host )
    end
 
-   ############    Other Stuff   ############
    def raw_items( run = 0, blog_id = 1)
       count = (run+1) * 10
       api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)

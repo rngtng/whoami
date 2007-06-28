@@ -23,21 +23,23 @@
     </div>  
     <br clear="all">
     
-    <div style="float: left">
-     <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
-     <% @user.accounts.each do |account| -%>
-       <% next unless account.id %>
-       <% n = image_tag "/images/accounts/#{account.type}.png" %>  
-       <%= link_to n, account_path( account ) %>
-       <%= "!" unless account.uptodate? %>
-     <% end %>
-    </div>
-    <div style="float:right">
-      view as:
-      <%= link_to 'map', map_items_path %>
-      <%= link_to 'timeline', timeline_items_path %>
-      <%= link_to 'iCal', ical_items_path %>
-    </div>
+   <% unless @user.accounts.empty? %> 
+     <div style="float: left">
+      <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
+      <% @user.accounts.each do |account| -%>
+        <% next unless account.id %>
+        <% n = image_tag "/images/accounts/#{account.type}.png" %>  
+        <%= link_to n, account_path( account ) %>
+        <%= "!" unless account.up_to_date? %>
+      <% end %>
+     </div>
+     <div style="float:right">
+        view as:
+        <%= link_to 'map', map_items_path %>
+        <%= link_to 'timeline', timeline_items_path %>
+        <%= link_to 'iCal', ical_items_path %>
+      </div>
+    <% end %>  
     <br clear="all">
     <p style="color: green"><%= flash[:notice] %></p>
     

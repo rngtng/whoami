@@ -2,7 +2,7 @@
   <% form_for :user, @user, :url => users_path, :html => {:method => :post } do |form| %> 
     <label for="name">Name:</label><%= form.text_field :login %>
     <label for="password">Password:</label><%= form.password_field :password %>
-    <label for="password">Password confirm:</label><%= form.password_field :password_confirmation %> 
+    <label for="password">Pw&nbsp;confirm:</label><%= form.password_field :password_confirmation %> 
     <p><%= submit_tag "create new account", :disable_with => "creating&hellip;" %></p>
   <% end %>
 </div>  

@@ -18,7 +18,7 @@
      <% #<div id="userdata" style="display:none"> %>
        <label for="name">Username:</label><%= form.text_field :username %>
        <% if @account.requires_password? -%>
-          <label for="password">Password:</label><%= form.text_field :password %>
+          <label for="password">Password:</label><%= form.password_field :password %>
           <em>Password is optional - however, more data can be fetched if password is provided</em>
        <% end %>
     <% #</div> %>   

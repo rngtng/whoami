@@ -4,6 +4,7 @@
 # $Rev$
 # by $Author$
 
+# Class representing a tag
 class Tag < ActiveRecord::Base
    TAG_DELIMITER = " " # how to separate tags in strings
 
@@ -18,41 +19,45 @@ class Tag < ActiveRecord::Base
    #validates_format_of :name, :with => /^[a-zA-Z0-9\_\-]+$/,
    #:message => "can not contain special characters"
 
-   #acts_as_tree
-
+   # The maximum of tags found in a query
+   #--
+   # FIXME: am I counting right?
    cattr_accessor :max_count
    self.max_count = 0
 
+   # The default tag type if not specified
    cattr_accessor :default_type
    self.default_type = :vague
 
-   def self.split_and_get( name, split_by = nil )
-      return Tag.get( name ) unless split_by #fallback if nothing to split
+   # Splits name by split_by and created & returns the tags
+   def self.split_and_get( names, split_by = nil )
+      return Tag.get( names ) unless split_by #fallback if nothing to split
       tags = []
       type = Tag.default_type
-      type, name = name.shift if name.is_a? Hash
-      name.split( split_by ).each do |item|
+      type, names = names.shift if names.is_a? Hash
+      names.split( split_by ).each do |item|
          tags << Tag.get( type => item)
       end
       return tags
    end
 
+   # Returns the tag with name in case it exists. If not the tag is created and
+   # returned.
    def self.get( name )
-      #puts "++++++++++++++++++++++++++++"
       type = Tag.default_type
       type, name = name.shift if name.is_a? Hash
       type, name = process_tag( type, name )   #fliter special tag/keys--
-      #puts "+++ #{name.to_s}"
       tag = Tag.find_by_data_id( name.to_s ) #TODO find similar! prepare before!?
       tag = Tag.find_by_name( name.to_s ) if !tag #TODO find similar! prepare before!?
-      #puts "+++ found  #{tag.id} #{tag.data_id} #{tag.name}" if tag
       tag = Tag.factory( type, :name => name ) unless tag
       tag = tag.change_type!( type ) unless tag.is_type?( type )  ##force change of typ
       tag.save if !tag.id or tag.new_record? or !tag.is_type?( type )
-      #puts "+++  #{tag.id} #{tag.data_id} #{tag.name}"
       return tag
    end
 
+   # Changes tag type. As this changes the object type as well, the returned tag has to be assigned to
+   # the variable:
+   #  tag = Tag.change_type( :location, tag )
    def self.change_type( type, old)
       new_tag = Tag.factory( type, old.attributes )
       new_tag[:id] = old.id if old.id
@@ -60,6 +65,7 @@ class Tag < ActiveRecord::Base
       new_tag
    end
 
+   # Created a tag of given type
    def self.factory( type, params = {} )
       class_name = type.to_s.capitalize
       raise unless defined? class_name.constantize
@@ -67,6 +73,7 @@ class Tag < ActiveRecord::Base
       class_name.constantize.new( params )
    end
 
+   # List of available tag types
    def self.types
       @types ||= subclasses.collect do |type|
          type.to_s.downcase.pluralize.intern
@@ -74,15 +81,18 @@ class Tag < ActiveRecord::Base
       @types.map ##return a copy!
    end
 
+   # Checks if tag type is valid
    def self.has_type?(typ)
       Tag.types.include?( typ.to_s.downcase.pluralize.to_sym )
    end
 
+   # List of concepts
    def self.concepts
       return [self.to_sym] if  self.to_sym == Tag.default_type
       [ self.to_sym ] + superclass.concepts
    end
 
+   # Get tag class name as smybol
    def self.to_sym
       to_s.downcase.intern
    end
@@ -93,6 +103,12 @@ class Tag < ActiveRecord::Base
    end
 
    #############################################################################
+   # Sets the name of the tag
+   def name=(name)
+      super( name.strip.gsub( '"', '').gsub("'", '' ).squeeze(" ") )
+   end
+
+   # Changes the tag type
    def change_type!(typ)
       return self if is_concept_of?( typ ) #no changing if is's a (sub)concept!
       puts "##try changing id#{id}/#{type} -#{name}- to #{typ.to_s}:"
@@ -100,20 +116,19 @@ class Tag < ActiveRecord::Base
       puts "  --> changeing!!"
       new_tag = Tag.change_type( typ, self )
    end
-
-   def name=(name)
-      super( name.strip.gsub( '"', '').gsub("'", '' ).squeeze(" ") )
-   end
-
+   
+   # Returns the tag type
    def type
       return 'tag' unless self[:type]
       self[:type].downcase
    end
 
+   # Set the new_record status
    def new_record=(n_r)
       @new_record= n_r
    end
 
+   # Compares two tag if equal
    def ==(object)
       super || (object.is_a?(Tag) && name == object.name)
    end
@@ -135,12 +150,11 @@ class Tag < ActiveRecord::Base
       self.class.concepts.include?( typ )
    end
 
-   def is_place?
+   #def is_place?
+   #end
 
-   end
-
-   def is_person?
-   end
+   #def is_person?
+   #end
 
    private
    def self.process_tag( key, tag )
@@ -256,3 +270,8 @@ end
 class Blog < Link
 end
 
+class Video < Link
+end
+
+class Bookmark < Link
+end
