@@ -54,7 +54,7 @@ class Item < ActiveRecord::Base
       opt[:group]  = 'items.id HAVING count > 0'
       #opt[:having]  = 'count > 0'
       puts '##############################'
-      pp opt 
+      pp opt
       pp scope( :find )
       result = Item.find( :all, opt )
       return result unless @tag_types
@@ -171,11 +171,11 @@ class Item < ActiveRecord::Base
    def color #much faster than delegte to account.color!
       "#{type}_account".classify.constantize.color
    end
-   
+
    ###############################################################################################
    # Tags item with tag. If split_by is provided, tag is splited in server tags
    # tag can be a Sting, a Hash where :Tagtype => TagName or a Tag
-   def tag( tag, split_by = nil )  
+   def tag( tag, split_by = nil )
       @cached_tags ||= []
       tag = Tag.split_and_get( tag, split_by )  unless tag.is_a? Tag
       @cached_tags  <<  tag
@@ -209,7 +209,7 @@ class Item < ActiveRecord::Base
    ###############################################################################################
    private
    # Prepares the query for finding tags and tagged items
-   #-- 
+   #--
    # TODO :location => 'esa' should work to
    def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
       scope = scope(:find)
@@ -241,7 +241,7 @@ class Item < ActiveRecord::Base
 
       return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC'}
    end
-   
+
    # URL to get thumbshot
    def thumbshot( url )
       "http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #add /.png to get rif of error ms
@@ -249,7 +249,7 @@ class Item < ActiveRecord::Base
 
    #---------------------------------------------------------------------------------------------------------------------
    # Extracts tags, people and locations
-   def extract_all 
+   def extract_all
       extract_links_and_images
       extract_meta_people_locations
    end
@@ -266,7 +266,7 @@ class Item < ActiveRecord::Base
 
    # Extracts everthing fomr http://tagthe.net
    def tag_the_net( from_url = nil  )
-      from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text)}"
+      from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text.gsub( /<[^>]*>/, '' ))}"
       doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
       (doc/"dim[@type='topic']/item").each    { |item| tag( :unknown => item.inner_html ) } # return all unkown tags
       (doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
@@ -296,7 +296,7 @@ end
 #--
 # TODO is url correct?????
 class FlickrItem < Item
-   
+
    def raw_data=(d)
       return self.data = d if self.data_id
       self.data_id = [d.id, d.secret, d.owner_id].join(':')
@@ -306,7 +306,7 @@ class FlickrItem < Item
    def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
       d.tags.each do |tag|
-         tag( tag.clean )
+         tag( :vague => tag.clean )
       end
       # add notes, comments, date_posted
       self.data = SimpleItem.new( :url => d.url, :title => d.title, :text => d.description )
@@ -353,7 +353,7 @@ class YoutubeItem < Item
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      tag( d.tags, ' ')
+      tag( :vague => d.tags, ' ')
       self.data = d
       tag( :video => url )
       self.complete = true
@@ -421,7 +421,7 @@ class DeliciousItem < Item
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      tag( d.tag, ' ' )
+      tag( :vague => d.tag, ' ' )
       self.data = d
       tag( :bookmark => url)
       self.complete = true
@@ -439,7 +439,7 @@ class DeliciousItem < Item
       self.data = SimpleItem.new( :url => r_url, :title => r_title,  :text => r_text )
       self.data_id = url
       tags = (r/"dc:subject").inner_html
-      tag( tags, ' ' )
+      tag( :vague => tags, ' ' )
       tag( :link => url)
       self.complete = true
    end
@@ -450,7 +450,7 @@ class DeliciousItem < Item
       self.data_id = url
       tag( :link => url)
       j['t'].each do |tag|
-         tag( tag )
+         tag( :vague => tag )
       end
       self.complete = true
    end

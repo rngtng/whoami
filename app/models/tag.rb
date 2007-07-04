@@ -27,7 +27,7 @@ class Tag < ActiveRecord::Base
 
    # The default tag type if not specified
    cattr_accessor :default_type
-   self.default_type = :vague
+   self.default_type = :unknown
 
    # Splits name by split_by and created & returns the tags
    def self.split_and_get( names, split_by = nil )
@@ -206,7 +206,9 @@ class Location < Vague
       return new if new.is_a? Geo #is already geo
       url = "http://ws.geonames.org/search?q=#{URI.escape(new.name)}&maxRows=1&style=FULL"
       content = Hpricot.XML( open( url ) )
-      cnt = (content%"totalresultscount").inner_html.to_i
+      cnt = (content%"totalresultscount")
+      return new unless cnt
+      cnt.inner_html.to_i #TODO
       puts "## results for -#{new.name}-: #{cnt}"
       return new unless  cnt > 0 # (1..100) === cnt
       new.data = content

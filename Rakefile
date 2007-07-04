@@ -63,7 +63,7 @@ task :install_my_gems do
    sh "cd gems/plazes; gem build Rakefile; gem install plazes"
 end
 
-task :install do
+task :install_whoami do
    sh "svn co https://whoami.opendfki.de/repos/trunk whoami"
 end
 
@@ -82,5 +82,12 @@ end
 
 task :update_gems do
    sh "gem update"
+end
+
+
+task :install do
+   install_vendor_gems
+   install_my_gems
+   install_whoami
 end
 
