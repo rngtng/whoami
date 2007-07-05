@@ -353,7 +353,7 @@ class YoutubeItem < Item
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      tag( :vague => d.tags, ' ')
+      tag( { :vague => d.tags }, ' ' )
       self.data = d
       tag( :video => url )
       self.complete = true
@@ -421,7 +421,7 @@ class DeliciousItem < Item
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      tag( :vague => d.tag, ' ' )
+      tag( { :vague => d.tag }, ' ' )
       self.data = d
       tag( :bookmark => url)
       self.complete = true
@@ -439,7 +439,7 @@ class DeliciousItem < Item
       self.data = SimpleItem.new( :url => r_url, :title => r_title,  :text => r_text )
       self.data_id = url
       tags = (r/"dc:subject").inner_html
-      tag( :vague => tags, ' ' )
+      tag( { :vague => tags }, ' ' )
       tag( :link => url)
       self.complete = true
    end

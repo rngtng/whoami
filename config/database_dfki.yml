@@ -34,6 +34,6 @@ production:
   adapter: mysql
   database: whoami
   username: bielohla
-  password: !07who!
-  host: localhost
-  encoding: utf8  
+  password: 2007whoami..
+  host: serv-4100
+  encoding: utf8
