@@ -45,6 +45,7 @@ when 'dfki'
       task :set_config, :roles => :app do
          run "mv -f #{release_path}/config/database_dfki.yml #{release_path}/config/database.yml"
          run "mv -f #{release_path}/config/api_keys_dfki.yml #{release_path}/config/api_keys.yml"
+	 run "mv -f #{release_path}/config/gmaps_api_keys_dfki.yml #{release_path}/config/gmaps_api_keys.yml"
       end
    end
 
@@ -185,5 +186,5 @@ end
 before 'mongrel:cluster:stop', 'daemon:fetch:stop'
 #before 'mongrel:cluster:start', 'daemon:fetch:stop'
 after  'mongrel:cluster:start', 'daemon:fetch:start'
-after  'deploy:update_code', 'deploy:setdbconfig'
+after  'deploy:update_code', 'deploy:set_config'
 
