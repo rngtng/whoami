@@ -30,26 +30,42 @@ set :repository, "https://whoami.opendfki.de/repos/trunk/"
 # be used to single out a specific subset of boxes in a particular role, like
 # :primary => true.
 
-role :web, "whoami.warteschlange.de"
-role :app, "whoami.warteschlange.de"
-role :db,  "whoami.warteschlange.de", :primary => true
+case server
+when 'dfki'
+   #### DFKI
+   #set :default_shell, "/usr/bin/tcsh"
+   role :web, "serv-4103.kl.dfki.de"
+   role :app, "serv-4103.kl.dfki.de"
+   role :db,  "serv-4103.kl.dfki.de", :primary => true
+   set :deploy_to,    "/home/bielohla/rails/whoami/"           # defaults to "/u/apps/#{application}"
+   set :mongrel_conf, "/home/bielohla/rails/whoami/current/config/mongrel_cluster_dfki.yml"
+   set :user,         "bielohla"    # defaults to the currently logged in user
 
-#set :default_shell, "/usr/bin/tcsh"
-#role :web, "serv-4103.kl.dfki.de"
-#role :app, "serv-4103.kl.dfki.de"
-#role :db,  "serv-4103.kl.dfki.de", :primary => true
+   namespace :deploy do
+      task :set_config, :roles => :app do
+         run "mv -f #{release_path}/config/database_dfki.yml #{release_path}/config/database.yml"
+         run "mv -f #{release_path}/config/api_keys_dfki.yml #{release_path}/config/api_keys.yml"
+      end
+   end
 
+else
+   #### Warteschlange
+   role :web, "whoami.warteschlange.de"
+   role :app, "whoami.warteschlange.de"
+   role :db,  "whoami.warteschlange.de", :primary => true
+   set :deploy_to,    "/kunden/warteschlange.de/produktiv/rails/whoami/"           # defaults to "/u/apps/#{application}"
+   set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
+   set :user,         "ssh-21560-rails"    # defaults to the currently logged in user
+
+   namespace :deploy do
+      task :set_config, :roles => :app do
+      end
+   end
+end
 # =============================================================================
 # OPTIONAL VARIABLES
 # =============================================================================
-set :deploy_to,    "/kunden/warteschlange.de/produktiv/rails/whoami/"           # defaults to "/u/apps/#{application}"
-set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
-set :user,         "ssh-21560-rails"    # defaults to the currently logged in user
 
-
-#set :deploy_to,    "/home/bielohla/rails/whoami/"           # defaults to "/u/apps/#{application}"
-#set :mongrel_conf, "/home/bielohla/rails/whoami/current/config/mongrel_cluster_dfki.yml"
-#set :user,         "bielohla"    # defaults to the currently logged in user
 
 # set :scm, :darcs                      # defaults to :subversion
 # set :svn, "/path/to/svn"              # defaults to searching the PATH
@@ -164,7 +180,10 @@ task :test1, :roles => :app do
    #run 'echo \ '
 end
 
+
+
 before 'mongrel:cluster:stop', 'daemon:fetch:stop'
 #before 'mongrel:cluster:start', 'daemon:fetch:stop'
 after  'mongrel:cluster:start', 'daemon:fetch:start'
+after  'deploy:update_code', 'deploy:setdbconfig'
 
