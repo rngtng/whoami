@@ -21,48 +21,7 @@ require 'lib/mongrel_cluster_recipes.rb'
 set :application, "WhoAmI"
 set :repository, "https://whoami.opendfki.de/repos/trunk/"
 
-# =============================================================================
-# ROLES
-# =============================================================================
-# You can define any number of roles, each of which contains any number of
-# machines. Roles might include such things as :web, or :app, or :db, defining
-# what the purpose of each machine is. You can also specify options that can
-# be used to single out a specific subset of boxes in a particular role, like
-# :primary => true.
 
-case server
-when 'dfki'
-   #### DFKI
-   #set :default_shell, "/usr/bin/tcsh"
-   role :web, "serv-4103.kl.dfki.de"
-   role :app, "serv-4103.kl.dfki.de"
-   role :db,  "serv-4103.kl.dfki.de", :primary => true
-   set :deploy_to,    "/home/bielohla/rails/whoami/"           # defaults to "/u/apps/#{application}"
-   set :mongrel_conf, "/home/bielohla/rails/whoami/current/config/mongrel_cluster_dfki.yml"
-   set :user,         "bielohla"    # defaults to the currently logged in user
-
-   namespace :deploy do
-      task :set_config, :roles => :app do
-         run "mv -f #{release_path}/config/database_dfki.yml #{release_path}/config/database.yml"
-         run "mv -f #{release_path}/config/api_keys_dfki.yml #{release_path}/config/api_keys.yml"
-	 run "mv -f #{release_path}/config/gmaps_api_keys_dfki.yml #{release_path}/config/gmaps_api_keys.yml"
-      end
-   end
-
-else
-   #### Warteschlange
-   role :web, "whoami.warteschlange.de"
-   role :app, "whoami.warteschlange.de"
-   role :db,  "whoami.warteschlange.de", :primary => true
-   set :deploy_to,    "/kunden/warteschlange.de/produktiv/rails/whoami/"           # defaults to "/u/apps/#{application}"
-   set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
-   set :user,         "ssh-21560-rails"    # defaults to the currently logged in user
-
-   namespace :deploy do
-      task :set_config, :roles => :app do
-      end
-   end
-end
 # =============================================================================
 # OPTIONAL VARIABLES
 # =============================================================================
@@ -146,20 +105,6 @@ set :use_sudo, false
 # all should be rolled back (for each task that specifies an on_rollback
 # handler).
 
-
-#desc "A task demonstrating the use of transactions."
-#task :long_deploy do
-#   transaction do
-#      update_code
-#      disable_web
-#      symlink
-#      migrate
-#   end
-#
-#   restart
-#   enable_web
-#end
-
 namespace :daemon do
    namespace :fetch do
       desc "Start the fetch daemon"
@@ -181,10 +126,7 @@ task :test1, :roles => :app do
    #run 'echo \ '
 end
 
-
-
 before 'mongrel:cluster:stop', 'daemon:fetch:stop'
-#before 'mongrel:cluster:start', 'daemon:fetch:stop'
 after  'mongrel:cluster:start', 'daemon:fetch:start'
-after  'deploy:update_code', 'deploy:set_config'
+
 
