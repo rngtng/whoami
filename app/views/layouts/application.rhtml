@@ -17,8 +17,10 @@
         <% Account.types.each do |type| -%> 
          <% n = image_tag( "/images/accounts/#{type}.png" ) %>
          <%= link_to n, new_account_path( :type => type ) %>  
-        <% end %>&nbsp;|&nbsp; 
-	<%= link_to "logout", session_path, :method => :delete %>
+        <% end %>&nbsp;|&nbsp;
+	<%= link_to "logout", session_path, :method => :delete %>&nbsp;|&nbsp; 
+	<%= link_to "workers", workers_path %>
+	
       </div>
     </div>  
     <br clear="all">

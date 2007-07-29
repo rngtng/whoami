@@ -1,6 +1,0 @@
-dir_mode: script
-dir: ../../log
-multiple: true
-backtrace: true
-monitor: true
-log_output: true

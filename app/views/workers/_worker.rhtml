@@ -1,0 +1,16 @@
+   <% key  = worker[0]  %>
+   <% r    = worker[1].results %>
+   <% args = r.to_hash[:args] %>
+   <% user = args[:user] %>
+   <% type = args[:type] %>
+   <tr>
+    <td><%= key %></td>
+    <td><%= user == '%' ? 'any' : user %>, <%= type == '' ? 'any' : type %>, <%= args[:sleep]  %></td>
+    <td align="center"><%= (Time.now - r[:last_run]).to_i %></td>
+    <% if r[:running] %>
+      <td><%= r[:processing] ? "#{r[:account_type]} owned by #{r[:account_user]}" : "sleeping #{r[:sleep_cnt]}" %></td>
+      <td><%= link_to 'delete', worker_path( key ), :method => :delete, :confirm => "Are you sure?" %></td>
+    <% else %>
+      <td colspan="2"><%= r[:stopped] ? "halted" : "stopping" %></td>
+    <% end %> 
+   </tr>

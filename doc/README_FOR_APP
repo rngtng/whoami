@@ -1,12 +1,42 @@
 Welcome to WhoAmI
 
-WhoAmI aggregates you personal data from various social communities. 
-By now. flickr, youtube, delicious, last.fm, wordpress blogs and rss/atom feed are
-supported.
+WhoAmI is a tool to aggregate your personal media shared on the internet. Everything what you share, your images,
+videos, bookmarks, music, blog posts etc. are merged into one place. The content is analyzed on keywords, permalinks
+and mapped to a simple ontology. If no tags are available the content is automatically tagged. Is a tag identified as
+location its geodata is added.
 
-TO get started, visit http://whoami.opendfki.de
+The resulting semantic relations are visualized via tagcloud, timeline, map or in detail. For further processing,
+your media can be accessed via RSS Feed or iCal (e.g. adding to your feed reader or calendar).
 
-This project was developed from my final thesis '' at he DFKI Kaiserslautern in Germany. Futher infromations
-ca be found at: http://www.vIdentity.de
+Primary access to the data is established trough the APIs of the web-services. Therefore your password or 
+authorization has to be provided. If you feel uncomfy giving away your data, just provide your username. This falls 
+back to public accessible RSS/Atom feeds. Although this doesn't give access to data of the past, your future content
+is processed as nearly good as content aggregated via API.
 
-2007 Tobias Bielohlawek
+Features in summary:
+ * support for multiple Web2.0 profiling accounts: Flickr, Youtube, Last.fm, Del.icio.us and Wordpress Blogs and RSS/ATOM feed
+ * analyzation on shared tags, permalinks
+ * automatic tag retrieving of blog posts via tagthe.net
+ * automatic (simple) geotagging of found plazes
+ * Thumbnail preview
+ * Detail view of relations, time, tags, plaze etc.
+ * Timeline & GeoTag visualization
+ * Filter on time, tags and content type
+ * RSS & iCal access
+ * Account data fallback to RSS/ATOM feed in case password/auth is not provided
+ * see top relations
+ * see clustered data
+ * support for OpenID sign on
+ * Controllable background workes for fetching content asynchronous
+ * implemented with RubyOnRails
+ * 100% RESTful
+ * MySQL DB backend
+ * OpenSource
+ * Web 2.0 - yeah!
+
+To get started, visit http://whoami.opendfki.de
+
+The project was developed for the final thesis 'mediated Idendity' at the DFKI Kaiserslautern in Germany. 
+Further information can be found at: http://www.vIdentity.de
+
+(c) 2007 Tobias Bielohlawek

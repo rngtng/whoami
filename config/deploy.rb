@@ -105,18 +105,18 @@ set :use_sudo, false
 # all should be rolled back (for each task that specifies an on_rollback
 # handler).
 
-namespace :daemon do
-   namespace :fetch do
-      desc "Start the fetch daemon"
+namespace :backgroundrb do
+      desc "Start  backgroundrb"
       task :start, :roles => :app do
-         run "#{deploy_to}current/script/fetch_items_daemon start -- -e production"
+         #run "#{deploy_to}current/script/fetch_items_daemon start -- -e production"
+	 run "#{deploy_to}current/script/backgroundrb start"
       end
 
-      desc "Stop the fetch daemon"
+      desc "Stop backgroundrb"
       task :stop, :roles => :app do
          run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
+	 run "#{deploy_to}current/script/backgroundrb stop"
       end
-   end
 end
 
 task :test1, :roles => :app do
@@ -126,7 +126,7 @@ task :test1, :roles => :app do
    #run 'echo \ '
 end
 
-before 'mongrel:cluster:stop', 'daemon:fetch:stop'
-after  'mongrel:cluster:start', 'daemon:fetch:start'
+before 'mongrel:cluster:stop',  'backgroundrb:stop'
+after  'mongrel:cluster:start', 'backgroundrb:start'
 
 

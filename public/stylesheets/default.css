@@ -58,6 +58,7 @@ FORM LABEL {
         margin-right: 10px;
 }
 
+FORM SELECT,
 FORM INPUT,
 FORM TEXTAREA {
         margin: 2 0 2 0px;
@@ -65,6 +66,7 @@ FORM TEXTAREA {
         padding-left: 1px;
 }
 
+FORM SELECT,
 FORM INPUT[type=text],
 FORM INPUT[type=password],
 FORM TEXTAREA {
@@ -202,4 +204,10 @@ FORM INPUT[type=submit] {
 
 #small_map {
 	border: 1px solid #333333; 
+}
+
+
+#worker_table {
+	margin:0 auto; 
+	border: 1px solid #555555; 
 }

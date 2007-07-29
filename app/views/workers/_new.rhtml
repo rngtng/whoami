@@ -1,0 +1,14 @@
+<style>
+FORM LABEL {
+        width: 50px;
+}
+</style>
+<div class="formbox">
+  <% form_tag workers_path, :html => { :method => :post } do %>
+    <label for="name">Name:</label><%= text_field_tag :key %> 
+    <label for="user">User:</label><%= select( :worker, :user, User.find( :all ).collect{ |user| user.login }, { :include_blank => true } ) %><br clear="all">
+    <label for="account">Account:</label><%= select( :worker, :account, Account.types, { :include_blank => true } ) %><br clear="all">
+    <label for="time">Time:</label><%= text_field_tag :sleep %>
+    <p><%= submit_tag "create", :disable_with => "creating..." %></p>
+  <% end %>
+</div>

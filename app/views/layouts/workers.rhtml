@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <title>WhoAmI - who are you? | <%= controller.action_name %></title>
+    <%= javascript_include_tag :defaults %>
+    <%= stylesheet_link_tag 'default' %>
+  </head>
+  <body>
+    <div>
+      <h1  style="float:left; margin:0; border:0">WhoAmI Worker Overview</h1>
+       <div class="accounts" style="float:right;">
+        <%= link_to "reload", workers_path %>&nbsp;|&nbsp;
+        <%= link_to "whoami", home_path %>
+       </div>  
+       <br clear="all">
+    
+      <p style="color: green"><%= flash[:notice] %></p>
+      <div style="margin:0px auto; width:700px; text-align:center;">
+      <div id="content">
+        <%= yield  %>
+      </div>
+      </div>
+    </div>  
+  </body>
+</html>

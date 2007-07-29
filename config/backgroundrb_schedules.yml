@@ -1,0 +1,5 @@
+#main_worker:
+#  :class: fetch_items_worker
+#  :job_key: :main_worker
+#  :trigger_args:
+#       :start: <%= Time.now + 5.seconds %>
