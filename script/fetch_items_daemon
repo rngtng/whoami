@@ -7,9 +7,8 @@
 # by $Author$
 
 require 'rubygems'
-require "daemons"
+require 'daemons'
 require 'yaml'
-require 'erb'
 
 class Hash
    def with_symbols!
@@ -17,7 +16,7 @@ class Hash
    end
 end
 
-options = YAML.load( ERB.new( IO.read( File.dirname(__FILE__) + "/../config/daemons.yml" )).result).with_symbols!
+options = YAML.load_file( File.dirname(__FILE__) + "/../config/daemons.yml" ).with_symbols!
 options[:dir_mode] = options[:dir_mode].to_sym
 
 Daemons.run File.dirname(__FILE__) + '/../lib/daemons/fetch_items.rb', options
