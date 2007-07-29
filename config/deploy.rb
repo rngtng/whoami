@@ -109,13 +109,13 @@ namespace :backgroundrb do
       desc "Start  backgroundrb"
       task :start, :roles => :app do
          #run "#{deploy_to}current/script/fetch_items_daemon start -- -e production"
-	 run "#{deploy_to}current/script/backgroundrb start"
+	 run "#{deploy_to}current/script/backgroundrb start -- -r production"
       end
 
       desc "Stop backgroundrb"
       task :stop, :roles => :app do
-         run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
-	 run "#{deploy_to}current/script/backgroundrb stop"
+         #run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
+	 run "#{deploy_to}current/script/backgroundrb stop -- -r production"
       end
 end
 

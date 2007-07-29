@@ -7,7 +7,7 @@ class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
    def do_work( args = {} )
       @type = args[:type] ||= ''
       @user = args[:user] ||= '%'
-      @sleep = 30.seconds
+      @sleep = 10.seconds
       results[:args] = args
       results[:stopped] = false
       results[:running] = true

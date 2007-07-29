@@ -26,7 +26,7 @@ class WorkersController < ApplicationController
       args = {}
       params[:user] = '%' if params[:user].nil?
       params[:type] = ''  if params[:type].nil?
-      params[:sleep] = 30 if params[:sleep].empty?
+      params[:sleep] = 10 if params[:sleep].empty?
       args[:user] =  params[:user]
       args[:type] =  params[:type]
       args[:sleep] =  params[:sleep]
