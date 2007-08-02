@@ -36,8 +36,8 @@ class Account < ActiveRecord::Base
    end
 
    def self.find_to_update( account_name = '', username = '%')
-      begin
-         account = (account_name.capitalize + 'Account').constantize
+      account = (account_name.capitalize + 'Account').constantize	   
+      #begin
          time     = Time.now - account.daemon_update_time
          time_min = Time.now - 3.minutes #30.seconds
          Account.transaction do
@@ -45,9 +45,9 @@ class Account < ActiveRecord::Base
             a.save if a #update timestamp -> no other daemons get this feed
             return a
          end
-      rescue
-         raise "No such Account Type: " + account_name.capitalize + 'Account'
-      end
+      #rescue
+       #  raise "No such Account Type: " + account.to_s
+     # end
    end
 
    #debug

@@ -17,7 +17,10 @@ class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
 
       logger.info( "Worker #{@type} inited for #{@user} at #{Time.now}." )
       while results[:running] do
-         fetch_items
+         #begin
+            fetch_items
+         #rescue
+         #end
          results[:sleep_cnt] = @sleep
          while( results[:sleep_cnt] > 0 && results[:running] ) do
             sleep 1
