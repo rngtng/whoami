@@ -18,7 +18,7 @@ class AccountsController < ApplicationController
       params[:account_id] = params.delete( :id )
       @min  = @user.accounts.find( params[:account_id] ).valid_resources.min_time.to_i / 1.day
       @max  = @user.accounts.find( params[:account_id] ).valid_resources.max_time.to_i / 1.day
-      @resources = @user.valid_resources.find_annotationged_with( params )
+      @resources = @user.valid_resources.find_annotated_with( params )
       @from = params[:from] ? params[:from] : @min
       @to   = params[:to] ? params[:to] : @max
       respond_to do |format|

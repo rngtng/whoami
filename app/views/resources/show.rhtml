@@ -3,7 +3,7 @@
     <tr>
      <td width="200" valign="top">
        <%= @resource.html if @resource.html %>
-       <%= link_to( image_annotation( @resource.thumbnail, :size => "200x200", :style => "border: 1px solid #{@resource.color};" ), @resource.url ) unless @resource.html %>
+       <%= link_to( image_tag( @resource.thumbnail, :size => "200x200", :style => "border: 1px solid #{@resource.color};" ), @resource.url ) unless @resource.html %>
        <% if @map %>
         <div id="map_div">
           <b>map</b>
@@ -18,21 +18,21 @@
       <%= @resource.text.gsub!(/\n/, '<br/>') if @resource.text %>
       
       <div id="annotations">
-        <%= render :partial => "partials/annotation_group", :collection => Item.annotation_types, :locals => { :from => @resource } %>
+        <%= render :partial => "partials/annotation_group", :collection => Resource.annotation_types, :locals => { :from => @resource } %>
       </div>
      </td>
      <td valign="top" width="200">
        <div id="relations">
         <b>related resources</b>
 	<ul id="resources">
-	  <%= render :partial => "relation_group", :collection => Item.annotation_types %>
-	  <li>via Items after:
+	  <%= render :partial => "relation_group", :collection => Resource.annotation_types %>
+	  <li>via Resources after:
             <ul>
              <%= render :partial => "relation", :collection => @resource.related_resources( :period => 2.days, :limit => 10 ) %>
             </ul>
 	   <br clear="all">
 	  </li>
-	  <li>via Items before:
+	  <li>via Resources before:
             <ul>
              <%= render :partial => "relation", :collection => @resource.related_resources( :period => -2.days, :limit => 10 ) %>
             </ul>

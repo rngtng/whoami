@@ -39,7 +39,7 @@ class Resource < ActiveRecord::Base
       Annotation.find( :all, opt )
    end
 
-   #Find resources annotationged with the given options. This can be:
+   #Find resources annotated with the given options. This can be:
    #  * :account_id => ID - only resources from a specific account
    #  * :from => time - resources not older than time
    #  * :to => time - resources not younger then time
@@ -48,7 +48,7 @@ class Resource < ActiveRecord::Base
    #  * :annotation => name - resources which match this annotation
    #  * :annotations => array of names - resources which match a least one of the annotations
    #  * :TAGTYPE => name
-   def self.find_annotationged_with( options = {})
+   def self.find_annotated_with( options = {})
       opt = prepage_query( options, 'ftw' )  #set uniqe identifier -ftw- to be able to extend query...
       scope( :find )[:select] = 'resources.*, COUNT(resources.id) as count'
       opt[:group]  = 'resources.id HAVING count > 0'
@@ -132,12 +132,12 @@ class Resource < ActiveRecord::Base
       info.join("\n")
    end
 
-   # Returns thumbnail. If available the first annotationged image is returned, if not thumbshot of the first
+   # Returns thumbnail. If available the first annotated image is returned, if not thumbshot of the first
    # link, if this fails to, the thumbshot of url is taken
    def thumbnail
       return images.first.thumbnail unless images.empty?
       return thumbshot( links.first.thumbnail ) unless links.empty?
-      thumbshot( url)
+      thumbshot( url )
    end
 
    # Returns resource as iCal event
@@ -203,12 +203,12 @@ class Resource < ActiveRecord::Base
       options[:time] = time if options[:period] && !options[:time]
       options[:conditions] = ["resources.id !=? AND resources.complete=1", id ]
       options[:having] = "cnt > 2"
-      account.user.resources.find_annotationged_with( options )
+      account.user.resources.find_annotated_with( options )
    end
 
    ###############################################################################################
    private
-   # Prepares the query for finding annotations and annotationged resources
+   # Prepares the query for finding annotations and annotated resources
    #--
    # TODO :location => 'esa' should work to
    def self.prepage_query( options = {}, nr = '')	# eg. :annotation => 'esa' :type - :account_id - :period, :time

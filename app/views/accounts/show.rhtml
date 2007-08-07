@@ -1,5 +1,5 @@
    <h4><%= image_tag "/images/accounts/#{@account.type}.png" %> Your <%= @account.type.capitalize %> - <em><%= @account.username %></em> -
-    Items: <%= @account.resources.count %> - <%= @account.valid_resources.count %> are valid </h4>&nbsp;&nbsp;
+    Resources: <%= @account.resources.count %> - <%= @account.valid_resources.count %> are valid </h4>&nbsp;&nbsp;
      <% #link_to 'fetch_resources',   account_path( @account ), :method => :put %>
      <%= link_to 'edit',   edit_account_path( @account ) %>
      <%= link_to 'delete', account_path( @account ), :method => :delete, :confirm => "Are you sure?" %>

@@ -10,7 +10,7 @@ class ResourcesController < ApplicationController
    exempt_from_layout :rxml
 
    def index
-      @resources = @user.valid_resources.find_annotationged_with( params )
+      @resources = @user.valid_resources.find_annotated_with( params )
       @min  = @user.valid_resources.min_time.to_i / 1.day
       @max  = @user.valid_resources.max_time.to_i / 1.day
       @from = params[:from] ? params[:from] : @min
@@ -32,7 +32,7 @@ class ResourcesController < ApplicationController
    end
 
    def map
-      @resources = @user.valid_resources.find_annotationged_with( params )
+      @resources = @user.valid_resources.find_annotated_with( params )
       @map = get_map( @resources )
    end
 
