@@ -1,7 +1,7 @@
-  <% from = @items if from.nil? -%>
-  <% tags = from.send( tag_group ) -%>
-  <% return if tags.empty? or !tags.map( &:class ).include?( tag_group.to_s.classify.constantize ) -%>
+  <% from = @resources if from.nil? -%>
+  <% annotations = from.send( annotation_group ) -%>
+  <% return if annotations.empty? or !annotations.map( &:class ).include?( annotation_group.to_s.classify.constantize ) -%>
   <ul>
-     <li><b><%= link_to tag_group.to_s.capitalize %></b></li> 
-     <%= render :partial => "partials/tag", :collection => tags, :locals => { :tag_group=> tag_group } -%>
+     <li><b><%= link_to annotation_group.to_s.capitalize %></b></li> 
+     <%= render :partial => "partials/annotation", :collection => annotations, :locals => { :annotation_group=> annotation_group } -%>
   </ul>
