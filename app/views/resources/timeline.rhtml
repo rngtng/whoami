@@ -1,0 +1,76 @@
+<%= javascript_include_tag 'painters.js' %>
+
+
+<script>
+var tl;
+function onLoad() {
+   var theme = Timeline.ClassicTheme.create();
+   theme.event.label.width = 150; // px
+   theme.event.bubble.width = 250;
+   theme.event.bubble.height = 150;
+   //theme.ether.backgroundColors.unshift("white");
+   var eventSource = new Timeline.DefaultEventSource();
+
+   var bandInfos = [
+      Timeline.createBandInfo({
+         width:          "80%",
+         intervalUnit:   Timeline.DateTime.WEEK,
+         intervalPixels: 100,
+         eventSource:    eventSource,
+         trackGap:       5,
+         trackHeight:    1.5,
+         theme:          theme
+      }),
+      Timeline.createBandInfo({
+         width:          "15%",
+         intervalUnit:   Timeline.DateTime.MONTH,
+         intervalPixels: 150,
+         eventSource:    eventSource,
+         showEventText:  false,
+         trackHeight:    0.3,
+         trackGap:       0.2,
+         theme:          theme
+      })
+      ,
+      Timeline.createBandInfo({
+         width:          "5%",
+         intervalUnit:   Timeline.DateTime.YEAR,
+         intervalPixels: 400,
+         theme:          theme
+      })
+   ];
+   var layout = bandInfos[0].eventPainter.getLayout();
+
+   bandInfos[0].eventPainter = new Timeline.ThumbnailEventPainter({
+      theme:              theme,
+      layout:             layout,
+      trackHeight:        20,
+      trackOffset:        2,
+      labelWidth:         120,
+      thumbnailWidth:     20,
+      thumbnailHeight:    20
+   });
+
+   bandInfos[0].highlight = true;
+   bandInfos[1].syncWith = 0;
+   bandInfos[1].highlight = true;
+   bandInfos[1].eventPainter.setLayout(layout);
+   bandInfos[2].syncWith = 1;
+   bandInfos[2].highlight = true;
+
+   tl = Timeline.create(document.getElementById("timeline"), bandInfos);
+   tl.loadXML("<%= formatted_items_path( :xml ) %>", function(xml, url) { eventSource.loadXML(xml, url); });
+}
+
+var resizeTimerID = null;
+function onResize() {
+   if (resizeTimerID == null) {
+      resizeTimerID = window.setTimeout(function() {
+         resizeTimerID = null;
+         tl.layout();
+      }, 500);
+   }
+}
+</script>
+<div id="timeline" style="height: 600px; border: 1px solid #aaa; margin: 0px 40px 0px 40px"></div>
+

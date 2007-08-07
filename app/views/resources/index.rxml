@@ -1,0 +1,12 @@
+#xml.instruct!
+xml.data do
+ @items.each do |item|
+  xml.event( item.title,  
+   :start => item.time.httpdate, 
+   :title => item.title,
+   :link =>  item_path( item), 
+   :image => item.thumbnail,
+   :thumbnail=> item.thumbnail,
+   :color => item.color )
+ end
+end
