@@ -15,7 +15,7 @@
       <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path %> - <em>who are you?</em></h1> 
       <div class="accounts" style="float:right;">Add:
         <% Account.types.each do |type| -%> 
-         <% n = image_tag( "/images/accounts/#{type}.png" ) %>
+         <% n = image_annotation( "/images/accounts/#{type}.png" ) %>
          <%= link_to n, new_account_path( :type => type ) %>  
         <% end %>&nbsp;|&nbsp;
 	<%= link_to "logout", session_path, :method => :delete %>&nbsp;|&nbsp; 
@@ -30,16 +30,16 @@
       <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
       <% @user.accounts.each do |account| -%>
         <% next unless account.id %>
-        <% n = image_tag( "/images/accounts/#{account.type}.png", :style => "border: 1px solid #{account.color};" ) %>  
+        <% n = image_annotation( "/images/accounts/#{account.type}.png", :style => "border: 1px solid #{account.color};" ) %>  
         <%= link_to n, account_path( account ) %>
         <%= "!" unless account.up_to_date? %>
       <% end %>
      </div>
      <div style="float:right">
         view as:
-        <%= link_to 'map', map_items_path %>
-        <%= link_to 'timeline', timeline_items_path %>
-        <%= link_to 'iCal', ical_items_path %>
+        <%= link_to 'map', map_resources_path %>
+        <%= link_to 'timeline', timeline_resources_path %>
+        <%= link_to 'iCal', ical_resources_path %>
       </div>
     <% end %>  
     <br clear="all">

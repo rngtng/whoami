@@ -1,39 +1,39 @@
 ####################
 #
-# $LastChangedDate$
-# $Rev$
-# by $Author$
+# $LastChangedDate:2007-08-07 15:37:28 +0200 (Tue, 07 Aug 2007) $
+# $Rev:94 $
+# by $Author:bielohla $
 
-class ItemsController < ApplicationController
+class ResourcesController < ApplicationController
    before_filter :login
 
    exempt_from_layout :rxml
 
    def index
-      @items = @user.valid_items.find_tagged_with( params )
-      @min  = @user.valid_items.min_time.to_i / 1.day
-      @max  = @user.valid_items.max_time.to_i / 1.day
+      @resources = @user.valid_resources.find_annotationged_with( params )
+      @min  = @user.valid_resources.min_time.to_i / 1.day
+      @max  = @user.valid_resources.max_time.to_i / 1.day
       @from = params[:from] ? params[:from] : @min
       @to   = params[:to] ? params[:to] : @max
       respond_to do |format|  #strange bug: fromat.html must be first in row in case format is not given!?
          format.html
          format.xml
          format.ics {
-            ical = Item.to_calendar( @items ).to_ical
+            ical = Resource.to_calendar( @resources ).to_ical
             render :text => ical
          }
-         format.js { render :partial => "partials/tags_and_items" }
+         format.js { render :partial => "partials/annotations_and_resources" }
       end
    end
 
    def show
-      @item = @user.valid_items.find( params[:id] )
-      @map = get_small_map( @item )
+      @resource = @user.valid_resources.find( params[:id] )
+      @map = get_small_map( @resource )
    end
 
    def map
-      @items = @user.valid_items.find_tagged_with( params )
-      @map = get_map( @items )
+      @resources = @user.valid_resources.find_annotationged_with( params )
+      @map = get_map( @resources )
    end
 
 
@@ -45,7 +45,7 @@ class ItemsController < ApplicationController
    end
 
    private
-   def get_map(items)
+   def get_map(resources)
       map = GMap.new("large_map")
       map.control_init( :large_map => true, :map_type => true )
       ll = []
@@ -53,33 +53,33 @@ class ItemsController < ApplicationController
       to = [ll]
       i = 0
       color = [ "#ff0000", "#00ff00" ]
-      items.each do |item|
-         next if item.geos.empty?
-         geotag = item.geos.first
-         next if geotag.ll == ll
+      resources.each do |resource|
+         next if resource.geos.empty?
+         geoannotation = resource.geos.first
+         next if geoannotation.ll == ll
          #unless ll.empty?
-         #info = "<div style='color:#000000'><img src='#{item.thumbnail}' align='left'><b>#{item.title}</b></div>"
-         map.icon_global_init(GIcon.new(:image => item.thumbnail, :icon_size => GSize.new(40,40), :icon_anchor => GPoint.new(7,7),:info_window_anchor => GPoint.new(9,2) ), "i#{item.id}" )
-         marker = GMarker.new( geotag.ll, :title => item.title , :icon => Variable.new( "i#{item.id}" ) ) #, :info_window => info )#, :icon => icon )
+         #info = "<div style='color:#000000'><img src='#{resource.thumbnail}' align='left'><b>#{resource.title}</b></div>"
+         map.icon_global_init(GIcon.new(:image => resource.thumbnail, :icon_size => GSize.new(40,40), :icon_anchor => GPoint.new(7,7),:info_window_anchor => GPoint.new(9,2) ), "i#{resource.id}" )
+         marker = GMarker.new( geoannotation.ll, :title => resource.title , :icon => Variable.new( "i#{resource.id}" ) ) #, :info_window => info )#, :icon => icon )
          map.overlay_init(marker)
          #end
          i = (-i) + 1
-         map.overlay_init( GPolyline.new( get_arrow([geotag.ll,ll]), color[i],2,0.7) )
-         ll = geotag.ll
+         map.overlay_init( GPolyline.new( get_arrow([geoannotation.ll,ll]), color[i],2,0.7) )
+         ll = geoannotation.ll
       end
       map.center_zoom_init(ll, 2 )
       return map
    end
 
-   def get_small_map(item)
-      return nil if item.geos.empty?
+   def get_small_map(resource)
+      return nil if resource.geos.empty?
       map = GMap.new("small_map")
       map.control_init( :small_zoom => true, :map_type => true ) #:small_map => true, :map_type => true )
       ll = nil
-      item.geos.each do |geotag|
-         info = "<div style='color:#000000'><img src='#{item.thumbnail}' align='left'><b>#{item.title}</b></div>"
-         ll = geotag.ll
-         marker = GMarker.new( ll, :title => item.title, :info_window => info )#, :icon => icon )
+      resource.geos.each do |geoannotation|
+         info = "<div style='color:#000000'><img src='#{resource.thumbnail}' align='left'><b>#{resource.title}</b></div>"
+         ll = geoannotation.ll
+         marker = GMarker.new( ll, :title => resource.title, :info_window => info )#, :icon => icon )
          map.overlay_init(marker)
       end
       map.center_zoom_init(ll, 12 )

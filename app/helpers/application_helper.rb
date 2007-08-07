@@ -1,6 +1,6 @@
 # Methods added to this helper will be available to all templates in the application.
 module ApplicationHelper
-   def style_for_tag_cloud( total, lowest, highest, options={} )
+   def style_for_annotation_cloud( total, lowest, highest, options={} )
      return nil if total.nil? or highest.nil? or lowest.nil?
      #
      # options

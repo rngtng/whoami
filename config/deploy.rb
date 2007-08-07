@@ -63,7 +63,7 @@ set :use_sudo, false
 #   end
 #end
 
-# Tasks may take advantage of several different helper methods to interact
+# Tasks may take advanannotatione of several different helper methods to interact
 # with the remote server(s). These are:
 #
 # * run(command, options={}, &block): execute the given command on all servers
@@ -108,13 +108,13 @@ set :use_sudo, false
 namespace :backgroundrb do
       desc "Start  backgroundrb"
       task :start, :roles => :app do
-         #run "#{deploy_to}current/script/fetch_items_daemon start -- -e production"
+         #run "#{deploy_to}current/script/fetch_resources_daemon start -- -e production"
 	 run "#{deploy_to}current/script/backgroundrb start -- -r production"
       end
 
       desc "Stop backgroundrb"
       task :stop, :roles => :app do
-         #run "#{deploy_to}current/script/fetch_items_daemon stop -- -e production"
+         #run "#{deploy_to}current/script/fetch_resources_daemon stop -- -e production"
 	 run "#{deploy_to}current/script/backgroundrb stop -- -r production"
       end
 end

@@ -1,9 +1,9 @@
-  <div class="item" style="width:90%; border: 0px solid #333333; margin: 0px auto">
+  <div class="resource" style="width:90%; border: 0px solid #333333; margin: 0px auto">
    <table width="100%">
     <tr>
      <td width="200" valign="top">
-       <%= @item.html if @item.html %>
-       <%= link_to( image_tag( @item.thumbnail, :size => "200x200", :style => "border: 1px solid #{@item.color};" ), @item.url ) unless @item.html %>
+       <%= @resource.html if @resource.html %>
+       <%= link_to( image_annotation( @resource.thumbnail, :size => "200x200", :style => "border: 1px solid #{@resource.color};" ), @resource.url ) unless @resource.html %>
        <% if @map %>
         <div id="map_div">
           <b>map</b>
@@ -13,28 +13,28 @@
        <% end %>
      </td>
      <td valign="top">
-      <h3><%= @item.title %> - <%= @item.time.strftime("%H:%M %d.%m.%Y") %></h3>
+      <h3><%= @resource.title %> - <%= @resource.time.strftime("%H:%M %d.%m.%Y") %></h3>
       <br clear="all">
-      <%= @item.text.gsub!(/\n/, '<br/>') if @item.text %>
+      <%= @resource.text.gsub!(/\n/, '<br/>') if @resource.text %>
       
-      <div id="tags">
-        <%= render :partial => "partials/tag_group", :collection => Item.tag_types, :locals => { :from => @item } %>
+      <div id="annotations">
+        <%= render :partial => "partials/annotation_group", :collection => Item.annotation_types, :locals => { :from => @resource } %>
       </div>
      </td>
      <td valign="top" width="200">
        <div id="relations">
-        <b>related items</b>
-	<ul id="items">
-	  <%= render :partial => "relation_group", :collection => Item.tag_types %>
+        <b>related resources</b>
+	<ul id="resources">
+	  <%= render :partial => "relation_group", :collection => Item.annotation_types %>
 	  <li>via Items after:
             <ul>
-             <%= render :partial => "relation", :collection => @item.related_items( :period => 2.days, :limit => 10 ) %>
+             <%= render :partial => "relation", :collection => @resource.related_resources( :period => 2.days, :limit => 10 ) %>
             </ul>
 	   <br clear="all">
 	  </li>
 	  <li>via Items before:
             <ul>
-             <%= render :partial => "relation", :collection => @item.related_items( :period => -2.days, :limit => 10 ) %>
+             <%= render :partial => "relation", :collection => @resource.related_resources( :period => -2.days, :limit => 10 ) %>
             </ul>
 	   <br clear="all">
 	  </li> 

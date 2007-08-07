@@ -28,13 +28,13 @@ ActionController::Routing::Routes.draw do |map|
    map.open_id_complete 'session/new;create_openid', :controller => "session", :action => "create_openid", :requirements => { :method => :get }
 
    map.resources :accounts, :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
-      accounts.resources :included_items, :controller => 'items'
+      accounts.resources :included_resources, :controller => 'resources'
    end
 
-   map.resources :items, :collection => { :map => :get, :timeline => :get, :ical => :get }
+   map.resources :resources, :collection => { :map => :get, :timeline => :get, :ical => :get }
 
    map.resources :workers
    
-   map.home '', :controller => 'items', :action => 'index'
+   map.home '', :controller => 'resources', :action => 'index'
 end
 

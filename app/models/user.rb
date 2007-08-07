@@ -4,15 +4,15 @@
 # $Rev$
 # by $Author$
 
-#require 'tag'
+#require 'annotation'
 require 'digest/sha1'
 
 class User < ActiveRecord::Base
-   has_many :accounts,       :include => :items
-   has_many :valid_accounts, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true] ##TODO does his work?  
+   has_many :accounts,       :include => :resources
+   has_many :valid_accounts, :through => :accounts, :source => :resources, :order => 'resources.time DESC', :conditions => ['resources.complete = ?',true] ##TODO does his work?  
 
-   has_many :items,       :through => :accounts, :source => :items, :order => 'items.time DESC'  #, :extend => FindByTagAccountDate
-   has_many :valid_items, :through => :accounts, :source => :items, :order => 'items.time DESC', :conditions => ['items.complete = ?',true] ##TODO add Item.valid_condition??
+   has_many :resources,       :through => :accounts, :source => :resources, :order => 'resources.time DESC'  #, :extend => FindByAnnotationAccountDate
+   has_many :valid_resources, :through => :accounts, :source => :resources, :order => 'resources.time DESC', :conditions => ['resources.complete = ?',true] ##TODO add Resource.valid_condition??
 
    attr_accessor :password
 
@@ -28,7 +28,7 @@ class User < ActiveRecord::Base
    before_save               :encrypt_password
    before_create             :make_activation_code
 
-   delegate *Tag.types.push( :tags, :to => :valid_items )
+   delegate *Annotation.types.push( :annotations, :to => :valid_resources )
 
    # Activates the user in the database.
    def activate!

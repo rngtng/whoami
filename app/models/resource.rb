@@ -1,138 +1,138 @@
 ####################
 #
-# $LastChangedDate$
-# $Rev$
-# by $Author$
+# $LastChangedDate:2007-08-07 15:37:28 +0200 (Tue, 07 Aug 2007) $
+# $Rev:94 $
+# by $Author:bielohla $
 
-# Class representing an item
-#-- require 'tag'
-class Item < ActiveRecord::Base
+# Class representing an resource
+#-- require 'annotation'
+class Resource < ActiveRecord::Base
    belongs_to :account  #, :counter_cache => true
 
    delegate :user,                :to => :account
    delegate :url, :title, :text,  :to => :data
 
-   has_many_polymorphs :tags, :through => :taggings, :from =>  Tag.types
+   has_many_polymorphs :annotations, :through => :annotatings, :from =>  Annotation.types
 
    serialize  :data
 
    validates_associated    :account
    validates_presence_of   :time
    validates_presence_of   :data_id
-   validates_uniqueness_of :data_id, :scope => 'account_id' #we need that to check if item is allready in DB
+   validates_uniqueness_of :data_id, :scope => 'account_id' #we need that to check if resource is allready in DB
 
-   after_save :save_tags
+   after_save :save_annotations
 
-   #Returns Items subclass of type type
+   #Returns Resources subclass of type type
    def self.factory( type, *params )
-      class_name = type.capitalize + "Item"
+      class_name = type.capitalize + "Resource"
       raise unless defined? class_name.constantize
       class_name.constantize.new( *params )
    end
 
-   #Tags of the items
-   def self.tags( options = {} )
+   #Annotations of the resources
+   def self.annotations( options = {} )
       opt = prepage_query( options )
-      opt[:from]   = 'items'
-      opt[:select] = 'tags.*, COUNT(tags.id) count'
-      opt[:group]  = 'tags.id'
-      Tag.find( :all, opt )
+      opt[:from]   = 'resources'
+      opt[:select] = 'annotations.*, COUNT(annotations.id) count'
+      opt[:group]  = 'annotations.id'
+      Annotation.find( :all, opt )
    end
 
-   #Find items tagged with the given options. This can be:
-   #  * :account_id => ID - only items from a specific account
-   #  * :from => time - items not older than time
-   #  * :to => time - items not younger then time
-   #  * :time => time - items not older than time
-   #  * :period => timespan - items not younger then time + period
-   #  * :tag => name - items which match this tag
-   #  * :tags => array of names - items which match a least one of the tags
+   #Find resources annotationged with the given options. This can be:
+   #  * :account_id => ID - only resources from a specific account
+   #  * :from => time - resources not older than time
+   #  * :to => time - resources not younger then time
+   #  * :time => time - resources not older than time
+   #  * :period => timespan - resources not younger then time + period
+   #  * :annotation => name - resources which match this annotation
+   #  * :annotations => array of names - resources which match a least one of the annotations
    #  * :TAGTYPE => name
-   def self.find_tagged_with( options = {})
+   def self.find_annotationged_with( options = {})
       opt = prepage_query( options, 'ftw' )  #set uniqe identifier -ftw- to be able to extend query...
-      scope( :find )[:select] = 'items.*, COUNT(items.id) as count'
-      opt[:group]  = 'items.id HAVING count > 0'
+      scope( :find )[:select] = 'resources.*, COUNT(resources.id) as count'
+      opt[:group]  = 'resources.id HAVING count > 0'
       #opt[:having]  = 'count > 0'
       #puts '##############################'
       #pp opt
       #pp scope( :find )
-      result = Item.find( :all, opt )
-      return result unless @tag_types
+      result = Resource.find( :all, opt )
+      return result unless @annotation_types
       result.instance_variable_set( :@options, opt )
       #add some helpfull methods to array
-      @tag_types.each do |tag|
+      @annotation_types.each do |annotation|
          result.instance_eval <<-end_eval
-         def #{tag.to_s}
-            Item.#{tag.to_s}( @options.merge( {} ) )
+         def #{annotation.to_s}
+            Resource.#{annotation.to_s}( @options.merge( {} ) )
          end
          end_eval
       end
       return result
    end
 
-   #Returns an array of items as iCal Format
-   def self.to_calendar( items )
+   #Returns an array of resources as iCal Format
+   def self.to_calendar( resources )
       cal = Icalendar::Calendar.new
       cal.custom_property("METHOD","PUBLISH")
-      items.each do |i|
+      resources.each do |i|
          cal.add_event( i.to_event )
       end
       cal
    end
 
-   # Find oldest items
+   # Find oldest resources
    def self.min_time
-      scope(:find)[:select] = 'MIN(items.time) AS time'
-      Item.find( :first ).time
+      scope(:find)[:select] = 'MIN(resources.time) AS time'
+      Resource.find( :first ).time
    end
 
-   # Find youngest (lastest) items
+   # Find youngest (lastest) resources
    def self.max_time
-      scope(:find)[:select] = 'MAX(items.time) AS time'
-      Item.find( :first ).time
+      scope(:find)[:select] = 'MAX(resources.time) AS time'
+      Resource.find( :first ).time
    end
 
-   # List of tag types
-   def self.tag_types
-      @tag_types
+   # List of annotation types
+   def self.annotation_types
+      @annotation_types
    end
 
-   # Add a dynamic methods to class for getting tags for all items
-   def self.tag_types=( tag_types )
-      @tag_types = tag_types
-      @tag_types.each do |tag|
+   # Add a dynamic methods to class for getting annotations for all resources
+   def self.annotation_types=( annotation_types )
+      @annotation_types = annotation_types
+      @annotation_types.each do |annotation|
          class_eval <<-end_eval
-         def self.#{tag.to_s}( options = {} )
-            options[:type] = "#{tag.to_s.classify}"
-            tags( options )
+         def self.#{annotation.to_s}( options = {} )
+            options[:type] = "#{annotation.to_s.classify}"
+            annotations( options )
          end
          end_eval
       end
    end
-   self.tag_types = Tag.types
+   self.annotation_types = Annotation.types
 
-   # Condition for a valid item
+   # Condition for a valid resource
    def self.valid_condition( valid = true)
-      [ 'items.complete = ?', valid  ]
+      [ 'resources.complete = ?', valid  ]
    end
 
    ###############################################################################################
-   # Complete info of an item
+   # Complete info of an resource
    def info
       info = ["Id:    #{id}"]
       info << "Date:  #{time.strftime('%Y-%m-%d')}"
       info << "Title: #{title}"
       info << "Text:  #{text}"
-      self.class.superclass.tag_types.each do |tag|
-         tag = tag.to_s
-         tags = send( tag ).join(', ')
-         info << "#{tag.capitalize}: #{tags}" unless tags.empty?
+      self.class.superclass.annotation_types.each do |annotation|
+         annotation = annotation.to_s
+         annotations = send( annotation ).join(', ')
+         info << "#{annotation.capitalize}: #{annotations}" unless annotations.empty?
       end
       info << "----------\n"
       info.join("\n")
    end
 
-   # Returns thumbnail. If available the first tagged image is returned, if not thumbshot of the first
+   # Returns thumbnail. If available the first annotationged image is returned, if not thumbshot of the first
    # link, if this fails to, the thumbshot of url is taken
    def thumbnail
       return images.first.thumbnail unless images.empty?
@@ -140,7 +140,7 @@ class Item < ActiveRecord::Base
       thumbshot( url)
    end
 
-   # Returns item as iCal event
+   # Returns resource as iCal event
    def to_event
       event = Icalendar::Event.new
       event.dtstart = time.strftime("%Y%m%dT%H%M%S")
@@ -157,9 +157,9 @@ class Item < ActiveRecord::Base
       event
    end
 
-   # Type of the item
+   # Type of the resource
    def type
-      @type ||= self.class.to_s.downcase.sub( /item/, '' )
+      @type ||= self.class.to_s.downcase.sub( /resource/, '' )
    end
 
    # Html code to diplay instead fo default code
@@ -167,56 +167,56 @@ class Item < ActiveRecord::Base
       false
    end
 
-   # Get the account color for the item.
+   # Get the account color for the resource.
    def color #much faster than delegte to account.color!
       "#{type}_account".classify.constantize.color
    end
 
    ###############################################################################################
-   # Tags item with tag. If split_by is provided, tag is splited in server tags
-   # tag can be a Sting, a Hash where :Tagtype => TagName or a Tag
-   def tag( tag, split_by = nil )
-      @cached_tags ||= []
-      tag = Tag.split_and_get( tag, split_by )  unless tag.is_a? Tag
-      @cached_tags  <<  tag
+   # Annotations resource with annotation. If split_by is provided, annotation is splited in server annotations
+   # annotation can be a Sting, a Hash where :Annotationtype => AnnotationName or a Annotation
+   def annotation( annotation, split_by = nil )
+      @cached_annotations ||= []
+      annotation = Annotation.split_and_get( annotation, split_by )  unless annotation.is_a? Annotation
+      @cached_annotations  <<  annotation
    end
 
-   # Save tags
-   def save_tags
-      tags << @cached_tags if @cached_tags
+   # Save annotations
+   def save_annotations
+      annotations << @cached_annotations if @cached_annotations
    end
 
-   # Set item data taken from a feed entry
+   # Set resource data taken from a feed entry
    def feed=(f)
       self.data_id = f.id || f.urls.first
       self.time = f.date_published || Time.now
-      self.data = SimpleItem.new( :url => f.url, :title => f.title,  :text => f.description )
-      tag( :link => url ) #TDODO specify better type here?
+      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.description )
+      annotation( :link => url ) #TDODO specify better type here?
       extract_all
       self.complete = true
    end
 
-   # Get related items. This can be via:
-   # * tags:
+   # Get related resources. This can be via:
+   # * annotations:
    # * time:
-   def related_items( options = {} )
+   def related_resources( options = {} )
       options[:time] = time if options[:period] && !options[:time]
-      options[:conditions] = ["items.id !=? AND items.complete=1", id ]
+      options[:conditions] = ["resources.id !=? AND resources.complete=1", id ]
       options[:having] = "cnt > 2"
-      account.user.items.find_tagged_with( options )
+      account.user.resources.find_annotationged_with( options )
    end
 
    ###############################################################################################
    private
-   # Prepares the query for finding tags and tagged items
+   # Prepares the query for finding annotations and annotationged resources
    #--
    # TODO :location => 'esa' should work to
-   def self.prepage_query( options = {}, nr = '')	# eg. :tag => 'esa' :type - :account_id - :period, :time
+   def self.prepage_query( options = {}, nr = '')	# eg. :annotation => 'esa' :type - :account_id - :period, :time
       scope = scope(:find)
       cond = ["1"]
       cond << sanitize_sql(scope.delete(:conditions)) if scope && scope[:conditions]
       cond << sanitize_sql(options.delete(:conditions)) if options[:conditions]
-      cond << sanitize_sql( ['items.account_id=?', options.delete(:account_id) ] ) if options[:account_id]
+      cond << sanitize_sql( ['resources.account_id=?', options.delete(:account_id) ] ) if options[:account_id]
 
       if options[:from] and options[:to]
          options[:time] = options.delete(:from )
@@ -227,19 +227,19 @@ class Item < ActiveRecord::Base
          past   = ( period <  0 ) ? period : 0
          future = ( period >= 0 ) ? period : 0
          time   = Time.at( options.delete(:time).to_i )
-         cond << sanitize_sql( [ "items.time >= ? AND items.time <= ?", time+past, time+future ] )
+         cond << sanitize_sql( [ "resources.time >= ? AND resources.time <= ?", time+past, time+future ] )
       end
 
       join = []
       join << scope.delete(:joins) if scope && scope[:joins]
       join << options.delete(:joins) if options[:joins]
-      join << "INNER JOIN taggings AS taggings#{nr} ON taggings#{nr}.item_id = items.id"
-      join << "INNER JOIN tags     AS tags#{nr}     ON tags#{nr}.id          = taggings#{nr}.tag_id"
-      join << " AND #{sanitize_sql( ["tags#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
-      join << " AND #{sanitize_sql( ["tags#{nr}.data_id=?", options.delete(:tag).to_s  ] )}" if options[:tag]
-      join << " AND ( tags#{nr}.data_id='#{options.delete(:tags).join("' OR tags#{nr}.data_id='")}')"  if options[:tags]
+      join << "INNER JOIN annotatings AS annotatings#{nr} ON annotatings#{nr}.resource_id = resources.id"
+      join << "INNER JOIN annotations     AS annotations#{nr}     ON annotations#{nr}.id          = annotatings#{nr}.annotation_id"
+      join << " AND #{sanitize_sql( ["annotations#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
+      join << " AND #{sanitize_sql( ["annotations#{nr}.data_id=?", options.delete(:annotation).to_s  ] )}" if options[:annotation]
+      join << " AND ( annotations#{nr}.data_id='#{options.delete(:annotations).join("' OR annotations#{nr}.data_id='")}')"  if options[:annotations]
 
-      return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'items.time DESC'}
+      return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'resources.time DESC'}
    end
 
    # URL to get thumbshot
@@ -248,7 +248,7 @@ class Item < ActiveRecord::Base
    end
 
    #---------------------------------------------------------------------------------------------------------------------
-   # Extracts tags, people and locations
+   # Extracts annotations, people and locations
    def extract_all
       extract_links_and_images
       extract_meta_people_locations
@@ -260,25 +260,25 @@ class Item < ActiveRecord::Base
       d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
       URI::extract( d, 'http' ) do |url|
          type = ( url =~ /\.(png|jpg|gif)/ ) ? :image : :link
-         tag( type => url )
+         annotation( type => url )
       end
    end
 
-   # Extracts everthing fomr http://tagthe.net
-   def tag_the_net( from_url = nil  )
+   # Extracts everthing fomr http://annotationthe.net
+   def annotation_the_net( from_url = nil  )
       from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text.gsub( /<[^>]*>/, '' ))}"
-      doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
-      (doc/"dim[@type='topic']/item").each    { |item| tag( :unknown => item.inner_html ) } # return all unkown tags
-      (doc/"dim[@type='person']/item").each   { |item| tag( :person => item.inner_html ) } # return all people
-      (doc/"dim[@type='location']/item").each { |item| tag( :location => item.inner_html ) } # return all locations
-      (doc/"dim[@type='language']/item").each { |item| tag( :language => item.inner_html ) } # return all languages
-      (doc/"dim[@type='author']/item").each   { |item| tag( :author => item.inner_html ) } # return all people
-      #(doc/"dim[@type='title']/item").each # return all people
+      doc = Hpricot.XML( open( "http://annotationthe.net/api/?#{from_url}" ) )
+      (doc/"dim[@type='topic']/resource").each    { |resource| annotation( :unknown => resource.inner_html ) } # return all unkown annotations
+      (doc/"dim[@type='person']/resource").each   { |resource| annotation( :person => resource.inner_html ) } # return all people
+      (doc/"dim[@type='location']/resource").each { |resource| annotation( :location => resource.inner_html ) } # return all locations
+      (doc/"dim[@type='language']/resource").each { |resource| annotation( :language => resource.inner_html ) } # return all languages
+      (doc/"dim[@type='author']/resource").each   { |resource| annotation( :author => resource.inner_html ) } # return all people
+      #(doc/"dim[@type='title']/resource").each # return all people
    end
-   alias extract_meta_people_locations tag_the_net ##TODO it isn't called meta anymore
+   alias extract_meta_people_locations annotation_the_net ##TODO it isn't called meta anymore
 
-   # A simple datastructure to store title, url and text for an item
-   class SimpleItem
+   # A simple datastructure to store title, url and text for an resource
+   class SimpleResource
       attr_accessor :title
       attr_accessor :url
       attr_accessor :text
@@ -295,7 +295,7 @@ end
 # Represents an image from Flickr - http://www.flickr.com
 #--
 # TODO is url correct?????
-class FlickrItem < Item
+class FlickrResource < Resource
 
    def raw_data=(d)
       return self.data = d if self.data_id
@@ -305,13 +305,13 @@ class FlickrItem < Item
 
    def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
-      d.tags.each do |tag|
-         tag( :vague => tag.clean )
+      d.annotations.each do |annotation|
+         annotation( :vague => annotation.clean )
       end
       # add notes, comments, date_posted
-      self.data = SimpleItem.new( :url => d.url, :title => d.title, :text => d.description )
-      tag( :image => data.url )
-      tag( :link => url )
+      self.data = SimpleResource.new( :url => d.url, :title => d.title, :text => d.description )
+      annotation( :image => data.url )
+      annotation( :link => url )
       self.complete = true
    end
 
@@ -349,13 +349,13 @@ end
 
 ######################################################################################################
 # Represents a video from YouTube - http://www.youtube.com
-class YoutubeItem < Item
+class YoutubeResource < Resource
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      tag( { :vague => d.tags }, ' ' )
+      annotation( { :vague => d.annotations }, ' ' )
       self.data = d
-      tag( :video => url )
+      annotation( :video => url )
       self.complete = true
    end
 
@@ -381,7 +381,7 @@ end
 
 ######################################################################################################
 # Represents a music Last.fm - http://www.last.fm
-class LastfmItem < Item
+class LastfmResource < Resource
    delegate :artist, :to => :data
    delegate :album,  :to => :data
 
@@ -389,8 +389,8 @@ class LastfmItem < Item
       self.data_id = d.url  ##TODO: is id available???
       self.time = d.date
       self.data = d
-      tag( :link => url)
-      tag( :artist => artist)
+      annotation( :link => url)
+      annotation( :artist => artist)
       self.complete = !album.nil?
    end
 
@@ -417,13 +417,13 @@ end
 
 ######################################################################################################
 # Represents a bookmark from Del.icious - http://del.icio.us
-class DeliciousItem < Item
+class DeliciousResource < Resource
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      tag( { :vague => d.tag }, ' ' )
+      annotation( { :vague => d.annotation }, ' ' )
       self.data = d
-      tag( :bookmark => url)
+      annotation( :bookmark => url)
       self.complete = true
    end
 
@@ -436,21 +436,21 @@ class DeliciousItem < Item
       r_url   = (r/"link").inner_html
       r_title = (r/"title").inner_html
       r_text  = (r/"description").inner_html
-      self.data = SimpleItem.new( :url => r_url, :title => r_title,  :text => r_text )
+      self.data = SimpleResource.new( :url => r_url, :title => r_title,  :text => r_text )
       self.data_id = url
-      tags = (r/"dc:subject").inner_html
-      tag( { :vague => tags }, ' ' )
-      tag( :link => url)
+      annotations = (r/"dc:subject").inner_html
+      annotation( { :vague => annotations }, ' ' )
+      annotation( :link => url)
       self.complete = true
    end
 
    def json=(j)
       self.time = Time.now #fix this!!
-      self.data = SimpleItem.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
+      self.data = SimpleResource.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
       self.data_id = url
-      tag( :link => url)
-      j['t'].each do |tag|
-         tag( :vague => tag )
+      annotation( :link => url)
+      j['t'].each do |annotation|
+         annotation( :vague => annotation )
       end
       self.complete = true
    end
@@ -458,23 +458,23 @@ end
 
 ######################################################################################################
 # Represents a posting from a blog
-class BlogItem < Item
+class BlogResource < Resource
    def raw_data=(d)
       self.data_id = d['postid']
       time = d['dateCreated'].to_time
       return if time > Time.now #get rid of future posts
       return unless time.to_i > 0  #get rid of drafts
       self.time = time
-      self.data = SimpleItem.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
+      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
       extract_all
-      tag( :blog => url)
+      annotation( :blog => url)
       self.complete = true
    end
 end
 
 ######################################################################################################
 # Represents a search result by yahoo
-class YahoosearchItem < Item
+class YahoosearchResource < Resource
    def raw_data=(d)
       self.data_id = d['Url']
       self.time = Time.at( d['ModificationDate'].to_i )
@@ -501,7 +501,7 @@ end
 
 ######################################################################################################
 # Represents a posting from Twitter - http://www.twitter.com
-class TwitterItem < Item
+class TwitterResource < Resource
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.created_at
@@ -529,7 +529,7 @@ end
 
 ######################################################################################################
 # Represents a location by Plazes  http://www.plazes.com
-class PlazesItem < Item
+class PlazesResource < Resource
    delegate :plaze,    :to => :data
    delegate :street,   :to => :plaze
    delegate :zip,      :to => :plaze
@@ -566,16 +566,16 @@ end
 ############################################################################################################################################
 
 #private
-#a.items.each do | i | i.get_tags; i.save; end
-#def get_tags
+#a.resources.each do | i | i.get_annotations; i.save; end
+#def get_annotations
 #   t = text.gsub( /&/, 'und' ).gsub( /[^a-zA-Z0-9 ] /, ' ')
-#   tags = [ 'b', 'i', 'strong', 'em' ]
-#   resp = XmlSimple.xml_in( "<html>#{t}</html>", { 'ForceArray' => tags })
+#   annotations = [ 'b', 'i', 'strong', 'em' ]
+#   resp = XmlSimple.xml_in( "<html>#{t}</html>", { 'ForceArray' => annotations })
 #   r = title
-#   tags.each do | t |
+#   annotations.each do | t |
 #     r = [ r, resp[t] ].join( ' ') if resp[t]
 #   end
-#   Tag.delimiter = ' '
-#   self.tag_list = r
+#   Annotation.delimiter = ' '
+#   self.annotation_list = r
 #end
 

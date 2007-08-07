@@ -1,6 +1,6 @@
- <% tags = @item.send( relation_group ) %>
- <% return if tags.empty? %>
- <% collection = @item.related_items( :type => relation_group.to_s.singularize, :tags => tags ) %>
+ <% annotations = @resource.send( relation_group ) %>
+ <% return if annotations.empty? %>
+ <% collection = @resource.related_resources( :type => relation_group.to_s.singularize, :annotations => annotations ) %>
  <% return if collection.empty? %>
  <li>via <%= relation_group.to_s.capitalize %>:
     <ul>

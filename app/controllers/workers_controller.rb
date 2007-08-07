@@ -28,9 +28,9 @@ class WorkersController < ApplicationController
       params[:user] = params[:user].first if params[:user].is_a? Array
       params[:type] = params[:type].first if params[:type].is_a? Array
       params[:key] = "w#{Time.now.to_i}"  if params[:key].nil? || params[:key].empty?
-      MiddleMan.new_worker( { :class => :fetch_items_worker, :job_key => params.delete( "key" ), :args => params } )
+      MiddleMan.new_worker( { :class => :fetch_resources_worker, :job_key => params.delete( "key" ), :args => params } )
 
-      #opt[:worker_method] = :fetch_items
+      #opt[:worker_method] = :fetch_resources
       #opt[:trigger_args] = { :repeat_interval => 45.seconds  }
       #MiddleMan.schedule_worker( opt )
       redirect_to workers_path

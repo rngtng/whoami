@@ -1,7 +1,7 @@
-<% url = ( @account ) ? account_url( :id => @account ) : items_url %>
+<% url = ( @account ) ? account_url( :id => @account ) : resources_url %>
    <div id="timechooser"> 
      <% form_tag url , :id => 'timechooser_form' do %>
-      <input name="tag" value="<%= @tag %>" type="hidden">
+      <input name="annotation" value="<%= @annotation %>" type="hidden">
       <input id="from" name="from"  value="<%= @from * 86400 %>"type="hidden"><input id="from_str" value="<%= (Time.at(@from * 86400)).strftime( "%d.%m.%Y") %>">
       <div id="container" style="width: 600px;">
          <div id="clip_left">
@@ -18,7 +18,7 @@
 
      <%= observe_form :timechooser_form, 
       :frequency => 2, 
-      :update => 'tags_and_items', 
+      :update => 'annotations_and_resources', 
       :before => "Element.show('spinner')", 
       :complete => "Element.hide('spinner')", 
       :url => url,

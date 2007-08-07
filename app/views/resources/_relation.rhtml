@@ -1,4 +1,4 @@
 <li>
-  <%= link_to( image_tag( relation.thumbnail, :style => "border: 1px solid #{relation.color};" ), item_path( relation ) ) %>
+  <%= link_to( image_annotation( relation.thumbnail, :style => "border: 1px solid #{relation.color};" ), resource_path( relation ) ) %>
   <%= relation.count %>
 </li>

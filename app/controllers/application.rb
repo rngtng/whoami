@@ -21,8 +21,8 @@ class ApplicationController < ActionController::Base
       login_from_param unless logged_in?
       access_denied unless logged_in?
       @user = current_user
-      @tag  = params[:tag] # ? params[:tag] : ''
-      #@tag  = (params[:tag] && !params[:tag].empty?)  ? params[:tag] : nil
+      @annotation  = params[:annotation] # ? params[:annotation] : ''
+      #@annotation  = (params[:annotation] && !params[:annotation].empty?)  ? params[:annotation] : nil
    end
 
    def login_from_param

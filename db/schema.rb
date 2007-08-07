@@ -11,11 +11,11 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "password",    :string,   :limit => 20
     t.column "host",        :string,   :limit => 100
     t.column "token",       :text
-    t.column "items_count", :integer,                 :default => 0
+    t.column "resources_count", :integer,                 :default => 0
     t.column "updated_at",  :datetime
   end
 
-  add_index "accounts", ["user_id", "type", "items_count", "updated_at"], :name => "index"
+  add_index "accounts", ["user_id", "type", "resources_count", "updated_at"], :name => "index"
 
   create_table "cachedalbums", :force => true do |t|
     t.column "artist", :string
@@ -23,7 +23,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "album",  :text
   end
 
-  create_table "items", :force => true do |t|
+  create_table "resources", :force => true do |t|
     t.column "account_id", :integer
     t.column "type",       :string
     t.column "time",       :datetime
@@ -32,7 +32,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "complete",   :boolean,  :default => false
   end
 
-  add_index "items", ["account_id", "type"], :name => "index_items_on_account_id_and_type"
+  add_index "resources", ["account_id", "type"], :name => "index_resources_on_account_id_and_type"
 
   create_table "open_id_authentication_associations", :force => true do |t|
     t.column "server_url", :binary
@@ -62,16 +62,16 @@ ActiveRecord::Schema.define(:version => 6) do
   add_index "sessions", ["session_id"], :name => "index_sessions_on_session_id"
   add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
 
-  create_table "taggings", :force => true do |t|
-    t.column "item_id",  :integer
-    t.column "tag_id",   :integer
-    t.column "tag_type", :string
+  create_table "annotatings", :force => true do |t|
+    t.column "resource_id",  :integer
+    t.column "annotation_id",   :integer
+    t.column "annotation_type", :string
   end
 
-  add_index "taggings", ["item_id"], :name => "item_id"
-  add_index "taggings", ["tag_id", "item_id"], :name => "index_taggings_on_tag_id_and_item_id"
+  add_index "annotatings", ["resource_id"], :name => "resource_id"
+  add_index "annotatings", ["annotation_id", "resource_id"], :name => "index_annotatings_on_annotation_id_and_resource_id"
 
-  create_table "tags", :force => true do |t|
+  create_table "annotations", :force => true do |t|
     t.column "parent_id", :integer
     t.column "name",      :string
     t.column "type",      :string
@@ -80,7 +80,7 @@ ActiveRecord::Schema.define(:version => 6) do
     t.column "synonym",   :text
   end
 
-  add_index "tags", ["name", "type"], :name => "index_tags_on_name_and_type"
+  add_index "annotations", ["name", "type"], :name => "index_annotations_on_name_and_type"
 
   create_table "users", :force => true do |t|
     t.column "login",                     :string
@@ -100,9 +100,9 @@ ActiveRecord::Schema.define(:version => 6) do
 
   add_foreign_key "accounts", ["user_id"], "users", ["id"], :name => "accounts_ibfk_1"
 
-  add_foreign_key "items", ["account_id"], "accounts", ["id"], :name => "items_ibfk_1"
+  add_foreign_key "resources", ["account_id"], "accounts", ["id"], :name => "resources_ibfk_1"
 
-  add_foreign_key "taggings", ["item_id"], "items", ["id"], :name => "taggings_ibfk_1"
-  add_foreign_key "taggings", ["tag_id"], "tags", ["id"], :name => "taggings_ibfk_2"
+  add_foreign_key "annotatings", ["resource_id"], "resources", ["id"], :name => "annotatings_ibfk_1"
+  add_foreign_key "annotatings", ["annotation_id"], "annotations", ["id"], :name => "annotatings_ibfk_2"
 
 end

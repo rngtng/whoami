@@ -2,7 +2,7 @@
 # run automatically in a thread. You have access to all of your rails
 # models.  You also get logger and results method inside of this class
 # by default.
-class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
+class FetchResourcesWorker < BackgrounDRb::Worker::RailsBase
 
    def do_work( args = {} )
       @type  = Account.types.include?(   args[:type] ) ? args[:type] : ''
@@ -22,7 +22,7 @@ class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
       log( "Inited worker #{@type} for #{@user}" )
       while results[:running] do
          begin
-            #fetch_items
+            #fetch_resources
          rescue Exception => e
             log( "Error: #{e}" )
          end
@@ -32,14 +32,14 @@ class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
       log( "Stopped worker #{@type} for #{@user}" )
    end
 
-   def fetch_items
+   def fetch_resources
       results[:processing] = true
       account = Account.find_to_update( @type, @user )
       if account
          log( "Updateing Account #{account.type} owned by #{account.user.login}" )
          results[:account_type] = account.type
          results[:account_user] = account.user.login
-         account.worker_fetch_items
+         account.worker_fetch_resources
       end
       results[:last_run] = Time.now
       results[:processing] = false
@@ -59,5 +59,5 @@ class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
       results[:log] = @log 
    end
 end
-FetchItemsWorker.register
+FetchResourcesWorker.register
 

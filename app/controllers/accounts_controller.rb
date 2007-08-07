@@ -16,14 +16,14 @@ class AccountsController < ApplicationController
       @account = @user.accounts.find( params[:id] )
       redirect_to auth_account_path( @account ) and return if @account.requires_auth? and !@account.auth?
       params[:account_id] = params.delete( :id )
-      @min  = @user.accounts.find( params[:account_id] ).valid_items.min_time.to_i / 1.day
-      @max  = @user.accounts.find( params[:account_id] ).valid_items.max_time.to_i / 1.day
-      @items = @user.valid_items.find_tagged_with( params )
+      @min  = @user.accounts.find( params[:account_id] ).valid_resources.min_time.to_i / 1.day
+      @max  = @user.accounts.find( params[:account_id] ).valid_resources.max_time.to_i / 1.day
+      @resources = @user.valid_resources.find_annotationged_with( params )
       @from = params[:from] ? params[:from] : @min
       @to   = params[:to] ? params[:to] : @max
       respond_to do |format|
          format.html
-         format.js { render :partial => "partials/tags_and_items" }
+         format.js { render :partial => "partials/annotations_and_resources" }
       end
    end
 

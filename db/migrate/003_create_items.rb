@@ -4,9 +4,9 @@
 # $Rev$
 # by $Author$
 
-class CreateItems < ActiveRecord::Migration
+class CreateResources < ActiveRecord::Migration
    def self.up
-      create_table :items do |t|
+      create_table :resources do |t|
          t.column :account_id, :integer
          t.column :type,       :string
          t.column :time,       :datetime
@@ -15,12 +15,12 @@ class CreateItems < ActiveRecord::Migration
          t.column :complete,   :boolean, :default => false
       end
 
-      add_index :items, [ :account_id, :type]
+      add_index :resources, [ :account_id, :type]
 
    end
 
    def self.down
-      drop_table :items
+      drop_table :resources
    end
 end
 

@@ -13,11 +13,11 @@ class CreateAccounts < ActiveRecord::Migration
          t.column :password,    :string,  :limit => 20
          t.column :host,        :string,  :limit => 100
          t.column :token,       :text
-         t.column :items_count, :integer, :default => 0
+         t.column :resources_count, :integer, :default => 0
          t.column :updated_at,  :datetime
       end
 
-      add_index :accounts, [ :user_id, :type, :items_count, :updated_at], :name => 'index'
+      add_index :accounts, [ :user_id, :type, :resources_count, :updated_at], :name => 'index'
 
    end
 

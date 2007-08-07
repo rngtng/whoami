@@ -4,10 +4,10 @@
 # $Rev$
 # by $Author$
 
-class AddTagSupport < ActiveRecord::Migration
+class AddAnnotationSupport < ActiveRecord::Migration
    def self.up
-      #Table for your Tags
-      create_table :tags do |t|
+      #Table for your Annotations
+      create_table :annotations do |t|
          t.column :parent_id, :integer, :references => nil
          t.column :name, :string
          t.column :type, :string
@@ -16,20 +16,20 @@ class AddTagSupport < ActiveRecord::Migration
 	 t.column :synonym, :text
       end
 
-      create_table :taggings do |t|
-         t.column :item_id, :integer
-         t.column :tag_id, :integer
-         t.column :tag_type, :string
+      create_table :annotatings do |t|
+         t.column :resource_id, :integer
+         t.column :annotation_id, :integer
+         t.column :annotation_type, :string
       end
 
-      # Index your tags/taggings
-      add_index :tags, [ :name, :type]
-      add_index :taggings, [:tag_id, :item_id]
+      # Index your annotations/annotatings
+      add_index :annotations, [ :name, :type]
+      add_index :annotatings, [:annotation_id, :resource_id]
    end
 
    def self.down
-      drop_table :taggings
-      drop_table :tags
+      drop_table :annotatings
+      drop_table :annotations
    end
 end
 
