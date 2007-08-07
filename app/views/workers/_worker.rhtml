@@ -1,16 +1,31 @@
    <% key  = worker[0]  %>
    <% r    = worker[1].results %>
-   <% args = r.to_hash[:args] %>
-   <% user = args[:user] %>
-   <% type = args[:type] %>
-   <tr>
-    <td><%= key %></td>
-    <td><%= user == '%' ? 'any' : user %>, <%= type == '' ? 'any' : type %>, <%= args[:sleep]  %></td>
-    <td align="center"><%= (Time.now - r[:last_run]).to_i %></td>
-    <% if r[:running] %>
-      <td><%= r[:processing] ? "#{r[:account_type]} owned by #{r[:account_user]}" : "sleeping #{r[:sleep_cnt]}" %></td>
-      <td><%= link_to 'delete', worker_path( key ), :method => :delete, :confirm => "Are you sure?" %></td>
-    <% else %>
-      <td colspan="2"><%= r[:stopped] ? "halted" : "stopping" %></td>
-    <% end %> 
-   </tr>
+   <% unless r.empty? %>
+     <% user = User.all_logins.include?( r[:user] ) ? r[:user] : 'any' %>
+     <% type = Account.types.include?(   r[:type] ) ? r[:type] : 'any' %>
+     <tr>
+      <td><%= key %></td>
+      <td><%= "#{user}, #{type}, #{r[:sleep]}" %></td>
+      <td align="center"><%= (Time.now - r[:last_run]).to_i %> sec</td>
+      <% if r[:running] %>
+        <td><%= r[:processing] ? "#{r[:account_type]} owned by #{r[:account_user]}" : "sleeping #{r[:sleep_cnt]}" %></td>
+        <td>
+          <%= link_to 'stop', worker_path( key ), :method => :delete, :confirm => "Are you sure?" %>
+          <%= link_to_function 'log', "Element.toggle('#{key}')" %>
+        </td>
+      <% else %>
+        <td colspan="2" align="center"><%= r[:stopped] ? "stopped" : "stopping" %></td>
+      <% end %> 
+     </tr>
+     <tr style="display:none;" id="<%= key %>">
+      <td colspan="5" style="font-size:8pt; padding-left:15px; color: #aaa;">
+       <%= r[:log].join( "<br>" ) %>
+      </td>
+     </tr>    
+     <!-- #visual_effect( :toggle_slide, key, :duration => 0.5 ) -->
+   <% else %>
+      <tr>
+       <td><%= key %></td>
+       <td colspan="4" align="center"> An error occured </td>
+      </tr>
+   <% end %>

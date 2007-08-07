@@ -1,7 +1,7 @@
 <p style="color: red; text-align:center;"><%= flash[:error] %></p>
 <div class="formbox">
+  <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Add  <%= "#{@account.type.capitalize}" %> Account</h3>
   <% form_for :account, @account, :url => accounts_path, :html => { :method => :post } do |form| %>
-    <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Add  <%= "#{@account.type.capitalize}" %> Account:</h3>
     <%= hidden_field_tag :type, @account.type %>
     <% if @account.requires_host? -%>
     <label for="password">Host:</label><%= form.text_field :host %><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %>

@@ -2,6 +2,6 @@
   <% tags = from.send( tag_group ) -%>
   <% return if tags.empty? or !tags.map( &:class ).include?( tag_group.to_s.classify.constantize ) -%>
   <ul>
-     <li><b><%= link_to "All #{tag_group.to_s.capitalize}" %></b></li> 
+     <li><b><%= link_to tag_group.to_s.capitalize %></b></li> 
      <%= render :partial => "partials/tag", :collection => tags, :locals => { :tag_group=> tag_group } -%>
   </ul>

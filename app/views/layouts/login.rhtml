@@ -16,7 +16,7 @@
       
       <%= link_to_remote( 'login',  :url => new_session_path,        :method => :get, :update => 'content' ) %>
       <%= link_to_remote( 'openid', :url => openid_new_session_path, :method => :get, :update => 'content' ) %>
-      <%= link_to_remote( 'create', :url => new_user_path,           :method => :get, :update => 'content' ) %>
+      <%= link_to_remote( 'signup', :url => new_user_path,           :method => :get, :update => 'content' ) %>
       <div id="content">
         <%= yield  %>
       </div>

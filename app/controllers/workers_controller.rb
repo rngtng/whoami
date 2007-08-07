@@ -10,31 +10,25 @@ class WorkersController < ApplicationController
    def index
       @workers = running_workers
       @timestamps = MiddleMan.timestamps
-      render( :layout => 'layouts/workers' )
+      respond_to do |format|  #strange bug: fromat.html must be first in row in case format is not given!?
+         format.html
+         format.js { render :partial => "worker", :collection => @workers }
+      end
    end
 
 
    def show
-      daemon :status
-      render( :layout => 'layouts/workers' )
+     # daemon :status
    end
 
    def new
    end
 
    def create
-      args = {}
-      params[:user] = '%' if params[:user].nil?
-      params[:type] = ''  if params[:type].nil?
-      params[:sleep] = 10 if params[:sleep].empty?
-      args[:user] =  params[:user]
-      args[:type] =  params[:type]
-      args[:sleep] =  params[:sleep]
-      opt = {}
-      opt[:job_key] = params[:key] unless params[:key].empty?
-      opt[:class]   = :fetch_items_worker
-      opt[:args]    = args
-      MiddleMan.new_worker( opt )
+      params[:user] = params[:user].first if params[:user].is_a? Array
+      params[:type] = params[:type].first if params[:type].is_a? Array
+      params[:key] = "w#{Time.now.to_i}"  if params[:key].nil? || params[:key].empty?
+      MiddleMan.new_worker( { :class => :fetch_items_worker, :job_key => params.delete( "key" ), :args => params } )
 
       #opt[:worker_method] = :fetch_items
       #opt[:trigger_args] = { :repeat_interval => 45.seconds  }

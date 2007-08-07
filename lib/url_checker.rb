@@ -19,8 +19,8 @@ class UrlChecker
       data = { :serendipity  => 'serendipity_xmlrpc.php', :wordpress =>  'xmlrpc.php' } #'blogger' <link rel="service.post" type="application/atom+xml" title="bensei.com - Atom" href="http://www.blogger.com/feeds/38630431/posts/default" />
       uri = URI.parse( "http://#{url.sub( 'http://', '')}" )
       data.each do |system_name, file_name|
-         path = uri.path.slice(0, uri.path.rindex('/'))
-         xmlrpc_url = "#{uri.scheme}://#{uri.host}#{path}/#{file_name}"
+         length = uri.path.rindex('/') ? uri.path.rindex('/') : 0
+         xmlrpc_url = "#{uri.scheme}://#{uri.host}#{uri.path.slice(0, length)}/#{file_name}"
          begin
             page = open( xmlrpc_url )
             return xmlrpc_url if page.status.first == "200" #TODO better check here. check fpr redirect

@@ -53,9 +53,9 @@ class Item < ActiveRecord::Base
       scope( :find )[:select] = 'items.*, COUNT(items.id) as count'
       opt[:group]  = 'items.id HAVING count > 0'
       #opt[:having]  = 'count > 0'
-      puts '##############################'
-      pp opt
-      pp scope( :find )
+      #puts '##############################'
+      #pp opt
+      #pp scope( :find )
       result = Item.find( :all, opt )
       return result unless @tag_types
       result.instance_variable_set( :@options, opt )

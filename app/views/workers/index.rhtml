@@ -1,10 +1,21 @@
-<table id="worker_table">
- <tr><th>Name</th><th>Params</th><th>Last run</th><th>Action</th><th></th></tr>
+<%= periodically_call_remote( 
+            :update => 'workers',
+            :frequency => 8, 
+            :url => workers_path,
+            :method => :get,
+            :before => %(Element.show('spinner')),
+            :success => %(Element.hide('spinner') ) )
+       %>
 
- <%= render( :partial => "worker", :collection => @workers ) %>
-
+<table id="worker_table" cellspacing="8">
+ <tr><th>Name</th><th>Params</th><th>Last run</th><th>Action</th><th><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %></th></tr>
+ <tbody id="workers">
+   <%= render( :partial => "worker", :collection => @workers ) %>
+    <% if @workers.empty? %>
+     <tr><th align="center" colspan="5">No workers running</th></tr>
+    <% end %> 
+ </tbody>  
 </table>
-
 <br><br>
 
  <%= render( :partial => "new" ) %>

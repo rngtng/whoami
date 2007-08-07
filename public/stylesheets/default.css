@@ -37,7 +37,7 @@ A {
 }
 
 .formbox {
-	margin:0 auto; 
+	margin:2px auto; 
 	border: 1px solid #555555; 
 	width: 240px;
 	background:#444444; 
@@ -45,7 +45,7 @@ A {
 	text-align:center;
 }
 
-FORM H3 {
+.formbox H3 {
 	 display: block;
 	 padding: 0px 0px 5px 0px;
 }

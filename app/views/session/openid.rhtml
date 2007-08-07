@@ -1,4 +1,5 @@
 <div class="formbox">
+  <h3>Login with OpenID</h3>
   <% form_tag create_openid_new_session_path, :html => { :method => :post } do %> 
     <label for="password">OpenID:</label><%= text_field_tag :openid_url, params[:openid_url] %>
     <p><%= submit_tag "sign in", :disable_with => "signing in&hellip;" %></p>

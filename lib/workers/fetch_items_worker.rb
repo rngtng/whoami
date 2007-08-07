@@ -5,42 +5,58 @@
 class FetchItemsWorker < BackgrounDRb::Worker::RailsBase
 
    def do_work( args = {} )
-      @type = args[:type] ||= ''
-      @user = args[:user] ||= '%'
-      @sleep = 10.seconds
-      results[:args] = args
-      results[:stopped] = false
+      @type  = Account.types.include?(   args[:type] ) ? args[:type] : ''
+      @user  = User.all_logins.include?( args[:user] ) ? args[:user] : ''
+      @sleep = args[:sleep].to_i > 3 ? args[:sleep].to_i : 10.seconds
+      @log   = []
+      results[:type] = @type
+      results[:user] = @user
+      results[:sleep] = @sleep
+      results[:sleep_cnt] = @sleep
       results[:running] = true
+      results[:stopped] = false
       results[:last_run] = Time.now
-      results[:account_type] = '?'
-      results[:account_user] = '?'
+      results[:account_type] = ''
+      results[:account_user] = ''
 
-      logger.info( "Worker #{@type} inited for #{@user} at #{Time.now}." )
+      log( "Inited worker #{@type} for #{@user}" )
       while results[:running] do
-         #begin
-            fetch_items
-         #rescue
-         #end
-         results[:sleep_cnt] = @sleep
-         while( results[:sleep_cnt] > 0 && results[:running] ) do
-            sleep 1
-            results[:sleep_cnt] -= 1
+         begin
+            #fetch_items
+         rescue Exception => e
+            log( "Error: #{e}" )
          end
+         do_sleep
       end
       results[:stopped] = true
+      log( "Stopped worker #{@type} for #{@user}" )
    end
 
    def fetch_items
       results[:processing] = true
       account = Account.find_to_update( @type, @user )
       if account
-         logger.info("Updateing Account #{account.type} owned by #{account.user.login} at #{Time.now}." )
+         log( "Updateing Account #{account.type} owned by #{account.user.login}" )
          results[:account_type] = account.type
          results[:account_user] = account.user.login
-         account.daemon_fetch_items
+         account.worker_fetch_items
       end
       results[:last_run] = Time.now
       results[:processing] = false
+   end
+
+   def do_sleep
+      results[:sleep_cnt] = @sleep
+      while( results[:sleep_cnt] > 0 && results[:running] ) do
+         sleep 1
+         results[:sleep_cnt] -= 1
+      end
+   end
+
+   def log( msg )
+      logger.info( msg )
+      @log << msg
+      results[:log] = @log 
    end
 end
 FetchItemsWorker.register

@@ -18,7 +18,7 @@ class Account < ActiveRecord::Base
    validates_associated  :user
    validates_presence_of :username
 
-   delegate :requires_auth?, :requires_password?, :requires_host?, :daemon_update_time, :color, :to => :"self.class"
+   delegate :requires_auth?, :requires_password?, :requires_host?, :worker_update_time, :color, :to => :"self.class"
    delegate *Tag.types.push( :tags, :to => :valid_items )
 
    before_save :items_count #update item_counter
@@ -36,18 +36,16 @@ class Account < ActiveRecord::Base
    end
 
    def self.find_to_update( account_name = '', username = '%')
-      account = (account_name.capitalize + 'Account').constantize	   
-      #begin
-         time     = Time.now - account.daemon_update_time
-         time_min = Time.now - 3.minutes #30.seconds
-         Account.transaction do
-            a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
-            a.save if a #update timestamp -> no other daemons get this feed
-            return a
-         end
-      #rescue
-       #  raise "No such Account Type: " + account.to_s
-     # end
+      account_name  = Account.types.include?( account_name ) ? account_name : ''
+      username      = User.all_logins.include?( username ) ? username : '%'
+      account = (account_name.capitalize + 'Account').constantize
+      time     = Time.now - account.worker_update_time
+      time_min = Time.now - 3.minutes #30.seconds
+      Account.transaction do
+         a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.items_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :items ] )
+         a.save if a #update timestamp -> no other workers get this feed
+         return a
+      end
    end
 
    #debug
@@ -72,8 +70,8 @@ class Account < ActiveRecord::Base
    end
 
    # Time account needs update
-   def self.daemon_update_time
-      @daemon_update_time ||= 5.minutes
+   def self.worker_update_time
+      @worker_update_time ||= 5.minutes
    end
 
    # The color to use for this account
@@ -82,18 +80,18 @@ class Account < ActiveRecord::Base
    end
 
    ################### FETCH STUFF   ###################################
-   # Fetch items, fetch details, called by daemon
-   def daemon_fetch_items
+   # Fetch items, fetch details, called by worker
+   def worker_fetch_items
       (items_count > 0 ) ? fetch_items : fetch_items_init
       fetch_items_detail
       save #update time and items.count
    end
 
    # Destroy account items and get them new
-   def daemon_fetch_items!
+   def fetch_items!
       items.destroy_all
       save
-      daemon_fetch_items
+      fetch_items_init
    end
 
    # Get items from this account
@@ -122,10 +120,10 @@ class Account < ActiveRecord::Base
          self.items << i
       end
    end
-   
+
    # Get the RSS data
    # This is like fetch feed but far more details!
-   def fetch_rss  
+   def fetch_rss
       result = Hpricot.XML( open( feed ) )
       (result/:item).each  do |item|
          i = Item.factory( type, :rss=> item )
@@ -139,7 +137,7 @@ class Account < ActiveRecord::Base
    end
 
    # Type of the account
-   def type 
+   def type
       @type ||= self.class.to_s.downcase.sub( /account/, '' )
    end
 
@@ -166,7 +164,7 @@ class Account < ActiveRecord::Base
 
    # Checks if account is up to date
    def up_to_date?
-      time     = Time.now - daemon_update_time
+      time     = Time.now - worker_update_time
       time_min = Time.now - 30.seconds  #minimum of 30 update age
       ((updated_at > time_min) or (items_count > 1 and updated_at > time))
    end
@@ -291,7 +289,7 @@ end
 ######################################################################################################
 class LastfmAccount < Account
    @color = "#D01F3C"
-   @daemon_update_time = 5.minutes
+   @worker_update_time = 5.minutes
 
    def feed
       "http://ws.audioscrobbler.com/1.0/user/#{username}/recenttracks.rss"

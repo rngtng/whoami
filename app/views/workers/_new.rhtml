@@ -2,13 +2,18 @@
 FORM LABEL {
         width: 50px;
 }
+
+FORM #sleep {
+   width: 35px;
+}	
 </style>
 <div class="formbox">
+  <h3>Create new Worker</h3>
   <% form_tag workers_path, :html => { :method => :post } do %>
-    <label for="name">Name:</label><%= text_field_tag :key %> 
-    <label for="user">User:</label><%= select( :worker, :user, User.find( :all ).collect{ |user| user.login }, { :include_blank => true } ) %><br clear="all">
-    <label for="account">Account:</label><%= select( :worker, :account, Account.types, { :include_blank => true } ) %><br clear="all">
-    <label for="time">Time:</label><%= text_field_tag :sleep %>
+    <label for="key"  >Name:</label><%=    text_field_tag :key %> 
+    <label for="user" >User:</label><%=    select( :user, nil, ["any"] + User.all_logins ) %><br clear="all">
+    <label for="type" >Account:</label><%= select( :type, nil, ["any"] + Account.types ) %><br clear="all">
+    <label for="sleep">Sleep:</label><%=   text_field_tag :sleep,  20, :size => 6 %> seconds
     <p><%= submit_tag "create", :disable_with => "creating..." %></p>
   <% end %>
 </div>
