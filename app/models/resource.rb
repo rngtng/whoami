@@ -234,7 +234,7 @@ class Resource < ActiveRecord::Base
       join << scope.delete(:joins) if scope && scope[:joins]
       join << options.delete(:joins) if options[:joins]
       join << "INNER JOIN annotatings AS annotatings#{nr} ON annotatings#{nr}.resource_id = resources.id"
-      join << "INNER JOIN annotations     AS annotations#{nr}     ON annotations#{nr}.id          = annotatings#{nr}.annotation_id"
+      join << "INNER JOIN annotations AS annotations#{nr} ON annotations#{nr}.id          = annotatings#{nr}.annotation_id"
       join << " AND #{sanitize_sql( ["annotations#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
       join << " AND #{sanitize_sql( ["annotations#{nr}.data_id=?", options.delete(:annotation).to_s  ] )}" if options[:annotation]
       join << " AND ( annotations#{nr}.data_id='#{options.delete(:annotations).join("' OR annotations#{nr}.data_id='")}')"  if options[:annotations]
@@ -305,7 +305,7 @@ class FlickrResource < Resource
 
    def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
-      d.annotations.each do |annotation|
+      d.tags.each do |annotation|
          annotation( :vague => annotation.clean )
       end
       # add notes, comments, date_posted
@@ -353,7 +353,7 @@ class YoutubeResource < Resource
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      annotation( { :vague => d.annotations }, ' ' )
+      annotation( { :vague => d.tags }, ' ' )
       self.data = d
       annotation( :video => url )
       self.complete = true
@@ -421,7 +421,7 @@ class DeliciousResource < Resource
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      annotation( { :vague => d.annotation }, ' ' )
+      annotation( { :vague => d.tag }, ' ' )
       self.data = d
       annotation( :bookmark => url)
       self.complete = true

@@ -22,7 +22,7 @@ class FetchResourcesWorker < BackgrounDRb::Worker::RailsBase
       log( "Inited worker #{@type} for #{@user}" )
       while results[:running] do
          begin
-            #fetch_resources
+            fetch_resources
          rescue Exception => e
             log( "Error: #{e}" )
          end
