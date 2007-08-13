@@ -9,7 +9,7 @@ A IMG {
 	border:0px;
 }
 
-DIV.item IMG {
+DIV.resource IMG {
   margin: 2px;
 } 
 
@@ -81,20 +81,20 @@ FORM INPUT[type=submit] {
 	background-color: #FFFFFF;
 }
 
-#tags {
+#annotations {
 	text-align:left;
 	margin:0 40px 0 40px;
 }
 
-#tags UL {
+#annotations UL {
 	padding: 0px;
 }
 
-#tags UL LI {
+#annotations UL LI {
  	 display:inline;
 }
 
-#tags UL LI .selected {
+#annotations UL LI .selected {
  	 display:inline;
 	 color:#FFFFFF;
 	 font-style:bold;
@@ -103,11 +103,11 @@ FORM INPUT[type=submit] {
 }
 
 
-#tags UL A {
+#annotations UL A {
  	 text-decoration:none;
 }
 
-#tags UL A:hover {
+#annotations UL A:hover {
  	 text-decoration:underline;
 }
 
@@ -125,13 +125,13 @@ FORM INPUT[type=submit] {
 	 margin: 0;
 }
 
-#item,
-#items {
+#resource,
+#resources {
 	margin:0 40px 0 40px;
 	text-align:left;
 }
 
-#items a img {
+#resources a img {
  	width:25px;
 	height: 25px;
         vertical-align: middle;
@@ -140,13 +140,11 @@ FORM INPUT[type=submit] {
 }
 
 
-#items a:hover img {
-	position: absolute;
+#resources a:hover img {
  	width:60px;
 	height:60px;
 	z-index: 1000;
-	margin: -15px 0px 0px -15px;
-	text-align: center;
+	margin: -30px -4px -4px -30px;
 }
 
 

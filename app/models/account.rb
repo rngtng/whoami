@@ -235,7 +235,7 @@ class FlickrAccount < Account
       "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"
    end
 
-   #private
+   private
    def api
       @api ||= Flickr.new( 'dummy', api_key, api_key( :secret ) )
       @api.auth.token ||= token if token

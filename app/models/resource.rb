@@ -191,7 +191,7 @@ class Resource < ActiveRecord::Base
       self.data_id = f.id || f.urls.first
       self.time = f.date_published || Time.now
       self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.description )
-      annotation( :link => url ) #TDODO specify better type here?
+      annotation( :url => url ) #TDODO specify better type here?
       extract_all
       self.complete = true
    end
@@ -235,7 +235,7 @@ class Resource < ActiveRecord::Base
       join << options.delete(:joins) if options[:joins]
       join << "INNER JOIN annotatings AS annotatings#{nr} ON annotatings#{nr}.resource_id = resources.id"
       join << "INNER JOIN annotations AS annotations#{nr} ON annotations#{nr}.id          = annotatings#{nr}.annotation_id"
-      join << " AND #{sanitize_sql( ["annotations#{nr}.type=?", options.delete(:type).to_s ] )}" if options[:type]
+      join << " AND #{sanitize_sql( ["annotations#{nr}.type=?", options.delete(:type).to_s ] )}"           if options[:type]
       join << " AND #{sanitize_sql( ["annotations#{nr}.data_id=?", options.delete(:annotation).to_s  ] )}" if options[:annotation]
       join << " AND ( annotations#{nr}.data_id='#{options.delete(:annotations).join("' OR annotations#{nr}.data_id='")}')"  if options[:annotations]
 
@@ -259,15 +259,15 @@ class Resource < ActiveRecord::Base
       from = text unless from
       d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
       URI::extract( d, 'http' ) do |url|
-         type = ( url =~ /\.(png|jpg|gif)/ ) ? :image : :link
+         type = ( url =~ /\.(png|jpg|gif)/ ) ? :image : :url
          annotation( type => url )
       end
    end
 
-   # Extracts everthing fomr http://annotationthe.net
-   def annotation_the_net( from_url = nil  )
+   # Extracts everthing fomr http://tagthe.net
+   def tag_the_net( from_url = nil  )
       from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text.gsub( /<[^>]*>/, '' ))}"
-      doc = Hpricot.XML( open( "http://annotationthe.net/api/?#{from_url}" ) )
+      doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
       (doc/"dim[@type='topic']/resource").each    { |resource| annotation( :unknown => resource.inner_html ) } # return all unkown annotations
       (doc/"dim[@type='person']/resource").each   { |resource| annotation( :person => resource.inner_html ) } # return all people
       (doc/"dim[@type='location']/resource").each { |resource| annotation( :location => resource.inner_html ) } # return all locations
@@ -275,7 +275,7 @@ class Resource < ActiveRecord::Base
       (doc/"dim[@type='author']/resource").each   { |resource| annotation( :author => resource.inner_html ) } # return all people
       #(doc/"dim[@type='title']/resource").each # return all people
    end
-   alias extract_meta_people_locations annotation_the_net ##TODO it isn't called meta anymore
+   alias extract_meta_people_locations tag_the_net ##TODO it isn't called meta anymore
 
    # A simple datastructure to store title, url and text for an resource
    class SimpleResource
@@ -306,12 +306,12 @@ class FlickrResource < Resource
    def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
       d.tags.each do |annotation|
-         annotation( :vague => annotation.clean )
+         annotation( :tag => annotation.clean )
       end
       # add notes, comments, date_posted
       self.data = SimpleResource.new( :url => d.url, :title => d.title, :text => d.description )
       annotation( :image => data.url )
-      annotation( :link => url )
+      annotation( :url => url )
       self.complete = true
    end
 
@@ -353,7 +353,7 @@ class YoutubeResource < Resource
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      annotation( { :vague => d.tags }, ' ' )
+      annotation( { :tag => d.tags }, ' ' )
       self.data = d
       annotation( :video => url )
       self.complete = true
@@ -389,7 +389,7 @@ class LastfmResource < Resource
       self.data_id = d.url  ##TODO: is id available???
       self.time = d.date
       self.data = d
-      annotation( :link => url)
+      annotation( :url => url)
       annotation( :artist => artist)
       self.complete = !album.nil?
    end
@@ -421,7 +421,7 @@ class DeliciousResource < Resource
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      annotation( { :vague => d.tag }, ' ' )
+      annotation( { :tag => d.tag }, ' ' )
       self.data = d
       annotation( :bookmark => url)
       self.complete = true
@@ -439,8 +439,8 @@ class DeliciousResource < Resource
       self.data = SimpleResource.new( :url => r_url, :title => r_title,  :text => r_text )
       self.data_id = url
       annotations = (r/"dc:subject").inner_html
-      annotation( { :vague => annotations }, ' ' )
-      annotation( :link => url)
+      annotation( { :tag => annotations }, ' ' )
+      annotation( :url => url)
       self.complete = true
    end
 
@@ -448,9 +448,9 @@ class DeliciousResource < Resource
       self.time = Time.now #fix this!!
       self.data = SimpleResource.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
       self.data_id = url
-      annotation( :link => url)
+      annotation( :url => url)
       j['t'].each do |annotation|
-         annotation( :vague => annotation )
+         annotation( :tag => annotation )
       end
       self.complete = true
    end

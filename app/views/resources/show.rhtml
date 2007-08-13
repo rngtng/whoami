@@ -18,23 +18,27 @@
       <%= @resource.text.gsub!(/\n/, '<br/>') if @resource.text %>
       
       <div id="annotations">
-        <%= render :partial => "partials/annotation_group", :collection => Resource.annotation_types, :locals => { :from => @resource } %>
+        <%= #render :partial => "partials/annotation_group", :collection => Resource.annotation_types, :locals => { :from => @resource }
+	%>
       </div>
      </td>
      <td valign="top" width="200">
        <div id="relations">
         <b>related resources</b>
 	<ul id="resources">
-	  <%= render :partial => "relation_group", :collection => Resource.annotation_types %>
+	  <%= #render :partial => "relation_group", :collection => Resource.annotation_types 
+	  %>
 	  <li>via Resources after:
             <ul>
-             <%= render :partial => "relation", :collection => @resource.related_resources( :period => 2.days, :limit => 10 ) %>
+             <%= render :partial => "relation", :collection => @resource.related_resources( :period => 2.days, :limit => 10 ) 
+	     %>
             </ul>
 	   <br clear="all">
 	  </li>
 	  <li>via Resources before:
             <ul>
-             <%= render :partial => "relation", :collection => @resource.related_resources( :period => -2.days, :limit => 10 ) %>
+             <%= #render :partial => "relation", :collection => @resource.related_resources( :period => -2.days, :limit => 10 ) 
+	     %>
             </ul>
 	   <br clear="all">
 	  </li> 

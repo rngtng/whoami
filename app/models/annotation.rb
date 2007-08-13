@@ -159,7 +159,7 @@ class Annotation < ActiveRecord::Base
    private
    def self.process_annotation( key, annotation )
       #return nil if annotation =~/geo:l/ 	  #TODO won't work
-      return [ :location, "http://beta.plazes.com/plaze/#{$1}" ] if annotation =~ /plaze([a-z0-9]{32})/
+      return [ :link, "http://beta.plazes.com/plaze/#{$1}" ] if annotation =~ /plaze([a-z0-9]{32})/
       [key, annotation]
    end
 end
@@ -171,7 +171,7 @@ class Unknown < Annotation
    end
 end
 
-class Vague < Unknown
+class Tag < Annotation
 end
 
 class Nonsense < Annotation
@@ -181,7 +181,7 @@ class Nonsense < Annotation
 end
 
 #############################################################################
-class Person < Vague
+class Person < Annotation
 
    def name=(name)
       super(name.downcase)
@@ -196,7 +196,7 @@ class Author < Person
 end
 
 #############################################################################
-class Location < Vague
+class Location < Annotation
 
    def self.new( params = {} )
       check_and_get_if_geo( super( params ) )
@@ -209,7 +209,7 @@ class Location < Vague
       cnt = (content%"totalresultscount")
       return new unless cnt
       cnt.inner_html.to_i #TODO
-      puts "## results for -#{new.name}-: #{cnt}"
+      #puts "## results for -#{new.name}-: #{cnt}"
       return new unless  cnt > 0 # (1..100) === cnt
       new.data = content
       new.synonym = (content%"alternatenames").inner_html
@@ -251,29 +251,27 @@ end
 
 
 #############################################################################
-class Image < Vague
+class Language < Annotation
+end
+
+#############################################################################
+class Url < Annotation
    def thumbnail
       self.name
    end
 end
 
-#############################################################################
-class Language < Vague
-end
-
-
-#############################################################################
-class Link < Vague
+class Image < Url
    def thumbnail
       self.name
    end
 end
 
-class Blog < Link
+class Blog < Url
 end
 
-class Video < Link
+class Video < Url
 end
 
-class Bookmark < Link
+class Bookmark < Url
 end
