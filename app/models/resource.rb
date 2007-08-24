@@ -36,6 +36,7 @@ class Resource < ActiveRecord::Base
       opt[:from]   = 'resources'
       opt[:select] = 'annotations.*, COUNT(annotations.id) count'
       opt[:group]  = 'annotations.id'
+      opt[:order]  = 'annotations.name'
       Annotation.find( :all, opt )
    end
 

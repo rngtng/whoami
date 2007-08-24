@@ -8,17 +8,12 @@ module ApplicationHelper
      minf = options.delete( :min_font_size ) || 10
      maxc = options.delete( :max_color )     || [ 70, 120, 110 ]
      minc = options.delete( :min_color )     || [ 210, 236, 156 ]
-     hide_sizes   = options.delete( :hide_sizes )
-     hide_colours = options.delete( :hide_colours )
      #
      # function to work out rgb values
      def rgb_color( a, b, i, x)
         return nil if i <= 1 or x <= 1
-        if a > b
-         a-(Math.log(i)*(a-b)/Math.log(x)).floor
-        else
-         (Math.log(i)*(b-a)/Math.log(x)+a).floor
-        end
+        return  a - ( Math.log(i) * ( a - b ) / Math.log(x) ).floor if a > b
+        ( Math.log(i) * ( b - a ) / Math.log(x) + a ).floor
      end
      #
      # work out colours
@@ -35,8 +30,6 @@ module ApplicationHelper
      size = maxf if size > maxf
      #
      # display the results
-     size_txt = "font-size:#{ size.to_s }px;" unless hide_sizes
-     color_txt = "color:rgb(#{ colors });" unless hide_colours
-     return [ size_txt, color_txt ].join
+     "font-size:#{size}px; color:rgb(#{colors});"
    end
 end

@@ -9,12 +9,13 @@ module AuthenticatedSystem
    # Returns true or false if the user is logged in.
    # Preloads @current_user with the user model if they're logged in.
    def logged_in?
-      current_user != false
+      current_user != :false
    end
 
-   # Accesses the current user from the session.
+   # Accesses the current user from the session.  Set it to :false if login fails
+   # so that future calls do not hit the database.
    def current_user
-      @current_user ||= (session[:user] && User.find_by_id(session[:user], :include => :accounts )) || false
+      @current_user ||= (login_from_session || login_from_basic_auth || login_from_cookie || :false)
    end
 
    # Store the given user in the session.
@@ -23,7 +24,7 @@ module AuthenticatedSystem
       @current_user = new_user
    end
 
-   # Check if the user is authorized.
+   # Check if the user is authorized
    #
    # Override this method in your controllers if you want to restrict access
    # to only a few actions or if you want to check if the user
@@ -32,11 +33,11 @@ module AuthenticatedSystem
    # Example:
    #
    #  # only allow nonbobs
-   #  def authorize?
+   #  def authorized?
    #    current_user.login != "bob"
    #  end
    def authorized?
-      true
+      logged_in?
    end
 
    # Filter method to enforce a login requirement.
@@ -54,9 +55,7 @@ module AuthenticatedSystem
    #   skip_before_filter :login_required
    #
    def login_required
-      username, passwd = get_auth_data
-      self.current_user ||= User.authenticate(username, passwd) || :false if username && passwd
-      logged_in? && authorized? ? true : access_denied
+      authorized? || access_denied
    end
 
    # Redirect as appropriate when an access request fails.
@@ -92,7 +91,7 @@ module AuthenticatedSystem
    # Redirect to the URI stored by the most recent store_location call or
    # to the passed default.
    def redirect_back_or_default(default)
-      session[:return_to] ? redirect_to_url(session[:return_to]) : redirect_to(default)
+      redirect_to( session[:return_to] ? session[:return_to] : default )
       session[:return_to] = nil
    end
 
@@ -102,16 +101,24 @@ module AuthenticatedSystem
       base.send :helper_method, :current_user, :logged_in?
    end
 
-   # When called with before_filter :login_from_cookie will check for an :auth_token
-   # cookie and log the user back in if apropriate
+   # Called from #current_user.  First attempt to login by the user id stored in the session.
+   def login_from_session
+      self.current_user = User.find_by_id(session[:user]) if session[:user]
+   end
+
+   # Called from #current_user.  Now, attempt to login by basic authentication information.
+   def login_from_basic_auth
+      username, passwd = get_auth_data
+      self.current_user = User.authenticate(username, passwd) if username && passwd
+   end
+
+   # Called from #current_user.  Finaly, attempt to login by an expiring token in the cookie.
    def login_from_cookie
-      return true if logged_in?
-      return false unless cookies[:auth_token]
-      user = User.find_by_remember_token(cookies[:auth_token], :include => :accounts)
+      user = cookies[:auth_token] && User.find_by_remember_token(cookies[:auth_token])
       if user && user.remember_token?
          user.remember_me
+         cookies[:auth_token] = { :value => user.remember_token, :expires => user.remember_token_expires_at }
          self.current_user = user
-         cookies[:auth_token] = { :value => self.current_user.remember_token , :expires => self.current_user.remember_token_expires_at }
       end
    end
 

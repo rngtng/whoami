@@ -12,7 +12,8 @@
   </head>
   <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline %> >
     <div>
-      <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path %> - <em>who are you?</em></h1> 
+      <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path %> - <em>who are you?</em></h1>  
+      <p style="color: green;float:left; margin-left:50px;"><%= flash[:notice] %></p>
       <div class="accounts" style="float:right;">Add:
         <% Account.types.each do |type| -%> 
          <% n = image_tag( "/images/accounts/#{type}.png" ) %>
@@ -38,12 +39,12 @@
      <div style="float:right">
         view as:
         <%= link_to 'map', map_resources_path %>
-        <%= link_to 'timeline', timeline_resources_path %>
+        <%= link_to 'timeline', timeline_resources_path %>&nbsp;|&nbsp;
+	export to:
         <%= link_to 'iCal', ical_resources_path %>
       </div>
     <% end %>  
     <br clear="all">
-    <p style="color: green"><%= flash[:notice] %></p>
     
       <%= yield  %>
    
