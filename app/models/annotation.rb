@@ -160,7 +160,7 @@ class Annotation < ActiveRecord::Base
    def self.process_annotation( key, annotation )
       return [ :lat,  "#{$1}" ] if annotation =~/geo:lat=([0-9.])/
       return [ :long, "#{$1}" ] if annotation =~/geo:long=([0-9.])/
-      return [ :link, "http://beta.plazes.com/plaze/#{$1}" ] if annotation =~ /plaze([a-z0-9]{32})/
+      return [ :url, "http://beta.plazes.com/plaze/#{$1}" ] if annotation =~ /plaze([a-z0-9]{32})/
       [key, annotation]
    end
 end

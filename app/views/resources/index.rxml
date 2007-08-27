@@ -1,6 +1,6 @@
 #xml.instruct!
 xml.data do
- @items.each do |item|
+ @resources.each do |item|
   xml.event( item.title,  
    :start => item.time.httpdate, 
    :title => item.title,
