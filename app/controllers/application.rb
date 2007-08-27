@@ -17,22 +17,17 @@ class ApplicationController < ActionController::Base
 
    private
    def login
-      login_from_cookie
-      login_from_param unless logged_in?
-      access_denied unless logged_in?
+      login_from_param if params[:auth]
+      login_required
       @user = current_user
       @annotation  = params[:annotation] # ? params[:annotation] : ''
       #@annotation  = (params[:annotation] && !params[:annotation].empty?)  ? params[:annotation] : nil
    end
-
-   def login_from_param
+   
+   def login_from_param 
       return true if logged_in?
-      return false unless params[:auth]
       user = User.find_by_crypted_password(params[:auth], :include => :accounts )
       self.current_user = user if user
-      #user = User.find_by_crypted_password(params[:auth])
-      #self.current_user = user if user
    end
-
 end
 

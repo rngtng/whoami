@@ -13,9 +13,9 @@
       <h1 style="margin:0; padding:0; margin-bottom: 40px; font-weight: 900;    border:0; font-size: 40pt;"><em>who are you?</em></h1>
       
       <p style="color: green"><%= flash[:notice] %></p>
+      <p style="color: red"><%= flash[:error] %></p>
       
       <%= link_to_remote( 'login',  :url => new_session_path,        :method => :get, :update => 'content' ) %>
-      <%= link_to_remote( 'openid', :url => openid_new_session_path, :method => :get, :update => 'content' ) %>
       <%= link_to_remote( 'signup', :url => new_user_path,           :method => :get, :update => 'content' ) %>
       <div id="content">
         <%= yield  %>

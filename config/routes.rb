@@ -23,9 +23,16 @@ ActionController::Routing::Routes.draw do |map|
    # instead of a file named 'wsdl'
    #map.connect ':controller/service.wsdl', :action => 'wsdl'
 
+   map.home '', :controller => 'resources', :action => 'index'
+   
+   map.signup '/signup', :controller => 'users',   :action => 'new'
+   map.login  '/login',  :controller => 'session', :action => 'new'
+   map.logout '/logout', :controller => 'session', :action => 'destroy'
+   
+   map.open_id_complete 'session', :controller => "session", :action => "create", :requirements => { :method => :get }
+   
    map.resources :users
-   map.resource :session, :controller => 'session', :new => { :create_openid => :post,  :openid => :get }
-   map.open_id_complete 'session/new/create_openid', :controller => "session", :action => "create_openid", :requirements => { :method => :get }
+   map.resource :session, :controller => 'session'
 
    map.resources :accounts, :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
       accounts.resources :included_resources, :controller => 'resources'
@@ -34,11 +41,6 @@ ActionController::Routing::Routes.draw do |map|
    map.resources :resources, :collection => { :map => :get, :timeline => :get, :ical => :get }
 
    map.resources :workers
-   
-   map.home '', :controller => 'resources', :action => 'index'
-   map.signup '/signup', :controller => 'users',   :action => 'new'
-   map.login  '/login',  :controller => 'session', :action => 'new'
-   map.logout '/logout', :controller => 'session', :action => 'destroy'
 
 end
 
