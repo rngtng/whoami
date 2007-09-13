@@ -208,7 +208,7 @@ class FlickrAccount < Account
 
    def auth_link
       api.auth.getFrob
-      api.auth.login_link
+      api.auth.login_link( 'read' )
    end
 
    def auth?

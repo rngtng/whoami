@@ -356,7 +356,8 @@ class YoutubeResource < Resource
       self.time = d.upload_time || Time.now
       annotation( { :tag => d.tags }, ' ' )
       self.data = d
-      annotation( :video => url )
+      annotation( :image => url )
+      annotation( :video => "http://www.youtube.com/v/#{d.id}" )
       self.complete = true
    end
 
@@ -475,94 +476,94 @@ end
 
 ######################################################################################################
 # Represents a search result by yahoo
-class YahoosearchResource < Resource
-   def raw_data=(d)
-      self.data_id = d['Url']
-      self.time = Time.at( d['ModificationDate'].to_i )
-      self.complete = true
-      self.data = d
-   end
-
-   def url
-      data['Url']
-   end
-
-   def title
-      data['Title']
-   end
-
-   def text
-      data['Summary']
-   end
-
-   def info
-      super
-   end
-end
+#class YahoosearchResource < Resource
+#   def raw_data=(d)
+#      self.data_id = d['Url']
+#      self.time = Time.at( d['ModificationDate'].to_i )
+#      self.complete = true
+#      self.data = d
+#   end
+#
+#   def url
+#      data['Url']
+#   end
+#
+#   def title
+#      data['Title']
+#   end
+#
+#   def text
+#      data['Summary']
+#   end
+#
+#   def info
+#      super
+#   end
+#end
 
 ######################################################################################################
 # Represents a posting from Twitter - http://www.twitter.com
-class TwitterResource < Resource
-   def raw_data=(d)
-      self.data_id = d.id
-      self.time = d.created_at
-      self.data = d
-      self.complete = true
-   end
-
-   def url
-      "http://www.twitter.com/#{data.user.screen_name}/statuses/#{data.id}"
-   end
-
-   def title
-      "#{data.user.name} says"
-   end
-
-   def thumbnail
-      return thumbshot( @links.first ) if @links.first
-      thumbshot( url )
-   end
-
-   def info
-      super
-   end
-end
-
-######################################################################################################
-# Represents a location by Plazes  http://www.plazes.com
-class PlazesResource < Resource
-   delegate :plaze,    :to => :data
-   delegate :street,   :to => :plaze
-   delegate :zip,      :to => :plaze
-   delegate :city,     :to => :plaze
-   delegate :country,  :to => :plaze
-   delegate :latitude, :to => :plaze
-   delegate :longitude,:to => :plaze
-   delegate :blog_url, :to => :plaze
-
-   def raw_data=(d)
-      return unless d.plaze.name
-      self.time = d.start.to_time
-      self.data_id = "#{d.plaze.key}#{self.time.to_i}"
-      self.data = d
-      #extract_all
-      extract_meta_people_locations( url )
-      self.complete = true
-   end
-
-   def url
-      return "http://#{plaze.blog_url.gsub( 'http://', '')}" unless plaze.blog_url.empty?
-      plaze.url
-   end
-
-   def title
-      plaze.name
-   end
-
-   def text
-      "#{street} #{zip} #{city} #{country}\n Latitude: #{latitude} Longitude: #{longitude}\n #{blog_url}"
-   end
-end
+#class TwitterResource < Resource
+#   def raw_data=(d)
+#      self.data_id = d.id
+#      self.time = d.created_at
+#      self.data = d
+#      self.complete = true
+#   end
+#
+#   def url
+#      "http://www.twitter.com/#{data.user.screen_name}/statuses/#{data.id}"
+#   end
+#
+#   def title
+#      "#{data.user.name} says"
+#   end
+#
+#   def thumbnail
+#      return thumbshot( @links.first ) if @links.first
+#      thumbshot( url )
+#   end
+#
+#   def info
+#      super
+#   end
+#end
+#
+#######################################################################################################
+## Represents a location by Plazes  http://www.plazes.com
+#class PlazesResource < Resource
+#   delegate :plaze,    :to => :data
+#   delegate :street,   :to => :plaze
+#   delegate :zip,      :to => :plaze
+#   delegate :city,     :to => :plaze
+#   delegate :country,  :to => :plaze
+#   delegate :latitude, :to => :plaze
+#   delegate :longitude,:to => :plaze
+#   delegate :blog_url, :to => :plaze
+#
+#   def raw_data=(d)
+#      return unless d.plaze.name
+#      self.time = d.start.to_time
+#      self.data_id = "#{d.plaze.key}#{self.time.to_i}"
+#      self.data = d
+#      #extract_all
+#      extract_meta_people_locations( url )
+#      self.complete = true
+#   end
+#
+#   def url
+#      return "http://#{plaze.blog_url.gsub( 'http://', '')}" unless plaze.blog_url.empty?
+#      plaze.url
+#   end
+#
+#   def title
+#      plaze.name
+#   end
+#
+#   def text
+#      "#{street} #{zip} #{city} #{country}\n Latitude: #{latitude} Longitude: #{longitude}\n #{blog_url}"
+#   end
+#end
 
 ############################################################################################################################################
 

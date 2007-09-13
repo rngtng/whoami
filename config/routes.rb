@@ -35,7 +35,7 @@ ActionController::Routing::Routes.draw do |map|
    map.resource :session, :controller => 'session'
 
    map.resources :accounts, :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
-      accounts.resources :included_resources, :controller => 'resources'
+      accounts.resources :resources, :controller => 'resources'
    end
 
    map.resources :resources, :collection => { :map => :get, :timeline => :get, :ical => :get }

@@ -158,8 +158,10 @@ class Annotation < ActiveRecord::Base
 
    private
    def self.process_annotation( key, annotation )
-      return [ :lat,  "#{$1}" ] if annotation =~/geo:lat=([0-9.])/
-      return [ :long, "#{$1}" ] if annotation =~/geo:long=([0-9.])/
+      #return [ :lat,  "#{$1}" ] if annotation =~/geo:lat=([0-9.])/
+      #return [ :long, "#{$1}" ] if annotation =~/geo:long=([0-9.])/
+      raise Exception.new  if annotation =~/geo:lat=([0-9.])/
+      raise Exception.new  if annotation =~/geo:long=([0-9.])/
       return [ :url, "http://beta.plazes.com/plaze/#{$1}" ] if annotation =~ /plaze([a-z0-9]{32})/
       [key, annotation]
    end
@@ -250,17 +252,25 @@ class Geo < Location
    end
 end
 
-class Lat < Geo
-   def lng
-      0
-   end
-end
-
-class Long < Geo
-   def lat
-      0
-   end
-end
+#class Lat < Geo
+#   def lat
+#      name
+#   end
+#
+#   def lng
+#      0
+#   end
+#end
+#
+#class Long < Geo
+#   def lat
+#      0
+#   end
+#
+#   def lng
+#      name
+#   end
+#end
 
 #############################################################################
 class Language < Annotation

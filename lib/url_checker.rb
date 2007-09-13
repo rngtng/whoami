@@ -8,7 +8,7 @@ class UrlChecker
 
    def self.check_url( url )
       return false if url.nil? or url.empty?
-      #url = get_xmlrpc_url( url )
+     # url = get_xmlrpc_url( url )
       #return url if url
       url = get_feed_url( url )
       return url if url
