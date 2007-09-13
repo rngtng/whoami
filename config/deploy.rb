@@ -106,30 +106,30 @@ set :use_sudo, false
 # handler).
 
 namespace :backgroundrb do
-      desc "Start  backgroundrb"
-      task :start, :roles => :app do
-         #run "#{deploy_to}current/script/fetch_resources_daemon start -- -e production"
-	 run "#{deploy_to}current/script/backgroundrb start -- -r production"
-      end
+   desc "Start  backgroundrb"
+   task :start, :roles => :app do
+      #run "#{deploy_to}current/script/fetch_resources_daemon start -- -e production"
+      run "#{deploy_to}current/script/backgroundrb start -- -r production"
+   end
 
-      desc "Stop backgroundrb"
-      task :stop, :roles => :app do
-         #run "#{deploy_to}current/script/fetch_resources_daemon stop -- -e production"
-	 run "#{deploy_to}current/script/backgroundrb stop -- -r production"
-      end
+   desc "Stop backgroundrb"
+   task :stop, :roles => :app do
+      #run "#{deploy_to}current/script/fetch_resources_daemon stop -- -e production"
+      run "#{deploy_to}current/script/backgroundrb stop -- -r production"
+   end
 end
+
+namespace :deploy do
+   task :copy_background, :roles => :app do
+      run "cp -f #{release_path}/vendor/middleman_rails_init.rb  #{release_path}/vendor/plugins/backgroundrb/lib/middleman_rails_init.rb"
+   end
+end
+
+after  'deploy:update_code', 'deploy:copy_background'
 
 before 'mongrel:cluster:stop',  'backgroundrb:stop'
 after  'mongrel:cluster:start', 'backgroundrb:start'
 
 before 'mongrel:cluster:restart',  'backgroundrb:stop'
 after  'mongrel:cluster:restart',  'backgroundrb:start'
-
-
-task :test1, :roles => :app do
-   stamp = Time.now.utc.strftime("%Y%m%d%H%M.%S")
-   #run 'find test -exec touch -t 200706182203.56 {} \;' #, :env => { "TZ" => "UTC" }
-   run 'which sh' #+'\''+';'
-   #run 'echo \ '
-end
 
