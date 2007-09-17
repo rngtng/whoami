@@ -10,6 +10,18 @@ class ResourcesController < ApplicationController
    exempt_from_layout :rxml
 
    def index
+      feed_options = {
+         :feed => {
+            :title => "All resources",
+	    :link => resources_url
+         },
+         :item => {
+            :title => :title,
+            :pub_date => :time,
+            :description => :text,
+            :link => Proc.new { |post| resource_url( post) }
+         }
+      }
       @resources = @user.valid_resources.find_annotated_with( params )
       @min  = @user.valid_resources.min_time.to_i / 1.day
       @max  = @user.valid_resources.max_time.to_i / 1.day
@@ -18,9 +30,11 @@ class ResourcesController < ApplicationController
       respond_to do |format|  #strange bug: fromat.html must be first in row in case format is not given!?
          format.html
          format.xml
+         format.rss  { render_rss_feed_for @resources, feed_options }
+         format.atom { render_atom_feed_for @resources, feed_options }
          format.ics {
-            ical = Resource.to_calendar( @resources ).to_ical
-            render :text => ical
+             ical = Resource.to_calendar( @resources ).to_ical
+             render :text => ical
          }
          format.js { render :partial => "partials/annotations_and_resources" }
       end

@@ -16,9 +16,9 @@ class Account < ActiveRecord::Base
    serialize  :token
 
    validates_associated  :user
-   validates_presence_of :username
+   #validates_presence_of :username
 
-   delegate :requires_auth?, :requires_password?, :requires_host?, :worker_update_time, :color, :to => :"self.class"
+   delegate :requires_auth?, :requires_password?, :requires_user?, :requires_host?, :worker_update_time, :color, :to => :"self.class"
    delegate *Annotation.types.push( :annotations, :to => :valid_resources )
 
    before_save :resources_count #update resource_counter
@@ -48,10 +48,6 @@ class Account < ActiveRecord::Base
       end
    end
 
-   #debug
-   def self.first
-      find :first
-   end
 
    ###################### REQUIRES STUFF   ####################
    # Wheter account requires auth
@@ -64,6 +60,11 @@ class Account < ActiveRecord::Base
       @requires_host ||= false
    end
 
+   # Wheter account requires host
+   def self.requires_user?
+      @requires_user ||= true
+   end
+   
    # Wheter account requires password
    def self.requires_password?
       @requires_password ||= false
@@ -115,7 +116,7 @@ class Account < ActiveRecord::Base
    # Get the feed data rss/atom
    def fetch_feed
       f = FeedNormalizer::FeedNormalizer.parse( open( feed ) )
-      f.resources.each  do |resource|
+      f.items.each  do |resource|
          i = Resource.factory( type, :feed => resource )
          self.resources << i
       end
@@ -387,6 +388,29 @@ class BlogAccount < Account
    def feed
       UrlChecker.get_feed_url( host )
    end
+
+   def raw_resources( run = 0, blog_id = 1)
+      count = (run+1) * 10
+      api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
+   end
+   alias posts raw_resources
+
+   private
+   def api
+      url = UrlChecker.get_xmlrpc_url( host )
+      @api ||= XMLRPC::Client.new2( url )
+   end
+   alias blog api
+
+   def fetch_resources_init
+      fetch_resources( 100, 50 ) #get 500 posting, until we got more than 1000
+   end
+end
+
+class FeedAccount < Account
+   @color = "#FFFF00"
+   @requires_host = true
+   @requires_user = false
 
    def raw_resources( run = 0, blog_id = 1)
       count = (run+1) * 10

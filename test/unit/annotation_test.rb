@@ -9,11 +9,11 @@ class AnnotationTest < Test::Unit::TestCase
       end
    end
 
-   def test_get_annotation_default( name = 'test' )
-      t = Annotation.get( name )
-      assert t, 'could not get Annotation'
-      assert t.is_type?( Annotation.default_type ), 'wrong type'
-   end
+  # def test_get_annotation_default( name = 'test' )
+  #    t = Annotation.get( name )
+  #    assert t, 'could not get Annotation'
+  #    assert t.is_type?( Annotation.default_type ), 'wrong type'
+  # end
 
   # def test_get_annotation( name = "   This SHOULD be \"' stripped and downCased ", annotations = [:vague, :person ] )
   #    annotations.each do |type|
@@ -60,15 +60,15 @@ class AnnotationTest < Test::Unit::TestCase
  #   assert t.save
  #end
 
-   def test_get_annotation_location_to_geo( type1 = :location, type2 = :geo, annotation = 'spain' )
-      test_get_annotation_default( annotation )
-      ##now get the annotation
-      t = Annotation.get( type1 => annotation )
-      assert t.id
-      assert t.is_type?( type2 )
-      assert t.is_a?( type2.to_s.classify.constantize ), "could not change Class type from DEFAULT to #{type2} -> it is #{t.type}"
-   end
-
+  # def test_get_annotation_location_to_geo( type1 = :location, type2 = :geo, annotation = 'spain' )
+  #    test_get_annotation_default( annotation )
+  #    ##now get the annotation
+  #    t = Annotation.get( type1 => annotation )
+  #    assert t.id
+  #    assert t.is_type?( type2 )
+  #    assert t.is_a?( type2.to_s.classify.constantize ), "could not change Class type from DEFAULT to #{type2} -> it is #{t.type}"
+  # end
+  #
    ###################################### should fail
   #def test_change_annotation_wrongtype(type1 = :person, type2 = :this_is_not_valid, name = 'test_p2invalid' )
   #   t = Annotation.get( type1 => name )

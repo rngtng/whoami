@@ -9,6 +9,8 @@
     <%= javascript_include_tag 'http://simile.mit.edu/timeline/api/timeline-api.js' if @timeline %>
     <%= javascript_include_tag 'double_slider' %>
     <%= stylesheet_link_tag 'default' %>
+    <%= auto_discovery_link_tag(:atom, formatted_resources_url(:atom) ) %>
+    <%= auto_discovery_link_tag(:rss, formatted_resources_url(:rss) ) %>
   </head>
   <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline %> >
     <div>
@@ -38,10 +40,14 @@
      </div>
      <div style="float:right">
         view as:
+	<%= link_to 'icons', resources_path %>
         <%= link_to 'map', map_resources_path %>
         <%= link_to 'timeline', timeline_resources_path %>&nbsp;|&nbsp;
 	export to:
         <%= link_to 'iCal', ical_resources_path %>
+	<%= link_to 'RSS',  formatted_resources_path( :rss )  %>
+	<%= link_to 'ATOM', formatted_resources_path( :atom )  %>
+	<%= link_to 'XML', formatted_resources_path( :xml )  %>
       </div>
     <% end %>  
     <br clear="all">

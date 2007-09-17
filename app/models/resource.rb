@@ -137,7 +137,7 @@ class Resource < ActiveRecord::Base
    # link, if this fails to, the thumbshot of url is taken
    def thumbnail
       return images.first.thumbnail unless images.empty?
-      return thumbshot( links.first.thumbnail ) unless links.empty?
+      return thumbshot( urls.first.thumbnail ) unless urls.empty?
       thumbshot( url )
    end
 
@@ -251,12 +251,12 @@ class Resource < ActiveRecord::Base
    #---------------------------------------------------------------------------------------------------------------------
    # Extracts annotations, people and locations
    def extract_all
-      extract_links_and_images
+      extract_urls_and_images
       extract_meta_people_locations
    end
 
-   # Extract links and images
-   def extract_links_and_images( from = nil )
+   # Extract urls and images
+   def extract_urls_and_images( from = nil )
       from = text unless from
       d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
       URI::extract( d, 'http' ) do |url|
@@ -311,8 +311,8 @@ class FlickrResource < Resource
       end
       # add notes, comments, date_posted
       self.data = SimpleResource.new( :url => d.url, :title => d.title, :text => d.description )
-      annotation( :image => data.url )
       annotation( :url => url )
+      annotation( :image => data.url )
       self.complete = true
    end
 
@@ -356,7 +356,7 @@ class YoutubeResource < Resource
       self.time = d.upload_time || Time.now
       annotation( { :tag => d.tags }, ' ' )
       self.data = d
-      annotation( :image => url )
+      annotation( :url => url )
       annotation( :video => "http://www.youtube.com/v/#{d.id}" )
       self.complete = true
    end
@@ -474,6 +474,23 @@ class BlogResource < Resource
    end
 end
 
+
+######################################################################################################
+# Represents a posting from a Feed
+class FeedResource < Resource
+   def raw_data=(d)
+      self.data_id = d['postid']
+      time = d['dateCreated'].to_time
+      return if time > Time.now #get rid of future posts
+      return unless time.to_i > 0  #get rid of drafts
+      self.time = time
+      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
+      extract_all
+      annotation( :blog => url)
+      self.complete = true
+   end
+end
+
 ######################################################################################################
 # Represents a search result by yahoo
 #class YahoosearchResource < Resource
@@ -520,7 +537,7 @@ end
 #   end
 #
 #   def thumbnail
-#      return thumbshot( @links.first ) if @links.first
+#      return thumbshot( @urls.first ) if @urls.first
 #      thumbshot( url )
 #   end
 #
