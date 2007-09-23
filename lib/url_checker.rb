@@ -38,7 +38,7 @@ class UrlChecker
       url = "http://#{url.sub( 'http://', '')}"
       begin
          content = Hpricot.XML( open( url ) )
-         return url if (content%"rss") or (content%"feed") #it is already an feed url -> return
+         return url if (content%"rss") or (content%"channel") or (content%"feed") #it is already an feed url -> return
          ['rss', 'atom'].each do |type|
             new_url = get_url( content, type )
             return new_url  if new_url

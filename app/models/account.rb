@@ -64,7 +64,7 @@ class Account < ActiveRecord::Base
    def self.requires_user?
       @requires_user ||= true
    end
-   
+
    # Wheter account requires password
    def self.requires_password?
       @requires_password ||= false
@@ -110,28 +110,12 @@ class Account < ActiveRecord::Base
 
    # What to do if resources can not be fetched e.g. in case of wrong auth
    def fetch_resources_fallback
-      return fetch_feed #if user isn't auth
-   end
-
-   # Get the feed data rss/atom
-   def fetch_feed
-      f = FeedNormalizer::FeedNormalizer.parse( open( feed ) )
-      f.items.each  do |resource|
-         i = Resource.factory( type, :feed => resource )
+      result = Hpricot.XML( open( feed ) ) #more infos but less resources  max. 31    #TODO: loop trough annotations to get even more!
+      (result/:item).each  do |resource|
+         i = Resource.factory( type, :feed=> resource )
          self.resources << i
       end
    end
-
-   # Get the RSS data
-   # This is like fetch feed but far more details!
-   def fetch_rss
-      result = Hpricot.XML( open( feed ) )
-      (result/:resource).each  do |resource|
-         i = Resource.factory( type, :rss=> resource )
-         self.resources << i
-      end
-   end
-
    #################### GET STUFF #############################
    def resources_count
       self.resources_count = resources.count
@@ -347,6 +331,15 @@ class LastfmAccount < Account
       return nil unless a
       a.album
    end
+
+   #TODO
+   #def fetch_resources_fallback
+   #   result = Hpricot.XML( open( feed ) ) #more infos but less resources  max. 31    #TODO: loop trough annotations to get even more!
+   #   (result/:item).each  do |resource|
+   #      i = Resource.factory( type, :feed=> resource )
+   #      self.resources << i
+   #   end
+   #end
 end
 
 ######################################################################################################
@@ -361,7 +354,7 @@ class DeliciousAccount < Account
    def raw_resources(run = 0)
       case run
       when 0 : api.posts_recent( nil, 100 )
-      when 1 : api.posts_all if count == 1
+      when 1 : api.posts_all if run == 1
       else []
       end
    end
@@ -372,10 +365,6 @@ class DeliciousAccount < Account
       @api ||= MyDelicious::Client.new username, password
    end
    alias delicious api
-
-   def fetch_resources_fallback
-      fetch_rss  #more infos but less resources  max. 31    #TODO: loop trough annotations to get even more!
-   end
 end
 
 ######################################################################################################
@@ -395,40 +384,54 @@ class BlogAccount < Account
    end
    alias posts raw_resources
 
+   def auth?
+      api and super
+      ##TODO check if logged in
+   end
+
    private
    def api
       url = UrlChecker.get_xmlrpc_url( host )
-      @api ||= XMLRPC::Client.new2( url )
+      @api ||= XMLRPC::Client.new2( url ) if url
    end
    alias blog api
 
    def fetch_resources_init
       fetch_resources( 100, 50 ) #get 500 posting, until we got more than 1000
    end
-end
 
-class FeedAccount < Account
-   @color = "#FFFF00"
-   @requires_host = true
-   @requires_user = false
-
-   def raw_resources( run = 0, blog_id = 1)
-      count = (run+1) * 10
-      api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
-   end
-   alias posts raw_resources
-
-   private
-   def api
-      url = UrlChecker.get_xmlrpc_url( host )
-      @api ||= XMLRPC::Client.new2( url )
-   end
-   alias blog api
-
-   def fetch_resources_init
-      fetch_resources( 100, 50 ) #get 500 posting, until we got more than 1000
+   # What to do if resources can not be fetched e.g. in case of wrong auth
+   def fetch_resources_fallback
+      f = FeedNormalizer::FeedNormalizer.parse( open( feed ) )
+      f.items.each  do |resource|
+         i = Resource.factory( type, :feed => resource )
+         self.resources << i
+      end
    end
 end
+
+#class FeedAccount < Account
+#   @color = "#FFFF00"
+#   @requires_host = true
+#   @requires_user = false
+#
+#   def raw_resources( run = 0, blog_id = 1)
+#      count = (run+1) * 10
+#      api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
+#   end
+#   alias posts raw_resources
+#
+#   private
+#   def api
+#      url = UrlChecker.get_xmlrpc_url( host )
+#      @api ||= XMLRPC::Client.new2( url )
+#   end
+#   alias blog api
+#
+#   def fetch_resources_init
+#      fetch_resources( 100, 50 ) #get 500 posting, until we got more than 1000
+#   end
+#end
 
 ######################################################################################################
 #class YahoosearchAccount < Account

@@ -29,7 +29,7 @@
     <br clear="all">
     
    <% unless @user.accounts.empty? %> 
-     <div style="float: left">
+     <div style="float: left; margin-top: 10px;">
       <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
       <% @user.accounts.each do |account| -%>
         <% next unless account.id %>
@@ -38,7 +38,7 @@
         <%= "!" unless account.up_to_date? %>
       <% end %>
      </div>
-     <div style="float:right">
+     <div style="float:right; margin-top: 10px;">
         view as:
 	<%= link_to 'icons', resources_path %>
         <%= link_to 'map', map_resources_path %>
@@ -50,7 +50,7 @@
 	<%= link_to 'XML', formatted_resources_path( :xml )  %>
       </div>
     <% end %>  
-    <br clear="all">
+    <br clear="all"><br clear="all">
     
       <%= yield  %>
    

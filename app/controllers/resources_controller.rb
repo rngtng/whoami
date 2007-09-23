@@ -13,7 +13,7 @@ class ResourcesController < ApplicationController
       feed_options = {
          :feed => {
             :title => "All resources",
-	    :link => resources_url
+            :link => resources_url
          },
          :item => {
             :title => :title,
@@ -33,8 +33,8 @@ class ResourcesController < ApplicationController
          format.rss  { render_rss_feed_for @resources, feed_options }
          format.atom { render_atom_feed_for @resources, feed_options }
          format.ics {
-             ical = Resource.to_calendar( @resources ).to_ical
-             render :text => ical
+            ical = Resource.to_calendar( @resources ).to_ical
+            render :text => ical
          }
          format.js { render :partial => "partials/annotations_and_resources" }
       end
@@ -66,7 +66,7 @@ class ResourcesController < ApplicationController
       info = ''
       to = [ll]
       i = 0
-      color = [ "#ff0000", "#00ff00" ]
+      color = [ "#ff0000", "#00ff00", "#0000ff"  ]
       resources.each do |resource|
          next if resource.geos.empty?
          geoannotation = resource.geos.first
@@ -77,8 +77,9 @@ class ResourcesController < ApplicationController
          marker = GMarker.new( geoannotation.ll, :title => resource.title , :icon => Variable.new( "i#{resource.id}" ) ) #, :info_window => info )#, :icon => icon )
          map.overlay_init(marker)
          #end
-         i = (-i) + 1
-         map.overlay_init( GPolyline.new( get_arrow([geoannotation.ll,ll]), color[i],2,0.7) )
+         i += 30
+         i = 0 if i > 255
+         map.overlay_init( GPolyline.new( get_arrow([geoannotation.ll,ll]), "#00#{i.to_s(16)}#{(255-i).to_s(16)}", 3, 0.8) ) # color, width, opciy
          ll = geoannotation.ll
       end
       map.center_zoom_init(ll, 2 )
@@ -101,6 +102,7 @@ class ResourcesController < ApplicationController
    end
 
    def get_arrow(line)
+      return line
       from = line[0]
       to = line[1]
       y = to[0].to_i - from[0].to_i
@@ -108,13 +110,13 @@ class ResourcesController < ApplicationController
       phi = Math::PI/8
       x1 = x*Math.cos(phi) - y*Math.sin(phi)
       y1 = y*Math.cos(phi) + x*Math.sin(phi)
-      x1 = x1 /5
-      y1 = y1 /5
+      x1 = x1 /8
+      y1 = y1 /8
       phi = -Math::PI/8
       x2 = x*Math.cos(phi) - y*Math.sin(phi)
       y2 = y*Math.cos(phi) + x*Math.sin(phi)
-      x2 = x2 /5
-      y2 = y2 /5
+      x2 = x2 /8
+      y2 = y2 /8
       line << [ to[0].to_i-y2,to[1].to_i-x2] << [to[0], to[1]] << [ to[0].to_i-y1,to[1].to_i-x1]
    end
 end

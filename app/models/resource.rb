@@ -176,7 +176,7 @@ class Resource < ActiveRecord::Base
    ###############################################################################################
    # Annotations resource with annotation. If split_by is provided, annotation is splited in server annotations
    # annotation can be a Sting, a Hash where :Annotationtype => AnnotationName or a Annotation
-   def annotation( annotation, split_by = nil )
+   def annotate( annotation, split_by = nil )
       @cached_annotations ||= []
       annotation = Annotation.split_and_get( annotation, split_by )  unless annotation.is_a? Annotation
       @cached_annotations  <<  annotation
@@ -190,10 +190,14 @@ class Resource < ActiveRecord::Base
    # Set resource data taken from a feed entry
    def feed=(f)
       self.data_id = f.id || f.urls.first
-      self.time = f.date_published || Time.now
-      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.description )
-      annotation( :url => url ) #TDODO specify better type here?
-      extract_all
+      t = f.date_published.to_i || Time.now.to_i
+      self.time = Time.at( t )
+      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.content)
+      annotate( :url => url ) #TDODO specify better type here?
+      annotate( { :tag => f.categories.join( ' ') }, ' ' ) unless f.categories.empty?
+      annotate( { :author => f.authors.join( ' ') }, ' ' ) unless f.authors.empty?
+      extract_urls_and_images
+      extract_tags
       self.complete = true
    end
 
@@ -249,19 +253,13 @@ class Resource < ActiveRecord::Base
    end
 
    #---------------------------------------------------------------------------------------------------------------------
-   # Extracts annotations, people and locations
-   def extract_all
-      extract_urls_and_images
-      extract_meta_people_locations
-   end
-
    # Extract urls and images
    def extract_urls_and_images( from = nil )
       from = text unless from
       d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
       URI::extract( d, 'http' ) do |url|
          type = ( url =~ /\.(png|jpg|gif)/ ) ? :image : :url
-         annotation( type => url )
+         annotate( type => url )
       end
    end
 
@@ -269,14 +267,13 @@ class Resource < ActiveRecord::Base
    def tag_the_net( from_url = nil  )
       from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text.gsub( /<[^>]*>/, '' ))}"
       doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
-      (doc/"dim[@type='topic']/resource").each    { |resource| annotation( :unknown => resource.inner_html ) } # return all unkown annotations
-      (doc/"dim[@type='person']/resource").each   { |resource| annotation( :person => resource.inner_html ) } # return all people
-      (doc/"dim[@type='location']/resource").each { |resource| annotation( :location => resource.inner_html ) } # return all locations
-      (doc/"dim[@type='language']/resource").each { |resource| annotation( :language => resource.inner_html ) } # return all languages
-      (doc/"dim[@type='author']/resource").each   { |resource| annotation( :author => resource.inner_html ) } # return all people
-      #(doc/"dim[@type='title']/resource").each # return all people
+      (doc/"dim[@type='topic']/item").each    { |resource| annotate( resource.inner_html ) } # return all unkown annotations
+      (doc/"dim[@type='person']/item").each   { |resource| annotate( :person => resource.inner_html ) } # return all people
+      (doc/"dim[@type='location']/item").each { |resource| annotate( :location => resource.inner_html ) } # return all locations
+      (doc/"dim[@type='language']/item").each { |resource| annotate( :language => resource.inner_html ) } # return all languages
+      (doc/"dim[@type='author']/item").each   { |resource| annotate( :author => resource.inner_html ) } # return all people
    end
-   alias extract_meta_people_locations tag_the_net ##TODO it isn't called meta anymore
+   alias extract_tags tag_the_net
 
    # A simple datastructure to store title, url and text for an resource
    class SimpleResource
@@ -307,12 +304,12 @@ class FlickrResource < Resource
    def more_data=( d )
       self.time = d.dates[:taken] || d.dates[:posted]
       d.tags.each do |annotation|
-         annotation( :tag => annotation.clean )
+         annotate( :tag => annotation.clean )
       end
       # add notes, comments, date_posted
       self.data = SimpleResource.new( :url => d.url, :title => d.title, :text => d.description )
-      annotation( :url => url )
-      annotation( :image => data.url )
+      annotate( :url => url )
+      annotate( :image => data.url )
       self.complete = true
    end
 
@@ -354,10 +351,10 @@ class YoutubeResource < Resource
    def raw_data=(d)
       self.data_id = d.id
       self.time = d.upload_time || Time.now
-      annotation( { :tag => d.tags }, ' ' )
+      annotate( { :tag => d.tags }, ' ' )
       self.data = d
-      annotation( :url => url )
-      annotation( :video => "http://www.youtube.com/v/#{d.id}" )
+      annotate( :url => url )
+      annotate( :video => "http://www.youtube.com/v/#{d.id}" )
       self.complete = true
    end
 
@@ -391,8 +388,8 @@ class LastfmResource < Resource
       self.data_id = d.url  ##TODO: is id available???
       self.time = d.date
       self.data = d
-      annotation( :url => url)
-      annotation( :artist => artist)
+      annotate( :url => url)
+      annotate( :artist => artist)
       self.complete = !album.nil?
    end
 
@@ -415,6 +412,20 @@ class LastfmResource < Resource
       data.album = album
       self.complete = true
    end
+
+   #TODO
+   #def feed=(r)
+   #   self.time = Time.parse( (r/"pubDate").inner_html )
+   #   r_url   = (r/"guid").inner_html
+   #   r_title = (r/"title").inner_html
+   #   r_text  = (r/"description").inner_html
+   #   self.data = SimpleResource.new( :url => r_url, :title => r_title,  :text => r_text )
+   #   self.data_id = url
+   #   #annotations = (r/"dc:subject").inner_html
+   #   #annotate( { :tag => annotations }, ' ' )
+   #   #annotate( :url => url)
+   #   self.complete = true
+   #end
 end
 
 ######################################################################################################
@@ -423,9 +434,9 @@ class DeliciousResource < Resource
    def raw_data=(d)
       self.data_id = d.hash
       self.time = d.time
-      annotation( { :tag => d.tag }, ' ' )
+      annotate( { :tag => d.tag }, ' ' )
       self.data = d
-      annotation( :bookmark => url)
+      annotate( :url => url)
       self.complete = true
    end
 
@@ -433,7 +444,7 @@ class DeliciousResource < Resource
       thumbshot( url)
    end
 
-   def rss=(r)
+   def feed=(r)
       self.time = Time.parse( (r/"dc:date").inner_html )
       r_url   = (r/"link").inner_html
       r_title = (r/"title").inner_html
@@ -441,19 +452,8 @@ class DeliciousResource < Resource
       self.data = SimpleResource.new( :url => r_url, :title => r_title,  :text => r_text )
       self.data_id = url
       annotations = (r/"dc:subject").inner_html
-      annotation( { :tag => annotations }, ' ' )
-      annotation( :url => url)
-      self.complete = true
-   end
-
-   def json=(j)
-      self.time = Time.now #fix this!!
-      self.data = SimpleResource.new( :url => j['u'], :title => j['d'],  :text => j['n'] )
-      self.data_id = url
-      annotation( :url => url)
-      j['t'].each do |annotation|
-         annotation( :tag => annotation )
-      end
+      annotate( { :tag => annotations }, ' ' )
+      annotate( :url => url)
       self.complete = true
    end
 end
@@ -468,8 +468,22 @@ class BlogResource < Resource
       return unless time.to_i > 0  #get rid of drafts
       self.time = time
       self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
-      extract_all
-      annotation( :blog => url)
+      extract_urls_and_images
+      extract_tags
+      annotate( :blog => url)
+      self.complete = true
+   end
+
+   def feed=(f)
+      self.data_id = f.id || f.urls.first
+      t = f.date_published.to_i || Time.now.to_i
+      self.time = Time.at( t )
+      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.content)
+      annotate( :blog => url )
+      annotate( { :tag => f.categories.join( ' ') }, ' ' ) unless f.categories.empty?
+      annotate( { :author => f.authors.join( ' ') }, ' ' ) unless f.authors.empty?
+      extract_urls_and_images
+      extract_tags
       self.complete = true
    end
 end
@@ -477,19 +491,19 @@ end
 
 ######################################################################################################
 # Represents a posting from a Feed
-class FeedResource < Resource
-   def raw_data=(d)
-      self.data_id = d['postid']
-      time = d['dateCreated'].to_time
-      return if time > Time.now #get rid of future posts
-      return unless time.to_i > 0  #get rid of drafts
-      self.time = time
-      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
-      extract_all
-      annotation( :blog => url)
-      self.complete = true
-   end
-end
+#class FeedResource < Resource
+#   def raw_data=(d)
+#      self.data_id = d['postid']
+#      time = d['dateCreated'].to_time
+#      return if time > Time.now #get rid of future posts
+#      return unless time.to_i > 0  #get rid of drafts
+#      self.time = time
+#      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
+#      extract_all
+#      annotate( :blog => url)
+#      self.complete = true
+#   end
+#end
 
 ######################################################################################################
 # Represents a search result by yahoo
@@ -564,7 +578,7 @@ end
 #      self.data_id = "#{d.plaze.key}#{self.time.to_i}"
 #      self.data = d
 #      #extract_all
-#      extract_meta_people_locations( url )
+#      extract_tags( url )
 #      self.complete = true
 #   end
 #

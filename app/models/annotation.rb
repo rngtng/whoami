@@ -27,13 +27,12 @@ class Annotation < ActiveRecord::Base
 
    # The default annotation type if not specified
    cattr_accessor :default_type
-   self.default_type = :unknown
 
    # Splits name by split_by and created & returns the annotations
    def self.split_and_get( names, split_by = nil )
       return Annotation.get( names ) unless split_by #fallback if nothing to split
       annotations = []
-      type = Annotation.default_type
+      type = :topic
       type, names = names.shift if names.is_a? Hash
       names.split( split_by ).each do |resource|
          annotations << Annotation.get( type => resource)
@@ -44,24 +43,26 @@ class Annotation < ActiveRecord::Base
    # Returns the annotation with name in case it exists. If not the annotation is created and
    # returned.
    def self.get( name )
-      type = Annotation.default_type
+      type = :topic
       type, name = name.shift if name.is_a? Hash
-      type, name = process_annotation( type, name )   #fliter special annotation/keys--
+      type, name = Annotation.process_annotation( type, name )   #fliter special annotation/keys--
       annotation = Annotation.find_by_data_id( name.to_s ) #TODO find similar! prepare before!?
       annotation = Annotation.find_by_name( name.to_s ) if !annotation #TODO find similar! prepare before!?
       annotation = Annotation.factory( type, :name => name ) unless annotation
-      annotation = annotation.change_type!( type ) unless annotation.is_type?( type )  ##force change of typ
-      annotation.save if !annotation.id or annotation.new_record? or !annotation.is_type?( type )
+      annotation.save! if annotation.new_record?
+      annotation = Annotation.change_type!( type, annotation ) if annotation.has_concept?( type )
       return annotation
    end
 
    # Changes annotation type. As this changes the object type as well, the returned annotation has to be assigned to
    # the variable:
    #  annotation = Annotation.change_type( :location, annotation )
-   def self.change_type( type, old)
+   def self.change_type!( type, old)
+      puts "##changing id#{old.id}/#{old.type} -#{old.name}- to #{type.to_s}"
       new_annotation = Annotation.factory( type, old.attributes )
-      new_annotation[:id] = old.id if old.id
-      new_annotation.new_record = old.new_record?
+      new_annotation[:id] = old.id
+      old.destroy
+      new_annotation.save!
       new_annotation
    end
 
@@ -82,14 +83,13 @@ class Annotation < ActiveRecord::Base
    end
 
    # Checks if annotation type is valid
-   def self.has_type?(typ)
-      Annotation.types.include?( typ.to_s.downcase.pluralize.to_sym )
-   end
+   #def self.has_type?(typ)
+   #   Annotation.types.include?( typ.to_s.downcase.pluralize.to_sym )
+   #end
 
    # List of concepts
    def self.concepts
-      return [self.to_sym] if  self.to_sym == Annotation.default_type
-      [ self.to_sym ] + superclass.concepts
+      subclasses_of( self ).collect( &:to_sym )
    end
 
    # Get annotation class name as smybol
@@ -104,17 +104,12 @@ class Annotation < ActiveRecord::Base
 
    #############################################################################
    # Sets the name of the annotation
-   def name=(name)
-      super( name.strip.gsub( '"', '').gsub("'", '' ).squeeze(" ") )
+   def strip_name(name)
+      name.strip.gsub( '"', '').gsub("'", '' ).squeeze(" ")
    end
 
-   # Changes the annotation type
-   def change_type!(typ)
-      return self if is_concept_of?( typ ) #no changing if is's a (sub)concept!
-      puts "##try changing id#{id}/#{type} -#{name}- to #{typ.to_s}:"
-      return self unless Annotation.has_type?( typ )  #check if allowed type
-      puts "  --> changeing!!"
-      new_annotation = Annotation.change_type( typ, self )
+   def name=(name)
+      super( strip_name( name ) )
    end
 
    # Returns the annotation type
@@ -146,15 +141,9 @@ class Annotation < ActiveRecord::Base
       self.type == typ.to_s.downcase
    end
 
-   def is_concept_of?( typ )
+   def has_concept?( typ )
       self.class.concepts.include?( typ )
    end
-
-   #def is_place?
-   #end
-
-   #def is_person?
-   #end
 
    private
    def self.process_annotation( key, annotation )
@@ -168,27 +157,20 @@ class Annotation < ActiveRecord::Base
 end
 
 #############################################################################
-class Unknown < Annotation
-   def name=(name)
-      super(name.downcase)
-   end
+#class Unknown < Annotation
+#   def name=(name)
+#      super(name.downcase)
+#   end
+#end
+
+class Topic < Annotation
 end
 
-class Tag < Annotation
-end
-
-class Nonsense < Annotation
-   def is_concept_of?(typ)
-      true #is concept of everything
-   end
+class Tag < Topic
 end
 
 #############################################################################
-class Person < Annotation
-
-   def name=(name)
-      super(name.downcase)
-   end
+class Person < Tag
    #TODO only allow [^a-zA-z. ]
 end
 
@@ -199,7 +181,7 @@ class Author < Person
 end
 
 #############################################################################
-class Location < Annotation
+class Location < Tag
 
    def self.new( params = {} )
       check_and_get_if_geo( super( params ) )
@@ -209,14 +191,12 @@ class Location < Annotation
       return new if new.is_a? Geo #is already geo
       url = "http://ws.geonames.org/search?q=#{URI.escape(new.name)}&maxRows=1&style=FULL"
       content = Hpricot.XML( open( url ) )
-      cnt = (content%"totalresultscount")
-      return new unless cnt
-      cnt.inner_html.to_i #TODO
-      #puts "## results for -#{new.name}-: #{cnt}"
-      return new unless  cnt > 0 # (1..100) === cnt
+      cnt = (content%"totalResultsCount")
+      puts "## results for -#{new.name}-: #{cnt.inner_html.to_i}"
+      return new if !cnt or cnt.inner_html.to_i < 1
       new.data = content
-      new.synonym = (content%"alternatenames").inner_html
-      return new.change_type!( :geo )
+      #new.synonym = (content%"alternateNames").inner_html
+      return Annotation.factory( :geo, new.attributes )
    end
 
    def name=(name)
@@ -252,32 +232,12 @@ class Geo < Location
    end
 end
 
-#class Lat < Geo
-#   def lat
-#      name
-#   end
-#
-#   def lng
-#      0
-#   end
-#end
-#
-#class Long < Geo
-#   def lat
-#      0
-#   end
-#
-#   def lng
-#      name
-#   end
-#end
-
 #############################################################################
-class Language < Annotation
+class Language < Tag
 end
 
 #############################################################################
-class Url < Annotation
+class Url < Tag
    def thumbnail
       self.name
    end
@@ -295,6 +255,6 @@ end
 class Video < Url
 end
 
-class Bookmark < Url
-end
+#class Bookmark < Url
+#end
 

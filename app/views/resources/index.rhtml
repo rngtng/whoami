@@ -4,7 +4,7 @@
     <% if @resources.empty? %>
       <b style="display:block; margin: 40px auto; width:300px; text-align:center;">Sorry, no resources fetched yet. Please be patient and check again in short time.</b>
     <% else %>
-      <h4>Your collected resources: <%= @resources.size %> - <%= @resources.size %> are valid </h4>
+      <h4>Your collected resources: <%= @resources.size %> found</h4>
        <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
       
         <%= periodically_call_remote( 
