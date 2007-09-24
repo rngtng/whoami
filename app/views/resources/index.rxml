@@ -4,7 +4,7 @@ xml.data do
   xml.event( resource.title,  
    :start => resource.time.httpdate, 
    :title => resource.title,
-   :link =>  resource_path( resource ), 
+   :link =>  resource_path( :id => resource, :username => @user.login ), 
    :image => resource.thumbnail,
    :thumbnail=> resource.thumbnail,
    :color => resource.color )

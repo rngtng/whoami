@@ -1,5 +1,5 @@
 <% return if annotation_group and annotation.type != annotation_group.to_s.singularize -%>
-<% url = ( @account ) ? account_url( :id => @account, :annotation => annotation.data_id ) : resources_url( :annotation => annotation.data_id ) -%>
+<% url = ( @account ) ? account_url( :id => @account, :annotation => annotation.data_id, :username => @user.login ) : resources_url( :annotation => annotation.data_id, :username => @user.login ) -%>
 <li><%= link_to( annotation.name, url, :style =>  style_for_annotation_cloud( annotation.count , 1, annotation.class.max_count )  ) unless @annotation == annotation.data_id -%>
  <%= link_to( annotation.name, url, :class => 'selected'  ) if @annotation == annotation.data_id -%>
 </li>

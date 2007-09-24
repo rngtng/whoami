@@ -9,7 +9,7 @@ class AccountsController < ApplicationController
 
    #a list of user's account
    def index
-      redirect_to home_path
+      redirect_to home_path( :username => @user.login )
    end
 
    def show
@@ -38,7 +38,7 @@ class AccountsController < ApplicationController
          if params[:account]
             @account.attributes = params[:account]
             @user.accounts << @account
-            redirect_to account_path( @account ) and return if @account.save
+            redirect_to account_path( @account, :username => @user.login ) and return if @account.save
          end
          flash[:error] = @account.errors.full_messages
          render :action => 'new' #TODO redirect here??
@@ -56,7 +56,7 @@ class AccountsController < ApplicationController
       @account = @user.accounts.find( params[:id] )
       if params[:account]
          @account.attributes = params[:account]
-         redirect_to account_path( @account ) and return if @account.save
+         redirect_to account_path( :id => @account, :username => @user.login ) and return if @account.save
       end
       flash[:error] = @account.errors.full_messages
       render :action => 'edit' #TODO redirect here??
@@ -65,7 +65,7 @@ class AccountsController < ApplicationController
    def destroy
       @account = @user.accounts.find( params[:id] )
       @account.destroy
-      redirect_to home_path
+      redirect_to home_path( :username => @user.login )
    end
 
    ######custom REST actions:
@@ -79,7 +79,7 @@ class AccountsController < ApplicationController
       redirect_to home_path and return unless @account
       @account.auth( params )
       @user.accounts << @account
-      redirect_to account_path( @account.id ) and return if @account.save
+      redirect_to account_path( :id => @account, :username => @user.login ) and return if @account.save
       #redirect_to auth_new_account_path( :type => params[:type] )
       render :action => 'auth'
    end

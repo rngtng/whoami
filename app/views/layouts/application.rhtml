@@ -9,17 +9,17 @@
     <%= javascript_include_tag 'http://simile.mit.edu/timeline/api/timeline-api.js' if @timeline %>
     <%= javascript_include_tag 'double_slider' %>
     <%= stylesheet_link_tag 'default' %>
-    <%= auto_discovery_link_tag(:atom, formatted_resources_url(:atom) ) %>
-    <%= auto_discovery_link_tag(:rss, formatted_resources_url(:rss) ) %>
+    <%= auto_discovery_link_tag(:atom, formatted_resources_url( :format => :atom, :username => @user.login) ) %>
+    <%= auto_discovery_link_tag(:rss, formatted_resources_url( :format =>:rss, :username => @user.login) ) %>
   </head>
   <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline %> >
     <div>
-      <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path %> - <em>who are you?</em></h1>  
+      <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path( :username => @user.login  ) %> - <em>who are you?</em></h1>  
       <p style="color: green;float:left; margin-left:50px;"><%= flash[:notice] %></p>
       <div class="accounts" style="float:right;">Add:
         <% Account.types.each do |type| -%> 
          <% n = image_tag( "/images/accounts/#{type}.png" ) %>
-         <%= link_to n, new_account_path( :type => type ) %>  
+         <%= link_to n, new_account_path( :type => type, :username => @user.login ) %>  
         <% end %>&nbsp;|&nbsp;
 	<%= link_to "logout", session_path, :method => :delete %>&nbsp;|&nbsp; 
 	<%= link_to "workers", workers_path %>
@@ -34,20 +34,20 @@
       <% @user.accounts.each do |account| -%>
         <% next unless account.id %>
         <% n = image_tag( "/images/accounts/#{account.type}.png", :style => "border: 1px solid #{account.color};" ) %>  
-        <%= link_to n, account_path( account ) %>
+        <%= link_to n, account_path( :id => account, :username => @user.login ) %>
         <%= "!" unless account.up_to_date? %>
       <% end %>
      </div>
      <div style="float:right; margin-top: 10px;">
         view as:
-	<%= link_to 'icons', resources_path %>
-        <%= link_to 'map', map_resources_path %>
-        <%= link_to 'timeline', timeline_resources_path %>&nbsp;|&nbsp;
+	<%= link_to 'icons', resources_path( :username => @user.login ) %>
+        <%= link_to 'map', map_resources_path( :username => @user.login ) %>
+        <%= link_to 'timeline', timeline_resources_path( :username => @user.login ) %>&nbsp;|&nbsp;
 	export to:
-        <%= link_to 'iCal', ical_resources_path %>
-	<%= link_to 'RSS',  formatted_resources_path( :rss )  %>
-	<%= link_to 'ATOM', formatted_resources_path( :atom )  %>
-	<%= link_to 'XML', formatted_resources_path( :xml )  %>
+        <%= link_to 'iCal', ical_resources_path( :username => @user.login ) %>
+	<%= link_to 'RSS',  formatted_resources_path( :format => :rss, :username => @user.login )  %>
+	<%= link_to 'ATOM', formatted_resources_path( :format => :atom, :username => @user.login )  %>
+	<%= link_to 'XML', formatted_resources_path( :format => :xml, :username => @user.login )  %>
       </div>
     <% end %>  
     <br clear="all"><br clear="all">

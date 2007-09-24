@@ -1,4 +1,4 @@
-<% url = ( @account ) ? account_url( :id => @account ) : resources_url %>
+<% url = ( @account ) ? account_url( :id => @account, :username => @user.login ) : resources_url %>
    <div id="timechooser"> 
      <% form_tag url , :id => 'timechooser_form' do %>
       <input name="annotation" value="<%= @annotation %>" type="hidden">

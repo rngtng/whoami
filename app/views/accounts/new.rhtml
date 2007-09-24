@@ -1,7 +1,7 @@
 <p style="color: red; text-align:center;"><%= flash[:error] %></p>
 <div class="formbox">
   <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Add  <%= "#{@account.type.capitalize}" %> Account&nbsp;<%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %></h3>
-  <% form_for :account, @account, :url => accounts_path, :html => { :method => :post } do |form| %>
+  <% form_for :account, @account, :url => accounts_path( :username => @user.login ), :html => { :method => :post } do |form| %>
     <%= hidden_field_tag :type, @account.type %>
     <% if @account.requires_host? -%>
     <label for="host">Host:</label><%= form.text_field :host %>
@@ -10,7 +10,7 @@
       :update => 'checked_host', 
       :before => "Element.show('spinner')", 
       :complete => "Element.hide('spinner')", 
-      :url => check_host_new_account_path( :type => @account.type ),
+      :url => check_host_new_account_path( :type => @account.type, :username => @user.login ),
       :method => :get,
       :with => "'host=' + encodeURIComponent(value)"
      %> 

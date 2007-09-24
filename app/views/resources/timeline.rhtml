@@ -59,7 +59,7 @@ function onLoad() {
    bandInfos[2].highlight = true;
 
    tl = Timeline.create(document.getElementById("timeline"), bandInfos);
-   tl.loadXML("<%= formatted_resources_path( :xml ) %>", function(xml, url) { eventSource.loadXML(xml, url); });
+   tl.loadXML("<%= formatted_resources_path( :format => :xml, :username => @user.login ) %>", function( xml, url) { eventSource.loadXML(xml, url); });
 }
 
 var resizeTimerID = null;

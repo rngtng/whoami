@@ -23,7 +23,8 @@ ActionController::Routing::Routes.draw do |map|
    # instead of a file named 'wsdl'
    #map.connect ':controller/service.wsdl', :action => 'wsdl'
 
-   map.home '', :controller => 'resources', :action => 'index'
+   map.home2 '', :controller => 'resources', :action => 'index', :username => ''
+   map.home '/users/:username', :controller => 'resources', :action => 'index'
    
    map.signup '/signup', :controller => 'users',   :action => 'new'
    map.login  '/login',  :controller => 'session', :action => 'new'
@@ -34,11 +35,11 @@ ActionController::Routing::Routes.draw do |map|
    map.resources :users
    map.resource :session, :controller => 'session'
 
-   map.resources :accounts, :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
-      accounts.resources :resources, :controller => 'resources'
+   map.resources :accounts, :path_prefix => '/users/:username', :new => { :auth => :get, :auth_finish => :get, :check_host => :get } do |accounts|
+      accounts.resources :resources, :path_prefix => '/users/:username/accounts', :controller => 'resources'
    end
 
-   map.resources :resources, :collection => { :map => :get, :timeline => :get, :ical => :get }
+   map.resources :resources, :path_prefix => '/users/:username',  :collection => { :map => :get, :timeline => :get, :ical => :get }
 
    map.resources :workers
 

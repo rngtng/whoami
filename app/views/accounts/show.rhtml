@@ -1,8 +1,8 @@
    <h4><%= image_tag "/images/accounts/#{@account.type}.png" %> Your <%= @account.type.capitalize %> - <em><%= @account.username %></em> -
     Resources: <%= @account.valid_resources.count %> found, <%= @account.resources.count - @account.valid_resources.count %> to aggregate </h4>&nbsp;&nbsp;
      <% #link_to 'fetch_resources',   account_path( @account ), :method => :put %>
-     <%= link_to 'edit',   edit_account_path( @account ) %>
-     <%= link_to 'delete', account_path( @account ), :method => :delete, :confirm => "Are you sure?" %>
+     <%= link_to 'edit',   edit_account_path( :id => @account, :username => @user.login ) %>
+     <%= link_to 'delete', account_path( :id => @account, :username => @user.login ), :method => :delete, :confirm => "Are you sure?" %>
  
   <% if @account.resources.empty? %>
     <b style="display:block; margin: 40px auto; width:300px; text-align:center;">Sorry, no resources fetched yet. Please be patient and check again in short time.</b>
@@ -10,7 +10,7 @@
      <%= periodically_call_remote( 
           :update => 'annotations_and_resources',
           :frequency => 3000, 
-          :url => account_resources_path( @account ),
+          :url => account_resources_path( :id => @account, :username => @user.login ),
           :method => :get,
           :before => %(Element.show('spinner')),
           :success => %(Element.hide('spinner') ) )

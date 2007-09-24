@@ -8,7 +8,7 @@ class SessionController < ApplicationController
    layout "layouts/login"
 
    def show
-      redirect_to home_path
+      redirect_to home2_path()
    end
 
    def new
@@ -69,7 +69,7 @@ class SessionController < ApplicationController
          self.current_user.remember_me
          cookies[:auth_token] = { :value => self.current_user.remember_token , :expires => self.current_user.remember_token_expires_at }
       end
-      redirect_back_or_default( home_url )
+      redirect_back_or_default( home2_url() )
       flash[:notice] = "Logged in successfully"
    end
 end

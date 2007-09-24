@@ -7,7 +7,7 @@
 #require 'annotation'
 require 'digest/sha1'
 class User < ActiveRecord::Base
-   has_many :accounts,       :include => :resources
+   has_many :accounts
    has_many :valid_accounts, :through => :accounts, :source => :resources, :order => 'resources.time DESC', :conditions => ['resources.complete = ?',true] ##TODO does his work?
    has_many :resources,       :through => :accounts, :source => :resources, :order => 'resources.time DESC'  #, :extend => FindByAnnotationAccountDate
    has_many :valid_resources, :through => :accounts, :source => :resources, :order => 'resources.time DESC', :conditions => ['resources.complete = ?',true] ##TODO add Resource.valid_condition??

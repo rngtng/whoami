@@ -42,7 +42,7 @@ class Account < ActiveRecord::Base
       time     = Time.now - account.worker_update_time
       time_min = Time.now - 3.minutes #30.seconds
       Account.transaction do
-         a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.resources_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user, :resources ] )
+         a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.resources_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user ] )
          a.save if a #update timestamp -> no other workers get this feed
          return a
       end

@@ -1,7 +1,7 @@
 <p style="color: red; text-align:center;"><%= flash[:error] %></p>
 <div class="formbox">
   <h3><%= image_tag "/images/accounts/#{@account.type}.png" %> Edit  <%= "#{@account.type.capitalize}" %> Account</h3>
-  <% form_for :account, @account, :url => account_path( @account ), :html => { :method => :put } do |form| %>
+  <% form_for :account, @account, :url => account_path( :id => @account, :username => @user.login ), :html => { :method => :put } do |form| %>
     <% if @account.requires_host? -%><label for="password">Host:</label><%= form.text_field :host %><% end %>
     <label for="name">Username:</label><%= form.text_field :username %>
     <% if @account.requires_password? -%>

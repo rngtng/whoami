@@ -37,6 +37,7 @@ class Resource < ActiveRecord::Base
       opt[:select] = 'annotations.*, COUNT(annotations.id) count'
       opt[:group]  = 'annotations.id'
       opt[:order]  = 'annotations.name'
+      #opt[:limit]  = '1'
       Annotation.find( :all, opt )
    end
 
@@ -241,7 +242,7 @@ class Resource < ActiveRecord::Base
       join << "INNER JOIN annotatings AS annotatings#{nr} ON annotatings#{nr}.resource_id = resources.id"
       join << "INNER JOIN annotations AS annotations#{nr} ON annotations#{nr}.id          = annotatings#{nr}.annotation_id"
       join << " AND #{sanitize_sql( ["annotations#{nr}.type=?", options.delete(:type).to_s ] )}"           if options[:type]
-      join << " AND #{sanitize_sql( ["annotations#{nr}.data_id=?", options.delete(:annotation).to_s  ] )}" if options[:annotation]
+      join << " AND #{sanitize_sql( ["annotations#{nr}.data_id=?", options.delete(:annotation).to_s  ] )}" if options[:annotation] and !options[:annotation].empty?
       join << " AND ( annotations#{nr}.data_id='#{options.delete(:annotations).join("' OR annotations#{nr}.data_id='")}')"  if options[:annotations]
 
       return { :joins => join.join( ' ' ), :conditions => cond.join( ' AND ' ), :order => 'resources.time DESC'}

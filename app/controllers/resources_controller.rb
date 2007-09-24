@@ -19,7 +19,7 @@ class ResourcesController < ApplicationController
             :title => :title,
             :pub_date => :time,
             :description => :text,
-            :link => Proc.new { |post| resource_url( post) }
+            :link => Proc.new { |post| resource_url( :id => post, :username => @user.login ) }
          }
       }
       @resources = @user.valid_resources.find_annotated_with( params )

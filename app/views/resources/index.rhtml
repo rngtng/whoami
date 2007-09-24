@@ -10,7 +10,7 @@
         <%= periodically_call_remote( 
             :update => 'annotations_and_resources',
             :frequency => 30, 
-            :url => resources_path( :annotation => @annotation ),
+            :url => resources_path( :annotation => @annotation, :username => @user.login ),
             :method => :get,
             :before => %(Element.show('spinner')),
             :success => %(Element.hide('spinner') ) )

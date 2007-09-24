@@ -1,7 +1,10 @@
 <div class="formbox" style="width:600px">
 To import your content to a calendar, download the
-<%= link_to 'resources.ics', formatted_resources_url( :ics ) %> file.<br/>
+<%= link_to 'resources.ics', formatted_resources_url( :format => :ics, :username => @user.login ) %> file.<br/>
 <br/>
 To subscribe to your content and get updates regulary, use this url:<br/>
-<%= formatted_resources_url( :ics ) + "?auth=#{@user.crypted_password}#{@user.identity_url}"%>
+<%= formatted_resources_url( :format => :ics, :username => @user.login ) %>
+<% 
+ #+ "?auth=#{@user.crypted_password}#{@user.identity_url}"
+ %>
 </div>
