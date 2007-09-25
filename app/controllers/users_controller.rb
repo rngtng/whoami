@@ -17,7 +17,7 @@ class UsersController < ApplicationController
       @user = User.new(params[:user])
       @user.save!
       self.current_user = @user
-      redirect_back_or_default( home_url )
+      redirect_back_or_default( home2_url )
    rescue Exception => e
       flash[:notice] = e.message
       render( :action => 'new' )

@@ -15,10 +15,23 @@
       <p style="color: green"><%= flash[:notice] %></p>
       <p style="color: red"><%= flash[:error] %></p>
       
-      <%= link_to_remote( 'login',  :url => new_session_path,        :method => :get, :update => 'content' ) %>
-      <%= link_to_remote( 'signup', :url => new_user_path,           :method => :get, :update => 'content' ) %>
+      <%= link_to_remote( 'login',  :url => new_session_path,  :method => :get, :update => 'content' ) %>
+      <%= link_to_remote( 'signup', :url => signup_path,       :method => :get, :update => 'content' ) %>
       <div id="content">
         <%= yield  %>
+      </div>
+      <br><br>
+      <div style="margin:0px auto; width:450px;text-align:left;">
+      <b>WhoAmI</b> is a tool to aggregate your personal media shared on the Internet.
+      The data is visualized via tagcloud, timeline, map or in detail. For further processing, your media can be accessed via web feed or iCal.
+      Altogether, it is a perfect tool to gain self-awareness on your virtual identity on the Internet.<br>
+      <br>
+      WhoAmI was developed during my 'Diplomarbeit' (similar to master thesis) 'mediated Identity'
+      @ the DFKI Kaiserslautern, TU Kaiserslauern<br>
+      <center>
+        <a href="http://whoami.opendfki.de" target="_blank">WhoAmI Project Page</a><br><br>
+        <%= link_to image_tag( 'dfki.jpg' ), 'http://www.dfki.de/web/research/km/index_html' %>  <%= link_to image_tag( 'tukl.png', :height => '40' ), 'http://www.uni-kl.de' %>
+      </center>
       </div>
     </div>  
   </body>

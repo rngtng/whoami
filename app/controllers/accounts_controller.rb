@@ -38,7 +38,7 @@ class AccountsController < ApplicationController
          if params[:account]
             @account.attributes = params[:account]
             @user.accounts << @account
-            redirect_to account_path( @account, :username => @user.login ) and return if @account.save
+            redirect_to account_path( :id => @account, :username => @user.login ) and return if @account.save
          end
          flash[:error] = @account.errors.full_messages
          render :action => 'new' #TODO redirect here??

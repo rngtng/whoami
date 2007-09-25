@@ -26,7 +26,7 @@ class ApplicationController < ActionController::Base
    
    def login_from_param 
       return true if logged_in?
-      user = User.find_by_crypted_password(params[:auth], :include => :accounts )
+      user = User.find_by_crypted_password(params[:auth] )
       self.current_user = user if user
    end
 end

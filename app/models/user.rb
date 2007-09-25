@@ -89,7 +89,7 @@ class User < ActiveRecord::Base
    end
 
    def password_required?
-      crypted_password.blank? || !password.blank?
+     identity_url.blank? && (crypted_password.blank? || !password.blank?)
    end
 
 end
