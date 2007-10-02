@@ -6,7 +6,7 @@
 
 # Class representing a annotation
 class Annotation < ActiveRecord::Base
-   TAG_DELIMITER = " " # how to separate annotations in strings
+   #TAG_DELIMITER = " " # how to separate annotations in strings
 
    serialize  :data
 
@@ -237,7 +237,7 @@ class Language < Tag
 end
 
 #############################################################################
-class Url < Tag
+class Url < Annotation
    def thumbnail
       self.name
    end
