@@ -233,7 +233,7 @@ class FlickrAccount < Account
          resource.more_data = api.photos.getInfo( resource.imgid, resource.secret ) #split to id,secret -> it is much faster!!
          begin
             data = get_location( resource.imgid )
-            resource.annotation( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
+            resource.annotate( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
          rescue Exception =>  e
             puts e.message
          end
