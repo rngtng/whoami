@@ -1,7 +1,7 @@
   <% from = @resources if from.nil? -%>
   <% annotations = from.send( annotation_group ) -%>
-  <% return if annotations.empty? or !annotations.map( &:class ).include?( annotation_group.to_s.classify.constantize ) -%>
+  <% return if annotations.empty?  -%>
   <ul>
-     <li><b><%= link_to annotation_group.to_s.capitalize %></b></li> 
+     <li><b><%= link_to annotation_group.to_s.capitalize %></b> (<%= annotations.size %>)</li> 
      <%= render :partial => "partials/annotation", :collection => annotations, :locals => { :annotation_group=> annotation_group } -%>
   </ul>

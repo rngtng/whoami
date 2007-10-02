@@ -1,6 +1,6 @@
     <div id="annotations">
       <%=
-       render( :partial => "partials/annotation_group", :collection => (Resource.annotation_types - [:images, :urls, :blogs, :videos] ) )
+      render( :partial => "partials/annotation_group", :collection => [:topics, :tags, :people, :locations, :languages, :artists, :authors, :geos] )
       %> 
     </div>
     <br>
