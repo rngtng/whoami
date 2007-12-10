@@ -4,7 +4,6 @@
      <% user = User.all_logins.include?( r[:user] ) ? r[:user] : 'any' %>
      <% type = Account.types.include?(   r[:type] ) ? r[:type] : 'any' %>
      <tr>
-      <td><%= key %></td>
       <td><%= "#{user}, #{type}, #{r[:sleep]}" %></td>
       <td align="center"><%= (Time.now - r[:last_run]).to_i %> sec</td>
       <% if r[:running] %>

@@ -9,8 +9,7 @@ FORM #sleep {
 </style>
 <div class="formbox">
   <h3>Create new Worker</h3>
-  <% form_tag workers_path, :html => { :method => :post } do %>
-    <label for="key"  >Name:</label><%=    text_field_tag :key %> 
+  <% form_tag workers_path, :method => :post do %>
     <label for="user" >User:</label><%=    select( :user, nil, ["any"] + User.all_logins ) %><br clear="all">
     <label for="type" >Account:</label><%= select( :type, nil, ["any"] + Account.types ) %><br clear="all">
     <label for="sleep">Sleep:</label><%=   text_field_tag :sleep,  20, :size => 6 %> seconds

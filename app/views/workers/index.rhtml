@@ -8,7 +8,7 @@
        %>
 
 <table id="worker_table" cellspacing="8">
- <tr><th>Name</th><th>Params</th><th>Last run</th><th>Action</th><th><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %></th></tr>
+ <tr><th>Worker</th><th>Last run</th><th>Action</th><th><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %></th></tr>
  <tbody id="workers">
    <%= render( :partial => "worker", :collection => @workers ) %>
     <% if @workers.empty? %>

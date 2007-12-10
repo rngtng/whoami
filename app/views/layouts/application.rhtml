@@ -38,6 +38,14 @@
         <%= "!" unless account.up_to_date? %>
       <% end %>
      </div>
+     
+     <div style="float:left; width:100%; margin-right: auto; margin-left: auto; margin-top: 10px;">
+      <% form_tag resources_path( :username => @user.login ), :method => :get do %>
+       <label for="search" >Search for:</label><%=   text_field_tag :search, '', {:size => 15} %>
+       <%= submit_tag "go" %>
+      <% end %>
+     </div>
+     
      <div style="float:right; margin-top: 10px;">
         view as:
 	<%= link_to 'icons', resources_path( :username => @user.login ) %>
