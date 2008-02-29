@@ -20,11 +20,16 @@ class ApplicationController < ActionController::Base
       login_from_param if params[:auth]
       login_required
       @user = current_user
+      unless @user
+         authenticate_or_request_with_http_basic("WhoAmI") do |username, password|
+            @user = User.authenticate(username, password)
+         end
+      end
       @annotation  = params[:annotation] # ? params[:annotation] : ''
       #@annotation  = (params[:annotation] && !params[:annotation].empty?)  ? params[:annotation] : nil
    end
-   
-   def login_from_param 
+
+   def login_from_param
       return true if logged_in?
       user = User.find_by_crypted_password(params[:auth] )
       self.current_user = user if user

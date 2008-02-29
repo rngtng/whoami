@@ -1,6 +1,6 @@
 <%= periodically_call_remote( 
             :update => 'workers',
-            :frequency => 8, 
+            :frequency => 3, 
             :url => workers_path,
             :method => :get,
             :before => %(Element.show('spinner')),

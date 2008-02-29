@@ -4,15 +4,15 @@
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title>WhoAmI - <%= controller.controller_name %> - <%= controller.action_name %></title>
-    <%= javascript_include_tag :defaults %>
+    <%= javascript_include_tag :defaults, 'builder', 'date-en-US', 'dateslider' %>
     <%= GMap.header if @map %> 
     <%= javascript_include_tag 'http://simile.mit.edu/timeline/api/timeline-api.js' if @timeline %>
-    <%= javascript_include_tag 'double_slider' %>
-    <%= stylesheet_link_tag 'default' %>
+    <%= javascript_include_tag 'http://static.simile.mit.edu/timeplot/api/1.0/timeplot-api.js' if @cluster %>
+    <%= stylesheet_link_tag 'default', 'dateslider' %>
     <%= auto_discovery_link_tag(:atom, formatted_resources_url( :format => :atom, :username => @user.login) ) %>
     <%= auto_discovery_link_tag(:rss, formatted_resources_url( :format =>:rss, :username => @user.login) ) %>
   </head>
-  <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline %> >
+  <body <%= 'onload="onLoad();" onresize="onResize();"' if @timeline || @cluster %> >
     <div>
       <h1 style="float:left; margin:0; border:0">Welcome <%= link_to @user.login, home_path( :username => @user.login  ) %> - <em>who are you?</em></h1>  
       <p style="color: green;float:left; margin-left:50px;"><%= flash[:notice] %></p>
@@ -30,19 +30,19 @@
     
    <% unless @user.accounts.empty? %> 
      <div style="float: left; margin-top: 10px;">
-      <h3 style="margin: 10px;">Your Accounts (<%= @user.accounts.count %>):</h3>
+      <h3 style="margin: 10px;">Accounts:</h3>
       <% @user.accounts.each do |account| -%>
         <% next unless account.id %>
-        <% n = image_tag( "/images/accounts/#{account.type}.png", :style => "border: 1px solid #{account.color};" ) %>  
+        <% n = image_tag( "/images/accounts/#{account.type}.png", :style => "border: 1px solid #{account.color}; margin-bottom: -3px;" ) %>  
         <%= link_to n, account_path( :id => account, :username => @user.login ) %>
         <%= "!" unless account.up_to_date? %>
       <% end %>
      </div>
      
-     <div style="float:left; width:100%; margin-right: auto; margin-left: auto; margin-top: 10px;">
+     <div style="float:left; width:340px; margin-left:40px; margin-top: 13px;">
       <% form_tag resources_path( :username => @user.login ), :method => :get do %>
-       <label for="search" >Search for:</label><%=   text_field_tag :search, '', {:size => 15} %>
-       <%= submit_tag "go" %>
+       <label for="search" >Search&nbsp;Resources:</label><%= text_field_tag :search, '', {:size => 15, :style => "margin-left:55px"} %>
+       <%= submit_tag "go", :style => "width:30px" %>
       <% end %>
      </div>
      
@@ -50,7 +50,8 @@
         view as:
 	<%= link_to 'icons', resources_path( :username => @user.login ) %>
         <%= link_to 'map', map_resources_path( :username => @user.login ) %>
-        <%= link_to 'timeline', timeline_resources_path( :username => @user.login ) %>&nbsp;|&nbsp;
+        <%= link_to 'timeline', timeline_resources_path( :username => @user.login ) %>
+	<%= link_to 'cluster', cluster_resources_path( :username => @user.login ) %>&nbsp;|&nbsp;
 	export to:
         <%= link_to 'iCal', ical_resources_path( :username => @user.login ) %>
 	<%= link_to 'RSS',  formatted_resources_path( :format => :rss, :username => @user.login )  %>
@@ -58,7 +59,7 @@
 	<%= link_to 'XML', formatted_resources_path( :format => :xml, :username => @user.login )  %>
       </div>
     <% end %>  
-    <br clear="all"><br clear="all">
+    <br clear="all">
     
       <%= yield  %>
    

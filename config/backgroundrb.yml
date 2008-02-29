@@ -1,4 +1,5 @@
---- 
-:host: localhost
-:rails_env: development
-:port: 2000
+## YAML Template.
+:backgroundrb:
+  :ip: 127.0.0.1
+  :port: 12001
+  :environment: development

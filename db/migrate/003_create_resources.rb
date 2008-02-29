@@ -1,8 +1,8 @@
 ####################
 #
-# $LastChangedDate$
-# $Rev$
-# by $Author$
+# $LastChangedDate:2007-08-07 17:03:12 +0200 (Tue, 07 Aug 2007) $
+# $Rev:101 $
+# by $Author:bielohla $
 
 class CreateResources < ActiveRecord::Migration
    def self.up

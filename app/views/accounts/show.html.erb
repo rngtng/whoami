@@ -1,25 +1,9 @@
-   <h4><%= image_tag "/images/accounts/#{@account.type}.png" %> Your <%= @account.type.capitalize %> - <em><%= @account.username %></em> -
-    Resources: <%= @account.valid_resources.count %> found, <%= @account.resources.count - @account.valid_resources.count %> to aggregate </h4>&nbsp;&nbsp;
-     <% #link_to 'fetch_resources',   account_path( @account ), :method => :put %>
-     <%= link_to 'edit',   edit_account_path( :id => @account, :username => @user.login ) %>
-     <%= link_to 'delete', account_path( :id => @account, :username => @user.login ), :method => :delete, :confirm => "Are you sure?" %>
- 
-  <% if @account.resources.empty? %>
-    <b style="display:block; margin: 40px auto; width:300px; text-align:center;">Sorry, no resources fetched yet. Please be patient and check again in short time.</b>
-  <% else %>   
-     <%= periodically_call_remote( 
-          :update => 'annotations_and_resources',
-          :frequency => 3000, 
-          :url => account_resources_path( :id => @account, :username => @user.login ),
-          :method => :get,
-          :before => %(Element.show('spinner')),
-          :success => %(Element.hide('spinner') ) )
-     %>
-     <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
-     
-     <%= render( :partial => "partials/timechooser" ) if @resources %>
-     
-     <div id="annotations_and_resources">
-       <%= render( :partial => "partials/annotations_and_resources" ) %>
-     </div>
-  <% end %>
+  <% @alert_msg = "Sorry, nothing found." if @resources.empty? %>
+  <% @alert_msg = "Sorry, no resources fetched yet. Please be patient and check again in short time." if @account.resources.empty? %>
+  
+  <h4>Account View: <%= @resources.empty? ? 0 : @resources.size %> found for&nbsp;<%= image_tag "/images/accounts/#{@account.type}.png", :style => "border: 1px solid #{@account.color}; margin-bottom:-4px;" %> - User: <em><%= @account.username %></em> -
+  <%= link_to 'edit',   edit_account_path( :id => @account, :username => @user.login ) -%>
+  <%= link_to 'delete', account_path( :id => @account, :username => @user.login ), :method => :delete, :confirm => "Are you sure?" -%></h4>&nbsp;
+  <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+  
+  <%= render( :partial => "partials/resources" ); %>

@@ -4,9 +4,8 @@
 # $Rev:94 $
 # by $Author:bielohla $
 
-# Class representing a annotation
+# Class representing an universal annotation
 class Annotation < ActiveRecord::Base
-   #TAG_DELIMITER = " " # how to separate annotations in strings
 
    serialize  :data
 
@@ -20,30 +19,21 @@ class Annotation < ActiveRecord::Base
    #:message => "can not contain special characters"
 
    # The maximum of annotations found in a query
-   #--
    # FIXME: am I counting right?
    cattr_accessor :max_count
    self.max_count = 0
 
-   # The default annotation type if not specified
-   cattr_accessor :default_type
-
-   # Splits name by split_by and created & returns the annotations
-   def self.split_and_get( names, split_by = nil )
-      return Annotation.get( names ) unless split_by #fallback if nothing to split
-      annotations = []
-      type = :topic
-      type, names = names.shift if names.is_a? Hash
-      names.split( split_by ).each do |resource|
-         annotations << Annotation.get( type => resource)
-      end
-      return annotations
+   # Created a annotation of given type
+   def self.factory( type, params = {} )
+      class_name = type.to_s.capitalize
+      raise Exception.new unless defined? class_name.constantize
+      params[:data_id] = params[:name].to_s if params[:name] and !params[:data_id]
+      class_name.constantize.new( params )
    end
 
    # Returns the annotation with name in case it exists. If not the annotation is created and
    # returned.
-   def self.get( name )
-      type = :topic
+   def self.get( name, type = :topic )
       type, name = name.shift if name.is_a? Hash
       type, name = Annotation.process_annotation( type, name )   #fliter special annotation/keys--
       annotation = Annotation.find_by_data_id( name.to_s ) #TODO find similar! prepare before!?
@@ -56,22 +46,15 @@ class Annotation < ActiveRecord::Base
 
    # Changes annotation type. As this changes the object type as well, the returned annotation has to be assigned to
    # the variable:
-   #  annotation = Annotation.change_type( :location, annotation )
+   #  annotation = Annotation.change_type!( :location, annotation )
    def self.change_type!( type, old)
+      raise Exception.new unless defined? type.to_s.capitalize.constantize
       puts "##changing id#{old.id}/#{old.type} -#{old.name}- to #{type.to_s}"
       new_annotation = Annotation.factory( type, old.attributes )
       new_annotation[:id] = old.id
       old.destroy
       new_annotation.save!
       new_annotation
-   end
-
-   # Created a annotation of given type
-   def self.factory( type, params = {} )
-      class_name = type.to_s.capitalize
-      raise unless defined? class_name.constantize
-      params[:data_id] = params[:name].to_s if params[:name] and !params[:data_id]
-      class_name.constantize.new( params )
    end
 
    # List of available annotation types
@@ -97,6 +80,10 @@ class Annotation < ActiveRecord::Base
       to_s.downcase.intern
    end
 
+   def self.show
+      true
+   end
+
    #############################################################################
    def after_find
       self.max_count = count if count && self.max_count < count
@@ -114,13 +101,8 @@ class Annotation < ActiveRecord::Base
 
    # Returns the annotation type
    def type
-      return 'annotation' unless self[:type]
-      self[:type].downcase
-   end
-
-   # Set the new_record status
-   def new_record=(n_r)
-      @new_record= n_r
+      return :annotation unless self[:type]
+      self[:type].downcase.to_sym
    end
 
    # Compares two annotation if equal
@@ -138,7 +120,7 @@ class Annotation < ActiveRecord::Base
 
    #########################
    def is_type?( typ )
-      self.type == typ.to_s.downcase
+      self.type == typ
    end
 
    def has_concept?( typ )
@@ -163,30 +145,36 @@ end
 #   end
 #end
 
+## every annotation which is extracted by tagthe.net (and yet not categorized)
 class Topic < Annotation
 end
 
+## every annotation which is explicit set by the user and cannot futher categorized
 class Tag < Topic
 end
 
 #############################################################################
+##every annotation presenting a Person
 class Person < Tag
    #TODO only allow [^a-zA-z. ]
 end
 
+##every annotation presenting an Artist
 class Artist < Person
 end
 
+##every annotation presenting an Author
 class Author < Person
 end
 
 #############################################################################
+##every annotation presenting a Location (Without Geodata)
 class Location < Tag
-
    def self.new( params = {} )
       check_and_get_if_geo( super( params ) )
    end
 
+   #cehck if geodata is available. If yes, set the data and change type to :geo
    def self.check_and_get_if_geo( new )
       return new if new.is_a? Geo #is already geo
       url = "http://ws.geonames.org/search?q=#{URI.escape(new.name)}&maxRows=1&style=FULL"
@@ -204,6 +192,7 @@ class Location < Tag
    end
 end
 
+##every annotation presenting a geographically annotated Location
 class Geo < Location
    #http://local.yahooapis.com/MapsService/V1/geocode?appid=YahooDemo&street=701+First+Street&city=Sunnyvale&state=CA <- local search
 
@@ -233,28 +222,39 @@ class Geo < Location
 end
 
 #############################################################################
+##every annotation presenting a Language
 class Language < Tag
 end
 
 #############################################################################
+##every annotation presenting a URL
 class Url < Annotation
+   def self.show
+      false
+   end
+
+
+   def name=(name)
+      write_attribute( 'name', name )
+   end
+
    def thumbnail
       self.name
    end
 end
 
+##every annotation presenting a Image
 class Image < Url
    def thumbnail
       self.name
    end
 end
 
+##every annotation presenting a Blog Url
 class Blog < Url
 end
 
+##every annotation presenting a Video
 class Video < Url
 end
-
-#class Bookmark < Url
-#end
 

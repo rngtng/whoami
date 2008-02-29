@@ -159,51 +159,21 @@ FORM INPUT[type=submit] {
 
 #timechooser {
 	margin:10px auto;
-	width:850px;
+	width:1000px;
 }
 
 #timechooser INPUT{
-	height: 20px;
-	width:100px;
+	height: 15px;
+	width:80px;
 	float: left;
 	text-align: center;
-	font-weight: bold;
-	font-size: 11pt;
+	font-size: 9pt;
 	color: #FFFFFF;
 	background: #333333;
 	border: 1px solid #666666;
+	margin: 4px;
 }
 
-#timechooser #container {
-	float: left;
-	width: 600px;
-        height: 20px;
-        background: #666666;
-        border: 0px solid #AAAAAA;
-        margin: 2px 6px 2px 6px;
-}
-
-#timechooser #clip_left {
-	    background: #333333;
-}
-
-#timechooser #clip_right {
-    background: #333333;
-}
-
-#timechooser #handle_min {
-    background: #FF7400;
-    height: 100%;
-    border: 1px solid black;
-}
-
-#timechooser #handle_max {
-    background: #FF7400;
-    height: 100%;
-    border: 1px solid black;
-}
-
-#timeline,
 #map {
 	border: 1px solid #333333; 
 	margin: 0px 40px 0px 40px;

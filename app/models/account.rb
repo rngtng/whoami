@@ -4,84 +4,59 @@
 # $Rev$
 # by $Author$
 
-# Class representing an account
-#-- require 'resource'
+# Class representing a webservice account. Every specific account implementation is inherited from Account and extended for specific API calls.
+# The STI (Single Table Interhitance) Pattern is used for a clean structure. 
+# An account belongs to an user and can have many resources.
 class Account < ActiveRecord::Base
+   extend InstanceVars #custom plugin to set account attributes easily
+   
    belongs_to :user
 
    has_many   :resources,         :order => 'time DESC', :dependent => :destroy
-   has_many   :valid_resources,   :order => 'time DESC', :class_name => 'Resource', :conditions => Resource.valid_condition  #:extend => AnnotationCountsExtension,
-   has_many   :invalid_resources, :order => 'time DESC', :class_name => 'Resource', :conditions => Resource.valid_condition( false )  #:extend => AnnotationCountsExtension,
 
    serialize  :token
 
    validates_associated  :user
-   #validates_presence_of :username
+   validates_presence_of :username
 
-   delegate :requires_auth?, :requires_password?, :requires_user?, :requires_host?, :worker_update_time, :color, :to => :"self.class"
-   delegate *Annotation.types.push( :annotations, :to => :valid_resources )
+   delegate *Annotation.types.push( :annotations, :to => :resources )
 
    before_save :resources_count #update resource_counter
 
+   #The color to use for this account  & Time the account needs update
+   iattr_reader :color => "#000000", :outdated_after => 5.minutes
+   iattr_reader_boolean :requires_auth, :requires_host , {:requires_user => true}, :requires_password
+
+
    ################### CALSS METHODS  ################################
+   #factory method to create new Account instances easily
    def self.factory( type )
       class_name = type.capitalize + 'Account'
       redirect_to :controller => "user" and return unless defined? class_name.constantize
       class_name.constantize.new
    end
 
+   #return all availables account types
    def self.types
       @types ||= subclasses.collect(&:to_s).collect( &:downcase ).collect { |s| s.sub( /account/, '' ) }
       @types.map ##return a copy!
    end
 
-   def self.find_to_update( account_name = '', username = '%')
-      account_name  = Account.types.include?( account_name ) ? account_name : ''
-      username      = User.all_logins.include?( username ) ? username : '%'
-      account = (account_name.capitalize + 'Account').constantize
-      time     = Time.now - account.worker_update_time
-      time_min = Time.now - 3.minutes #30.seconds
+   #return accounts which needs an update. Filters can specified for account type and username
+   def self.find_to_update( account_type = '', user_name = '%')
+      account_type  = Account.types.include?( account_type ) ? account_type : ''
+      user_name      = User.all_logins.include?( user_name ) ? user_name : '%'
+      account = (account_type.capitalize + 'Account').constantize
+      time    = Time.now - account.outdated_after
       Account.transaction do
-         a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ? AND ( accounts.resources_count < 1 OR accounts.updated_at < ? )', username, time_min, time ], :include => [ :user ] )
+         a = account.find( :first, :conditions => [ 'users.login LIKE ? AND accounts.updated_at < ?', user_name, time ], :include => [ :user ] )
          a.save if a #update timestamp -> no other workers get this feed
          return a
       end
    end
 
-
-   ###################### REQUIRES STUFF   ####################
-   # Wheter account requires auth
-   def self.requires_auth?
-      @requires_auth ||= false
-   end
-
-   # Wheter account requires host
-   def self.requires_host?
-      @requires_host ||= false
-   end
-
-   # Wheter account requires host
-   def self.requires_user?
-      @requires_user ||= true
-   end
-
-   # Wheter account requires password
-   def self.requires_password?
-      @requires_password ||= false
-   end
-
-   # Time account needs update
-   def self.worker_update_time
-      @worker_update_time ||= 5.minutes
-   end
-
-   # The color to use for this account
-   def self.color
-      @color ||= "#000000"
-   end
-
    ################### FETCH STUFF   ###################################
-   # Fetch resources, fetch details, called by worker
+   # Major fetch resources and fetch details method called by worker
    def worker_fetch_resources
       (resources_count > 0 ) ? fetch_resources : fetch_resources_init
       fetch_resources_detail
@@ -89,13 +64,13 @@ class Account < ActiveRecord::Base
    end
 
    # Destroy account resources and get them new
-   def fetch_resources!
-      resources.destroy_all
-      save
-      fetch_resources_init
-   end
+   #def fetch_resources!
+   #   resources.destroy_all
+   #   save
+   #   fetch_resources_init
+   #end
 
-   # Get resources from this account
+   # Get resources from this account via the API and save them to database.
    def fetch_resources( max_runs = 0, run = 0, updated = false ) #if max == 0 go for unlimited runs
       return fetch_resources_fallback unless auth?
       return updated if max_runs > 0 and run == max_runs
@@ -108,7 +83,8 @@ class Account < ActiveRecord::Base
       fetch_resources( max_runs, run + 1 ) #check if there are more to fetch
    end
 
-   # What to do if resources can not be fetched e.g. in case of wrong auth
+   # Fallback method in case resources can not be fetched e.g. in case of wrong auth. 
+   # Typically this is to fetch the RSS/ATOM feed
    def fetch_resources_fallback
       result = Hpricot.XML( open( feed ) ) #more infos but less resources  max. 31    #TODO: loop trough annotations to get even more!
       (result/:item).each  do |resource|
@@ -116,7 +92,9 @@ class Account < ActiveRecord::Base
          self.resources << i
       end
    end
+   
    #################### GET STUFF #############################
+   #Number of resources the account has
    def resources_count
       self.resources_count = resources.count
    end
@@ -131,17 +109,19 @@ class Account < ActiveRecord::Base
       info = []
       info << "Type: #{type} - #{username}"
       info << "User: #{user.name}"
-      info << "Resources: #{resources.count} - #{valid_resources.count} are valid "
+      #TODO!! info << "Resources: #{resources.count} - #{valid_resources.count} are valid "
       info.join("\n")
    end
 
-   # Resources to process
+   # Dummy method: for resources to process. Needs to be implemented by each subclass
    def raw_resources( run = 0)
    end
 
+   # Dummy method: for feed (ATOM/RSS) to process. Needs to be implemented by each subclass
    def feed
    end
 
+   # Checks if user is authorized
    def auth?
       !self.requires_password? or ( !password.nil? && !password.empty? )
       ##TODO check if logged in
@@ -149,9 +129,7 @@ class Account < ActiveRecord::Base
 
    # Checks if account is up to date
    def up_to_date?
-      time     = Time.now - worker_update_time
-      time_min = Time.now - 30.seconds  #minimum of 30 update age
-      ((updated_at > time_min) or (resources_count > 1 and updated_at > time))
+      updated_at > ( Time.now - outdated_after )
    end
 
    ############################################################
@@ -165,7 +143,7 @@ class Account < ActiveRecord::Base
    def fetch_resources_detail
    end
 
-   #api to call
+   # Dummy method: api to call
    def api
    end
 
@@ -180,10 +158,12 @@ class Account < ActiveRecord::Base
 end
 
 ###############################################################################
+# Implementation of a Flickr account. API access is done via the rflickr gem.
 class FlickrAccount < Account
    @color = "#FF0000"
    @requires_auth = true
 
+   #set authentification infos
    def auth( params )
       api.auth.frob = params[:frob]
       api.auth.getToken
@@ -191,15 +171,18 @@ class FlickrAccount < Account
       self.username = token.user.username
    end
 
+   #get authentification link
    def auth_link
       api.auth.getFrob
       api.auth.login_link( 'read' )
    end
 
+   #check if token is authenticated
    def auth?
       api.auth.token
    end
 
+   #get raw resources via API, default 15 photos per run/page
    def raw_resources( run = 0, per_page = 15 )  #run = number of pages - 1
       user = token.user.nsid
       annotations = nil
@@ -216,11 +199,13 @@ class FlickrAccount < Account
    end
    alias photos raw_resources
 
+   #feed url for fallback
    def feed
       "http://api.flickr.com/services/feeds/photos_public.gne?id=#{username}&format=rss_200"
    end
 
    private
+   #get api access instance
    def api
       @api ||= Flickr.new( 'dummy', api_key, api_key( :secret ) )
       @api.auth.token ||= token if token
@@ -228,9 +213,10 @@ class FlickrAccount < Account
    end
    alias flickr api
 
+   #get resources details, e.g. title, tags etc..
    def fetch_resources_detail( limit = 100 )
-      invalid_resources.find( :all, :limit => limit ).each do | resource |
-         resource.more_data = api.photos.getInfo( resource.imgid, resource.secret ) #split to id,secret -> it is much faster!!
+      resources.find_incomplete( :all, :limit => limit ).each do | resource |
+         resource.detail_data = api.photos.getInfo( resource.imgid, resource.secret ) #split to id,secret -> it is much faster!!
          begin
             data = get_location( resource.imgid )
             resource.annotate( :geo => {:lat => data['latitude'], :lng => data['longitude']} )
@@ -242,6 +228,7 @@ class FlickrAccount < Account
       end
    end
 
+   #get location data from raw api data
    def get_location( id )
       res = api.call_method('flickr.photos.geo.getLocation', 'photo_id'=> id )
       res.elements['/photo'].each_element do |location|
@@ -252,12 +239,14 @@ end
 
 
 ######################################################################################################
+# Implementation of a Youtube account. API access is done via the youtube gem.
 class YoutubeAccount < Account
    @color = "#00FF00"
 
+   #get raw resources via API
    def raw_resources(run = 0)
       case run
-      when 0 : api.videos_by_user( username ) #TODO paging support??, count+1 )
+      when 0 : api.videos_by_user( username ) #TODO paging support??
          #when 1 : api.favorite_videos( username )
       else []
       end
@@ -265,6 +254,7 @@ class YoutubeAccount < Account
    alias videos raw_resources
 
    private
+   #get api access instance
    def api
       @api ||= YouTube::Client.new api_key
    end
@@ -272,14 +262,18 @@ class YoutubeAccount < Account
 end
 
 ######################################################################################################
+# Implementation of a LastFM account. API access is done via the mylastfm gem.
+# TODO: just fetch albums to speed up process
 class LastfmAccount < Account
    @color = "#D01F3C"
-   @worker_update_time = 5.minutes
+   @outdated_after = 3.minutes
 
+   #feed url for fallback
    def feed
       "http://ws.audioscrobbler.com/1.0/user/#{username}/recenttracks.rss"
    end
 
+   #get raw resources via API
    def raw_resources(run = 0)
       #api.user_recenttracks()
       return [] if run > 2
@@ -288,19 +282,22 @@ class LastfmAccount < Account
    alias tracks raw_resources
 
    private
+   #get api access instance
    def api
       @api ||= MyLastfm::Client.new username
    end
    alias lastfm api
 
+   #get resources details, e.g. album
    def fetch_resources_detail( limit = 1000 )
-      invalid_resources.find( :all,  :limit => limit ).each do | track |
+      resources.find_incomplete( :all,  :limit => limit ).each do | track |
          puts "process track #{track.artist}, #{track.title}, #{track.time}"
          track.album = fetch_album( track.artist, track.title, track.time )
          track.save
       end
    end
 
+   #fetche a album for a given atrist and track_title and stores it to cached albums.
    def fetch_album( artist, track_title, date)
       @cached ||= Hash.new
       album = find_album( artist, track_title )
@@ -319,6 +316,7 @@ class LastfmAccount < Account
       find_album( artist, track_title )
    end
 
+   # return the album details
    def fetch_albums_details
       Cachedalbum.find_all_by_album( nil ).each do | album |
          album.album = api.album_info( album.artist, album.title )
@@ -326,14 +324,15 @@ class LastfmAccount < Account
       end
    end
 
+   # return the album for a given atrist and track_title from cached albums.
+   # TODO: maybe move this to gem??
    def find_album( artist, track_title )
       a = Cachedalbum.find_by_artist( artist, :conditions => [ "album LIKE ?", "%#{track_title}%" ])
       return nil unless a
       a.album
    end
 
-   #TODO
-   #def fetch_resources_fallback
+   #TODO: def fetch_resources_fallback
    #   result = Hpricot.XML( open( feed ) ) #more infos but less resources  max. 31    #TODO: loop trough annotations to get even more!
    #   (result/:item).each  do |resource|
    #      i = Resource.factory( type, :feed=> resource )
@@ -343,14 +342,19 @@ class LastfmAccount < Account
 end
 
 ######################################################################################################
+# Implementation of a Del.icio.us account. API access is done via the mydelicious gem.
 class DeliciousAccount < Account
    @color = "#0000FF"
    @requires_password = true
 
+   #TODO:  #requires_username  #can_have_password
+
+   #feed url for fallback
    def feed
       "http://del.icio.us/rss/#{username}"
    end
 
+   #get raw resources via API
    def raw_resources(run = 0)
       case run
       when 0 : api.posts_recent( nil, 100 )
@@ -361,6 +365,7 @@ class DeliciousAccount < Account
    alias bookmarks raw_resources
 
    private
+   #get api access instance
    def api
       @api ||= MyDelicious::Client.new username, password
    end
@@ -368,34 +373,39 @@ class DeliciousAccount < Account
 end
 
 ######################################################################################################
-
+# Implementation of a Blog/Wordpress account. API access is done via Feed or the XML-RPC client
 class BlogAccount < Account
-   @color = "#000000"
+   # @color = "#000000" #TODO default??
    @requires_host = true
    @requires_password = true
 
+   #feed url for fallback
    def feed
       UrlChecker.get_feed_url( host )
    end
 
+   #get raw resources via API
    def raw_resources( run = 0, blog_id = 1)
       count = (run+1) * 10
       api.call('metaWeblog.getRecentPosts', blog_id, username, password, count)
    end
    alias posts raw_resources
 
+   #checks if user is authentificated
    def auth?
       api and super
       ##TODO check if logged in
    end
 
    private
+   #get api access instance
    def api
       url = UrlChecker.get_xmlrpc_url( host )
       @api ||= XMLRPC::Client.new2( url ) if url
    end
    alias blog api
 
+   #intial resource fetch 
    def fetch_resources_init
       fetch_resources( 100, 50 ) #get 500 posting, until we got more than 1000
    end

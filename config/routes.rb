@@ -39,7 +39,7 @@ ActionController::Routing::Routes.draw do |map|
       accounts.resources :resources, :path_prefix => '/users/:username/accounts', :controller => 'resources'
    end
 
-   map.resources :resources, :path_prefix => '/users/:username',  :collection => { :map => :get, :timeline => :get, :ical => :get }
+   map.resources :resources, :path_prefix => '/users/:username',  :collection => { :map => :get, :timeline => :get, :cluster => :get, :ical => :get }
 
    map.resources :workers
 

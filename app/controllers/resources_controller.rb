@@ -4,12 +4,15 @@
 # $Rev:94 $
 # by $Author:bielohla $
 
+#Controller for Resources. 100% RESTful. Create/Edit/Update not needed yet.
 class ResourcesController < ApplicationController
    before_filter :login
 
-   exempt_from_layout :rxml
-
+   # show all resources. (Icon view)
    def index
+     params[:from] = Time.parse( params[:from] ) if params[:from]
+     params[:to]   = Time.parse( params[:to] )   if params[:to]
+     
       feed_options = {
          :feed => {
             :title => "All resources",
@@ -22,47 +25,60 @@ class ResourcesController < ApplicationController
             :link => Proc.new { |post| resource_url( :id => post, :username => @user.login ) }
          }
       }
-      @resources = @user.valid_resources.find_annotated_with( params )
-      @min  = @user.valid_resources.min_time.to_i / 1.day
-      @max  = @user.valid_resources.max_time.to_i / 1.day
+
+      @user.resources.with_complete do
+         @min  = @user.resources.min_time
+         @max  = @user.resources.max_time
+         @resources = @user.resources.find_annotated_with( params )
+      end
       @from = params[:from] ? params[:from] : @min
-      @to   = params[:to] ? params[:to] : @max
+      @to   = params[:to]   ? params[:to]   : @max
       respond_to do |format|  #strange bug: fromat.html must be first in row in case format is not given!?
          format.html
          format.xml
          format.rss  { render_rss_feed_for @resources, feed_options }
-         format.atom { render_atom_feed_for @resources, feed_options }
-         format.ics {
-            ical = Resource.to_calendar( @resources ).to_ical
-            render :text => ical
-         }
-         format.js { render :partial => "partials/annotations_and_resources" }
+         format.atom 
+         format.ics  { render :text => to_ical( @resources ) }
+         format.js   { render :partial => "partials/annotations_and_resources" }
       end
    end
 
+   # show one resource (Detail view)
    def show
-      @resource = @user.valid_resources.find( params[:id] )
+      @user.resources.with_complete do
+         @resource = @user.resources.find( params[:id] )
+      end
       @map = get_small_map( @resource )
    end
 
+   # show the map (Map view)
    def map
-      @resources = @user.valid_resources.find_annotated_with( params )
+      @user.resources.with_complete do
+         @resources = @user.resources.find_annotated_with( params )
+      end
       @map = get_map( @resources )
    end
 
-
+   # show the timeline (Timeline view)
    def timeline
       @timeline = true
    end
 
+   # show the cluster (Cluster view)
+   def cluster
+      @cluster = true
+   end
+   
+   # show the iCal download page (iCal export)
    def ical
    end
 
    private
+   # prepare map with resources
    def get_map(resources)
       map = GMap.new("large_map")
       map.control_init( :large_map => true, :map_type => true )
-      ll = []
+      ll = [0,0]
       info = ''
       to = [ll]
       i = 0
@@ -82,10 +98,11 @@ class ResourcesController < ApplicationController
          map.overlay_init( GPolyline.new( get_arrow([geoannotation.ll,ll]), "#00#{i.to_s(16)}#{(255-i).to_s(16)}", 3, 0.8) ) # color, width, opciy
          ll = geoannotation.ll
       end
-      map.center_zoom_init(ll, 2 )
+      map.center_zoom_init( ll, 2 )
       return map
    end
 
+   # prepare small map for detail resource view
    def get_small_map(resource)
       return nil if resource.geos.empty?
       map = GMap.new("small_map")
@@ -101,6 +118,7 @@ class ResourcesController < ApplicationController
       return map
    end
 
+   # draw arrow on map
    def get_arrow(line)
       return line
       from = line[0]
@@ -119,5 +137,16 @@ class ResourcesController < ApplicationController
       y2 = y2 /8
       line << [ to[0].to_i-y2,to[1].to_i-x2] << [to[0], to[1]] << [ to[0].to_i-y1,to[1].to_i-x1]
    end
+
+   #Returns an array of resources as iCal Format
+   def to_ical( resources )
+      calendar = Icalendar::Calendar.new
+      calendar.custom_property("METHOD","PUBLISH")
+      resources.each do |resource|
+         calendar.add_event( resource.to_event )
+      end
+      calendar.to_ical
+   end
+
 end
 

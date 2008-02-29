@@ -1,27 +1,6 @@
- <% if @user.accounts.empty? %>
-  <b style="display:block; margin: 40px auto; width:300px; text-align:center;">Please add your accounts first! Click on the icons on the top right side.</b>
- <% else %>
-    <% if @resources.empty? %>
-      <b style="display:block; margin: 40px auto; width:300px; text-align:center;">Sorry, no resources fetched yet. Please be patient and check again in short time.</b>
-    <% else %>
-      <h4>Your collected resources: <%= @resources.size %> found</h4>
-       <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
-      
-        <%= periodically_call_remote( 
-            :update => 'annotations_and_resources',
-            :frequency => 30, 
-            :url => resources_path( :annotation => @annotation, :username => @user.login ),
-            :method => :get,
-            :before => %(Element.show('spinner')),
-            :success => %(Element.hide('spinner') ) )
-       %>
-       <%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
-      
-       <%= render( :partial => "partials/timechooser" ) %>
-       
-       <div id="annotations_and_resources" style="width:100%; text-align:center;">
-         <%= render( :partial => "partials/annotations_and_resources" ) %>
-       </div>
-    <% end %>
-  <% end %>  
-  
+ <% @alert_msg = "Sorry, no resources fetched yet. Please be patient and check again in short time." if @resources.empty? %>
+ <% @alert_msg = "Please add your accounts first! Click on the icons on the top right side." if @user.accounts.empty? %>
+ 
+ <h4>Resources View: <%= @resources.empty? ? 0 : @resources.size %> found</h4><%= image_tag 'spinner.gif', :id => 'spinner', :style => 'display:none' %><br clear="all">
+ 
+ <%= render( :partial => "partials/resources" ); %> 

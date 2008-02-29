@@ -16,10 +16,20 @@
       <h3><%= @resource.title %> - <%= @resource.time.strftime("%H:%M %d.%m.%Y") %></h3>
       <br clear="all">
       <%= @resource.text.gsub!(/\n/, '<br/>') if @resource.text %>
-      
       <div id="annotations">
-        <%= render :partial => "partials/annotation_group", :collection => Resource.annotation_types, :locals => { :from => @resource }
-	%>
+      
+       <% type = '' %>
+       <ul>       
+        <% @resource.annotations.each do |annotation| %>
+          <% if type != annotation.type -%>
+          <% type = annotation.type %>
+           </ul><ul>
+	     <li><b><%= link_to annotation.type.to_s.capitalize %> </b></li>
+          <% end %>	     
+	  <%= render( :partial => "partials/annotation", :object => annotation ) %> 
+        <% end %>
+       </ul>
+	
       </div>
      </td>
      <td valign="top" width="200">

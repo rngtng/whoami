@@ -2,62 +2,68 @@
 # run automatically in a thread. You have access to all of your rails
 # models.  You also get logger and results method inside of this class
 # by default.
-class FetchResourcesWorker < BackgrounDRb::Worker::RailsBase
 
-   def do_work( args = {} )
-      @type  = Account.types.include?(   args[:type] ) ? args[:type] : ''
-      @user  = User.all_logins.include?( args[:user] ) ? args[:user] : ''
-      @sleep = args[:sleep].to_i > 3 ? args[:sleep].to_i : 10.seconds
-      @log   = []
-      results[:type] = @type
-      results[:user] = @user
-      results[:sleep] = @sleep
-      results[:sleep_cnt] = @sleep
-      results[:running] = true
-      results[:stopped] = false
-      results[:last_run] = Time.now
-      results[:account_type] = ''
-      results[:account_user] = ''
+class FetchResourcesWorker < BackgrounDRb::MetaWorker
+   set_worker_name :fetch_resources_worker
+   set_no_auto_load true
 
-      log( "Inited worker #{@type} for #{@user}" )
-      while results[:running] do
-         begin
-            fetch_resources
-         rescue Exception => e
-            log( "Error: #{e}" )
-         end
-         do_sleep
-      end
-      results[:stopped] = true
-      log( "Stopped worker #{@type} for #{@user}" )
+   DEFAULT_USER = ''
+   DEFAULT_TYPE = ''
+   DEFAULT_SLEEP = 10.seconds
+
+   def create( args = {} )
+      args ||= {}	   
+      logger.info "Started" 
+      set_type  ( args[:type]  && Account.types.include?(   args[:type] ) ) ? args[:type]       : DEFAULT_USER
+      set_user  ( args[:user]  && User.all_logins.include?( args[:user] ) ) ? args[:user]       : DEFAULT_TYPE
+      set_sleep ( args[:sleep] && args[:sleep].to_i > 3                   ) ? args[:sleep].to_i : DEFAULT_SLEEP
+      set_last_run Time.now
+      set_processing false
+      set_stopped false
+      wlog "Inited worker #{get_type} for #{get_user}"
+      update
+      fetch_resources
    end
 
    def fetch_resources
-      results[:processing] = true
-      account = Account.find_to_update( @type, @user )
+      set_processing true
+      update
+      account = Account.find_to_update( get_type, get_user )
       if account
-         log( "Updateing Account #{account.type} owned by #{account.user.login}" )
-         results[:account_type] = account.type
-         results[:account_user] = account.user.login
-         account.worker_fetch_resources
+         wlog "Updateing Account #{account.type} owned by #{account.user.login}"
+         set_account_type account.type
+         set_account_user account.user.login
+         update
+         # account.worker_fetch_resources
       end
-      results[:last_run] = Time.now
-      results[:processing] = false
+      sleep 10
+      set_last_run Time.now
+      set_processing false
+      update
+      add_timer( get_sleep ) { fetch_resources } unless get_stopped
    end
 
-   def do_sleep
-      results[:sleep_cnt] = @sleep
-      while( results[:sleep_cnt] > 0 && results[:running] ) do
-         sleep 1
-         results[:sleep_cnt] -= 1
-      end
+   def worker_stop
+      wlog "stopped"
+      set_stopped true
+      update
+      logger.info "stopped"
    end
 
-   def log( msg )
-      logger.info( msg )
-      @log << msg
-      results[:log] = @log 
+   def method_missing(name, *args)
+      @status ||= {}
+      @status[:log] ||= []
+      str_name = name.to_s
+      if str_name =~ /^set_(.*)/
+         raise ArgumentError( "Only 1 argument is allowed on set_ methods" ) if args.length != 1
+         return  @status[$1.to_sym] = args[0]
+      end
+      return @status[$1.to_sym] if str_name =~ /^get_(.*)/
+      return @status[:log] << args[0] if str_name =~ /^(wlog)/
+      return register_status( @status ) if str_name =~ /^update/
+      return super( name, args)
    end
+
+
 end
-FetchResourcesWorker.register
 

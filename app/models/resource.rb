@@ -4,13 +4,21 @@
 # $Rev:94 $
 # by $Author:bielohla $
 
-# Class representing an resource
-#-- require 'annotation'
+# Class representing an resource. Every specific resource implementation is inherited from Resource and extended for specific
+# resource attributes and methods. The STI (Single Table Interhitance) Pattern is used for a clean structure
+# A resource belongs to an account and can have many tags. Tag relations are build with has_many_polymorphes
 class Resource < ActiveRecord::Base
-   belongs_to :account  #, :counter_cache => true
+   act_as_event_resource #plugin, adds to_event support
 
-   delegate :user,                :to => :account
-   delegate :url, :title, :text,  :to => :data
+   belongs_to :account  # :counter_cache => true
+
+   scope_out :incomplete, :conditions =>  [ 'complete=?', false ]
+   scope_out :complete,   :conditions =>  [ 'complete=?', true ]
+
+   #TODO scope_out :min,        :conditions =>  [ 'resources.complete=?', true ]
+   #TODO scope_out :max,        :conditions =>  [ 'resources.complete=?', true ]
+
+   delegate :user, :to => :account
 
    has_many_polymorphs :annotations, :through => :annotatings, :from =>  Annotation.types
 
@@ -25,7 +33,7 @@ class Resource < ActiveRecord::Base
 
    #Returns Resources subclass of type type
    def self.factory( type, *params )
-      class_name = type.capitalize + "Resource"
+      class_name = type.to_s.capitalize + "Resource"
       raise unless defined? class_name.constantize
       class_name.constantize.new( *params )
    end
@@ -36,8 +44,7 @@ class Resource < ActiveRecord::Base
       opt[:from]   = 'resources'
       opt[:select] = 'annotations.*, COUNT(annotations.id) count'
       opt[:group]  = 'annotations.id'
-      opt[:order]  = 'annotations.name'
-      #opt[:limit]  = '1'
+      opt[:order]  = 'annotations.type, annotations.name'
       Annotation.find( :all, opt )
    end
 
@@ -54,33 +61,18 @@ class Resource < ActiveRecord::Base
       opt = prepage_query( options, 'ftw' )  #set uniqe identifier -ftw- to be able to extend query...
       scope( :find )[:select] = 'resources.*, COUNT(resources.id) as count'
       opt[:group]  = 'resources.id HAVING count > 0'
-      #opt[:having]  = 'count > 0'
-      #puts '##############################'
-      #pp opt
-      #pp scope( :find )
+      #TODO: opt[:having]  = 'count > 0'
+      #TODO: puts '##############################'      #pp opt      #pp scope( :find )
       result = Resource.find( :all, opt )
       return result unless @annotation_types
       result.instance_variable_set( :@options, opt )
-      #add some helpfull methods to array
-      @annotation_types.each do |annotation|
-         result.instance_eval <<-end_eval
-         def #{annotation.to_s}
-            Resource.#{annotation.to_s}( @options.merge( {} ) )
-         end
-         end_eval
+      #dynamic extension: add some helpfull methods to array
+      def result.annotations
+         Resource.annotations( @options.merge( {} ) )
       end
       return result
    end
 
-   #Returns an array of resources as iCal Format
-   def self.to_calendar( resources )
-      cal = Icalendar::Calendar.new
-      cal.custom_property("METHOD","PUBLISH")
-      resources.each do |i|
-         cal.add_event( i.to_event )
-      end
-      cal
-   end
 
    # Find oldest resources
    def self.min_time
@@ -99,7 +91,7 @@ class Resource < ActiveRecord::Base
       @annotation_types
    end
 
-   # Add a dynamic methods to class for getting annotations for all resources
+   # # Add a dynamic methods to class for getting annotations for all resources
    def self.annotation_types=( annotation_types )
       @annotation_types = annotation_types
       @annotation_types.each do |annotation|
@@ -112,11 +104,6 @@ class Resource < ActiveRecord::Base
       end
    end
    self.annotation_types = Annotation.types
-
-   # Condition for a valid resource
-   def self.valid_condition( valid = true)
-      [ 'resources.complete = ?', valid  ]
-   end
 
    ###############################################################################################
    # Complete info of an resource
@@ -137,26 +124,17 @@ class Resource < ActiveRecord::Base
    # Returns thumbnail. If available the first annotated image is returned, if not thumbshot of the first
    # link, if this fails to, the thumbshot of url is taken
    def thumbnail
-      return images.first.thumbnail unless images.empty?
-      return thumbshot( urls.first.thumbnail ) unless urls.empty?
-      thumbshot( url )
+      thb = read_attribute( 'thumbnail' )
+      thb = get_thumbnail if thb.empty?
+      return thb
    end
 
-   # Returns resource as iCal event
-   def to_event
-      event = Icalendar::Event.new
-      event.dtstart = time.strftime("%Y%m%dT%H%M%S")
-      event.summary = title
-      event.url = url
-      event.description = text
-      event.categories = [type]
-      #event.related_to
-      event.geo =   Icalendar::Geo.new( geos.first.lat, geos.first.lng ) unless geos.empty?
-      event.location = locations.map!( &:name).join(',' )
-      #event contacts
-      #event.klass = "PUBLIC"
-      #event.attachment
-      event
+   def get_thumbnail( thb = "" )
+      thb = images.first.thumbnail unless images.empty?
+      thb = thumbshot( urls.first.thumbnail ) if thb.empty? and !urls.empty?
+      thb = thumbshot( url ) if thb.empty?
+      self.thumbnail = thb && save unless thb.empty?
+      return thb
    end
 
    # Type of the resource
@@ -169,6 +147,13 @@ class Resource < ActiveRecord::Base
       false
    end
 
+   # Save the url and add annotation
+   def url=( url, type = :url)
+      super( url )
+      self.thumbnail = thumbshot( url )
+      annotate( type => url )
+   end
+
    # Get the account color for the resource.
    def color #much faster than delegte to account.color!
       "#{type}_account".classify.constantize.color
@@ -177,10 +162,10 @@ class Resource < ActiveRecord::Base
    ###############################################################################################
    # Annotations resource with annotation. If split_by is provided, annotation is splited in server annotations
    # annotation can be a Sting, a Hash where :Annotationtype => AnnotationName or a Annotation
-   def annotate( annotation, split_by = nil )
+   def annotate( annotation )
       @cached_annotations ||= []
-      annotation = Annotation.split_and_get( annotation, split_by )  unless annotation.is_a? Annotation
-      @cached_annotations  <<  annotation
+      annotation = Annotation.get( annotation )  unless annotation.is_a? Annotation
+      @cached_annotations  <<  annotation if annotation
    end
 
    # Save annotations
@@ -192,13 +177,17 @@ class Resource < ActiveRecord::Base
    def feed=(f)
       self.data_id = f.id || f.urls.first
       t = f.date_published.to_i || Time.now.to_i
-      self.time = Time.at( t )
-      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.content)
-      annotate( :url => url ) #TDODO specify better type here?
-      annotate( { :tag => f.categories.join( ' ') }, ' ' ) unless f.categories.empty?
-      annotate( { :author => f.authors.join( ' ') }, ' ' ) unless f.authors.empty?
-      extract_urls_and_images
-      extract_tags
+      self.time  = Time.at( t )
+      self.url   = f.url
+      self.title = f.title
+      self.text  = f.content
+      f.categories.each do | category |
+         annotate( :tag => category )
+      end
+      f.authors.each do | author |
+         annotate( :author => author )
+      end
+      Extractor.get_all( self.text ) { |type, tag | annotate( type => tag ) }
       self.complete = true
    end
 
@@ -253,120 +242,82 @@ class Resource < ActiveRecord::Base
       "http://www.thumbshots.de/cgi-bin/show.cgi?url=#{url}/.png"  #add /.png to get rif of error ms
    end
 
-   #---------------------------------------------------------------------------------------------------------------------
-   # Extract urls and images
-   def extract_urls_and_images( from = nil )
-      from = text unless from
-      d = from.gsub( / www\./, ' http://www.').gsub( /'"/, '')
-      URI::extract( d, 'http' ) do |url|
-         type = ( url =~ /\.(png|jpg|gif)/ ) ? :image : :url
-         annotate( type => url )
-      end
-   end
-
-   # Extracts everthing fomr http://tagthe.net
-   def tag_the_net( from_url = nil  )
-      from_url = ( from_url ) ? "url=#{from_url}" : "text=#{CGI::escape(text.gsub( /<[^>]*>/, '' ))}"
-      doc = Hpricot.XML( open( "http://tagthe.net/api/?#{from_url}" ) )
-      (doc/"dim[@type='topic']/item").each    { |resource| annotate( resource.inner_html ) } # return all unkown annotations
-      (doc/"dim[@type='person']/item").each   { |resource| annotate( :person => resource.inner_html ) } # return all people
-      (doc/"dim[@type='location']/item").each { |resource| annotate( :location => resource.inner_html ) } # return all locations
-      (doc/"dim[@type='language']/item").each { |resource| annotate( :language => resource.inner_html ) } # return all languages
-      (doc/"dim[@type='author']/item").each   { |resource| annotate( :author => resource.inner_html ) } # return all people
-   end
-   alias extract_tags tag_the_net
-
-   # A simple datastructure to store title, url and text for an resource
-   class SimpleResource
-      attr_accessor :title
-      attr_accessor :url
-      attr_accessor :text
-
-      def initialize( data = {} )
-         data.each do |key, value|
-            send( "#{key.to_s}=", value)
-         end
-      end
-   end
 end
 
 ######################################################################################################
 # Represents an image from Flickr - http://www.flickr.com
 #--
-# TODO is url correct?????
 class FlickrResource < Resource
 
+   # set raw/basic data
    def raw_data=(d)
       return self.data = d if self.data_id
-      self.data_id = [d.id, d.secret, d.owner_id].join(':')
-      self.time = Time.now
+      self.data_id   = [d.id, d.secret, d.owner_id].join(':')
+      self.time      = Time.now
+      self.url       = "http://www.flickr.com/photos/#{owner}/#{imgid}"
+      self.thumbnail = d.url.sub( /\.jpg/, '_s.jpg')
+      annotate( :image => d.url.sub( /\.jpg/, '.jpg') )
+      # self.data = d
+      self.complete = false
    end
 
-   def more_data=( d )
-      self.time = d.dates[:taken] || d.dates[:posted]
-      d.tags.each do |annotation|
-         annotate( :tag => annotation.clean )
-      end
-      # add notes, comments, date_posted
-      self.data = SimpleResource.new( :url => d.url, :title => d.title, :text => d.description )
-      annotate( :url => url )
-      annotate( :image => data.url )
+   # set detail data
+   def detail_data=( d )
+      self.time   = d.dates[:taken] || d.dates[:posted]
+      self.title  = d.title
+      self.text   = d.description
+      d.tags.each { |tag| annotate( :tag =>  tag.clean ) }
       self.complete = true
    end
+   #TODO: add notes, comments, date_posted
 
-   def thumbnail
-      data.url.sub( /\.jpg/, '_s.jpg')
+   #def info
+   #   super +  "Comments:"  ##TODO: more info here!!
+   #end
+
+   #HTML code to display image
+   def html
+      "<img src='#{thumbnail.sub( /\_s.jpg/, '_m.jpg')}'>" #TODO user image_tag helper here??
    end
 
-   def info
-      super +  "Comments:"  ##TODO: more info here!!
-   end
-
-   def url
-      "http://www.flickr.com/photos/#{owner}/#{imgid}"  #TODO add user param here
-   end
-
+   # image ID
    def imgid
       @imgid, @secret, @owner = data_id.split(/:/) unless @imgid
       @imgid
    end
 
+   # secret phrase of the image
    def secret
       imgid unless @secret
       @secret
    end
 
+   # owner of the image
    def owner
       imgid unless @owner
       @owner
-   end
-
-   def html
-      "<img src='#{data.url.sub( /\.jpg/, '_m.jpg')}'>"
    end
 end
 
 ######################################################################################################
 # Represents a video from YouTube - http://www.youtube.com
 class YoutubeResource < Resource
+
+   # set raw/basic data
    def raw_data=(d)
-      self.data_id = d.id
-      self.time = d.upload_time || Time.now
-      annotate( { :tag => d.tags }, ' ' )
-      self.data = d
-      annotate( :url => url )
+      self.data_id   = d.id
+      self.time      = d.upload_time || Time.now
+      self.title     = d.title
+      self.text      = d.description
+      self.url       = d.url
+      self.thumbnail = d.thumbnail_url
+      self.data      = d
       annotate( :video => "http://www.youtube.com/v/#{d.id}" )
+      d.tags.split(' ').each { |tag| annotate( :tag =>  tag ) }
       self.complete = true
    end
 
-   def thumbnail
-      data.thumbnail_url
-   end
-
-   def text
-      data.description
-   end
-
+   # return all infos about this resource
    def info
       super +  "Lengths:#{data.length_seconds}\nComments:#{data.comment_count}\n" +
       "Views:#{data.view_count}\nRating:#{data.rating_avg}\n" +
@@ -382,40 +333,36 @@ end
 ######################################################################################################
 # Represents a music Last.fm - http://www.last.fm
 class LastfmResource < Resource
-   delegate :artist, :to => :data
-   delegate :album,  :to => :data
+   #delegate :artist, :to => :data
+   #delegate :album,  :to => :data
 
+   # set raw/basic data
    def raw_data=(d)
-      self.data_id = d.url  ##TODO: is id available???
-      self.time = d.date
-      self.data = d
-      annotate( :url => url)
+      self.data_id   = d.url  ##TODO: is id available???
+      self.time      = d.date
+      self.url       = d.url
+      self.thumbnail = thumbshot( d.url )
+
       annotate( :artist => artist)
-      self.complete = !album.nil?
+      self.complete  = !album.nil?
    end
 
-   def text
-      [data.artist, data.album.title].join("\n")
-   end
-
+   # return all infos about this resource
    def info
       "Date: #{time.strftime("%Y-%m-%d")}\nTitle: #{title}\nArtist: #{artist}\nAlbum: #{album.title}\nPlayed: #{time.to_s}"
-   end
-
-   def thumbnail
-      return thumbshot( url ) if album.nil? or album.coverart.nil? or album.coverart.empty?
-      data.album.coverart['small']
    end
 
    # Set the album
    def album=(album)
       return if album.nil?
-      data.album = album
+      self.data.album = album
+      self.thumbnail = data.album.coverart['small']
+      self.text = [data.artist, data.album.title].join("\n")
       self.complete = true
    end
 
-   #TODO
-   #def feed=(r)
+   # set data from feed (in fallback cases)
+   #TODO:   #def feed=(r)
    #   self.time = Time.parse( (r/"pubDate").inner_html )
    #   r_url   = (r/"guid").inner_html
    #   r_title = (r/"title").inner_html
@@ -432,29 +379,27 @@ end
 ######################################################################################################
 # Represents a bookmark from Del.icious - http://del.icio.us
 class DeliciousResource < Resource
+
+   # set raw/basic data
    def raw_data=(d)
       self.data_id = d.hash
-      self.time = d.time
-      annotate( { :tag => d.tag }, ' ' )
+      self.time  = d.time
+      self.title = d.title
+      self.text  = d.text
+      self.url   = d.url
       self.data = d
-      annotate( :url => url)
+      d.tags.split(' ').each { |tag|  annotate( :tag =>  tag ) }
       self.complete = true
    end
 
-   def thumbnail
-      thumbshot( url)
-   end
-
+   # set data from feed (in fallback cases)
    def feed=(r)
-      self.time = Time.parse( (r/"dc:date").inner_html )
-      r_url   = (r/"link").inner_html
-      r_title = (r/"title").inner_html
-      r_text  = (r/"description").inner_html
-      self.data = SimpleResource.new( :url => r_url, :title => r_title,  :text => r_text )
-      self.data_id = url
-      annotations = (r/"dc:subject").inner_html
-      annotate( { :tag => annotations }, ' ' )
-      annotate( :url => url)
+      self.data_id = (r/"link").inner_html
+      self.time    = Time.parse( (r/"dc:date").inner_html )
+      self.title   = (r/"title").inner_html
+      self.text    = (r/"description").inner_html
+      self.url     = (r/"link").inner_html
+      (r/"dc:subject").inner_html.split(' ').each { |tag|  annotate( :tag =>  tag ) }
       self.complete = true
    end
 end
@@ -462,154 +407,33 @@ end
 ######################################################################################################
 # Represents a posting from a blog
 class BlogResource < Resource
+
+   # set raw/basic data
    def raw_data=(d)
       self.data_id = d['postid']
-      time = d['dateCreated'].to_time
-      return if time > Time.now #get rid of future posts
-      return unless time.to_i > 0  #get rid of drafts
-      self.time = time
-      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
-      extract_urls_and_images
-      extract_tags
-      annotate( :blog => url)
+      self.time    = d['dateCreated'].to_time
+      return nil if self.time > Time.now or self.time.to_i < 1 #get rid of future posts and drafts
+      self.title = d['title']
+      self.text  = d['description']
+      self.url   = d['permaLink'], :blog
+      Extractor.get_tags( self.text ) { |type, tag | annotate( type => tag ) }
+      Extractor.get_urls_and_images( self.text ) { |type, tag | annotate( type => tag ) }
       self.complete = true
    end
 
+   # set data from feed (in fallback cases)
    def feed=(f)
       self.data_id = f.id || f.urls.first
       t = f.date_published.to_i || Time.now.to_i
-      self.time = Time.at( t )
-      self.data = SimpleResource.new( :url => f.url, :title => f.title,  :text => f.content)
-      annotate( :blog => url )
-      annotate( { :tag => f.categories.join( ' ') }, ' ' ) unless f.categories.empty?
-      annotate( { :author => f.authors.join( ' ') }, ' ' ) unless f.authors.empty?
-      extract_urls_and_images
-      extract_tags
+      self.time  = Time.at( t )
+      self.url   = f.url, :blog
+      self.title = f.title
+      self.text  = f.content
+      f.categories.each {  | category |  annotate( :tag => category ) }
+      f.authors.each { | author |  annotate( :author => author ) }
+      Extractor.get_tags( self.text ) { |type, tag | annotate( type => tag ) }
+      Extractor.get_urls_and_images( self.text ) { |type, tag | annotate( type => tag ) }
       self.complete = true
    end
 end
-
-
-######################################################################################################
-# Represents a posting from a Feed
-#class FeedResource < Resource
-#   def raw_data=(d)
-#      self.data_id = d['postid']
-#      time = d['dateCreated'].to_time
-#      return if time > Time.now #get rid of future posts
-#      return unless time.to_i > 0  #get rid of drafts
-#      self.time = time
-#      self.data = SimpleResource.new( :url => d['permaLink'], :title => d['title'],  :text => d['description'] )
-#      extract_all
-#      annotate( :blog => url)
-#      self.complete = true
-#   end
-#end
-
-######################################################################################################
-# Represents a search result by yahoo
-#class YahoosearchResource < Resource
-#   def raw_data=(d)
-#      self.data_id = d['Url']
-#      self.time = Time.at( d['ModificationDate'].to_i )
-#      self.complete = true
-#      self.data = d
-#   end
-#
-#   def url
-#      data['Url']
-#   end
-#
-#   def title
-#      data['Title']
-#   end
-#
-#   def text
-#      data['Summary']
-#   end
-#
-#   def info
-#      super
-#   end
-#end
-
-######################################################################################################
-# Represents a posting from Twitter - http://www.twitter.com
-#class TwitterResource < Resource
-#   def raw_data=(d)
-#      self.data_id = d.id
-#      self.time = d.created_at
-#      self.data = d
-#      self.complete = true
-#   end
-#
-#   def url
-#      "http://www.twitter.com/#{data.user.screen_name}/statuses/#{data.id}"
-#   end
-#
-#   def title
-#      "#{data.user.name} says"
-#   end
-#
-#   def thumbnail
-#      return thumbshot( @urls.first ) if @urls.first
-#      thumbshot( url )
-#   end
-#
-#   def info
-#      super
-#   end
-#end
-#
-#######################################################################################################
-## Represents a location by Plazes  http://www.plazes.com
-#class PlazesResource < Resource
-#   delegate :plaze,    :to => :data
-#   delegate :street,   :to => :plaze
-#   delegate :zip,      :to => :plaze
-#   delegate :city,     :to => :plaze
-#   delegate :country,  :to => :plaze
-#   delegate :latitude, :to => :plaze
-#   delegate :longitude,:to => :plaze
-#   delegate :blog_url, :to => :plaze
-#
-#   def raw_data=(d)
-#      return unless d.plaze.name
-#      self.time = d.start.to_time
-#      self.data_id = "#{d.plaze.key}#{self.time.to_i}"
-#      self.data = d
-#      #extract_all
-#      extract_tags( url )
-#      self.complete = true
-#   end
-#
-#   def url
-#      return "http://#{plaze.blog_url.gsub( 'http://', '')}" unless plaze.blog_url.empty?
-#      plaze.url
-#   end
-#
-#   def title
-#      plaze.name
-#   end
-#
-#   def text
-#      "#{street} #{zip} #{city} #{country}\n Latitude: #{latitude} Longitude: #{longitude}\n #{blog_url}"
-#   end
-#end
-
-############################################################################################################################################
-
-#private
-#a.resources.each do | i | i.get_annotations; i.save; end
-#def get_annotations
-#   t = text.gsub( /&/, 'und' ).gsub( /[^a-zA-Z0-9 ] /, ' ')
-#   annotations = [ 'b', 'i', 'strong', 'em' ]
-#   resp = XmlSimple.xml_in( "<html>#{t}</html>", { 'ForceArray' => annotations })
-#   r = title
-#   annotations.each do | t |
-#     r = [ r, resp[t] ].join( ' ') if resp[t]
-#   end
-#   Annotation.delimiter = ' '
-#   self.annotation_list = r
-#end
 
