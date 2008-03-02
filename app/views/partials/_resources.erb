@@ -1,0 +1,19 @@
+ <% if @alert_msg %>
+   <%= render( :partial => "partials/msg" ); %>
+ <% else %>
+   <% @url = ( @account ) ? account_url( :id => @account, :username => @user.login ) : resources_url( :annotation => @annotation, :username => @user.login ) %>
+   <%= periodically_call_remote( 
+         :update => 'annotations_and_resources',
+         :frequency => 30, 
+         :url => @url,
+         :method => :get,
+         :before => %(Element.show('spinner')),
+         :success => %(Element.hide('spinner') ) )
+    %>
+   
+    <%= render( :partial => "partials/timechooser" ) %>
+    
+    <div id="annotations_and_resources" style="width:100%; text-align:center;">
+      <%= render( :partial => "partials/annotations_and_resources" ) %>
+    </div>
+ <% end %>

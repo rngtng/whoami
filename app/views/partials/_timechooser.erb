@@ -1,0 +1,27 @@
+    <div id="timechooser"> 
+     <% form_tag @url, :id => 'timechooser_form' do %>
+       <input name="annotation" value="<%= @annotation %>" type="hidden">
+       <input name="from" id="datestart" type="hiden">
+       <div id="slider-container" style="float: left">
+         <div id="sliderbar"></div>
+       </div>
+       <input name="to"   id="dateend"  type="hiden">
+     <% end %>
+   </div>
+   <br clear="all">
+
+     <%= observe_form :timechooser_form, 
+      :frequency => 2, 
+      :update => 'annotations_and_resources', 
+      :before => "Element.show('spinner')", 
+      :complete => "Element.hide('spinner')", 
+      :url => @url,
+      :method => :get
+     -%>
+
+ <script language = "javascript">	
+    p_oDateSlider = new DateSlider('sliderbar', 
+   <%= "#{@from.strftime( "'%Y-%m-%d'" )},#{@to.strftime( "'%Y-%m-%d'" )}, #{@min.strftime( "%Y" )}, #{@max.strftime( "%Y" )}" %>+1  );		
+    p_oDateSlider.attachFields($('datestart'), $('dateend'));
+  </script>
+

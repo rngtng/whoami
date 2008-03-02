@@ -1,0 +1,24 @@
+    <% type = '' %>
+    <div id="annotations">
+    <ul>       
+       <% from = @resources if from.nil? -%>
+       <% annotations = from.annotations -%>
+        
+       <% annotations.each do |annotation| %>
+         <% next unless annotation.type.to_s.capitalize.constantize.show %>
+         <% if type != annotation.type -%>
+         <% type = annotation.type %>
+          </ul><ul>
+	    <li><b><%= link_to annotation.type.to_s.capitalize %> </b></li>
+         <% end %>	     
+	 <%= render( :partial => "partials/annotation", :object => annotation ) %> 
+       <% end %>
+      </ul>
+    </div>
+    <br>
+    <div id="resources">
+      <%= render( :partial => "partials/resource", :collection => @resources ) %>
+    </div>
+    
+    <% @alert_msg = "Sorry, nothing found!" if @resources.empty? %>
+    <%= render( :partial => "partials/msg" ) if @resources.empty? %>

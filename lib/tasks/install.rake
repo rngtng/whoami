@@ -1,35 +1,35 @@
 namespace :install do
    desc "Install rails"
    task :rails do
-      sh "gem install --include-dependencies rails"
+      sh "gem install rails"
    end
 
    desc "Install deploy gems"
    task :deploy_gems do
-      sh "gem install --include-dependencies termios"
-      #sh "gem install --include-dependencies capistrano"
-      sh "gem install --include-dependencies -s http://gems.rubyonrails.org capistrano" #capsitrano 2.0
-      sh "gem install --include-dependencies mongrel"
-      sh "gem install --include-dependencies mongrel_cluster"
+      sh "gem install termios"
+      sh "gem install capistrano"
+      sh "gem install mongrel"
+      sh "gem install mongrel_cluster"
    end
 
    desc "Install vendor gems"
    task :vendor_gems do
-      sh "gem install --include-dependencies feed-normalizer"
-      sh "gem install --include-dependencies youtube"
-      sh "gem install --include-dependencies twitter4r"
-      sh "gem install --include-dependencies rflickr"
-      sh "gem install --include-dependencies daemons"
-      sh "gem install --include-dependencies slave"
-      sh "gem install --include-dependencies ruby-openid"
-      sh "gem install --include-dependencies icalendar"
+      sh "gem install feed-normalizer"
+      sh "gem install youtube"
+      sh "gem install twitter4r"
+      sh "gem install rflickr"
+      sh "gem install daemons"
+      sh "gem install slave"
+      sh "gem install ruby-openid"
+      sh "gem install icalendar"
+      sh "gem install ruby-openid"
       puts ""
       puts "#######################################################"
       puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"
       puts "#######################################################"
       puts ""
       puts "to fix it, go to:"
-      puts "  YOURGEMREPOS/gems/rflickr-2006.02.01/lib/flickr/base.rb"
+      puts " vi /usr/lib/ruby/gems/1.8/gems/rflickr-2006.02.01/lib/flickr/base.rb"
       puts " and change line 644: def from_xml(xml,photo=nil)"
       puts " to  def self.from_xml(xml,photo=nil)"
       puts ""
@@ -57,15 +57,15 @@ namespace :install do
 
    desc "Install all gems"
    task :gems do
-      install:vendor_gems
-      install:my_gems
+      install :vendor_gems
+      install :my_gems
    end
 
    desc "Install everything needed"
    task :all do
-      install:vendor_gems
-      install:my_gems
-      install:whoami
+      install :vendor_gems
+      install :my_gems
+      install :whoami
    end
 end
 

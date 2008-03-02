@@ -1,0 +1,37 @@
+
+<script>
+var timeplot;
+
+function onLoad() {
+  var plotInfo = [
+    Timeplot.createPlotInfo({
+      id: "plot1",
+      valueGeometry: new Timeplot.DefaultValueGeometry({
+        gridColor: "#000000",
+        axisLabelsPlacement: "left",
+        min: 0,
+        max: 100
+      }),
+      timeGeometry: new Timeplot.DefaultTimeGeometry({
+        gridColor: "#000000",
+        axisLabelsPlacement: "top"
+      })
+    })
+  ];
+            
+  timeplot = Timeplot.create(document.getElementById("timeplot"), plotInfo);
+}
+
+var resizeTimerID = null;
+function onResize() {
+    if (resizeTimerID == null) {
+        resizeTimerID = window.setTimeout(function() {
+            resizeTimerID = null;
+            timeplot.repaint();
+        }, 100);
+    }
+}
+</script>
+
+<div id="timeplot" style="height: 600px; border: 1px solid #aaa; margin: 0px 40px 0px 40px"></div>
+

@@ -1,0 +1,15 @@
+  <% from = @resources if from.nil? -%>
+  <% annotations = from.annotations -%>
+  <% return if annotations.empty?  -%>
+    
+  <% annotations.each do |annotation| %>
+    
+  (<%= annotation.type %>)<%= annotation.name %><br>
+  
+  <% end %>
+  
+  , :collection => [:topics, :tags, :people, :locations, :languages, :artists, :authors, :geos] 
+  
+  
+  
+  <%= render( :partial => "partials/annotation_group" )  %>
