@@ -1,30 +1,30 @@
-   <% key  = worker[0]  %>
-   <% r    = worker[1].results %>
-   <% unless r.empty? %>
-     <% user = User.all_logins.include?( r[:user] ) ? r[:user] : 'any' %>
-     <% type = Account.types.include?(   r[:type] ) ? r[:type] : 'any' %>
-     <tr>
-      <td><%= "#{user}, #{type}, #{r[:sleep]}" %></td>
-      <td align="center"><%= (Time.now - r[:last_run]).to_i %> sec</td>
-      <% if r[:running] %>
-        <td><%= r[:processing] ? "#{r[:account_type]} owned by #{r[:account_user]}" : "sleeping #{r[:sleep_cnt]}" %></td>
-        <td>
-          <%= link_to 'stop', worker_path( key ), :method => :delete, :confirm => "Are you sure?" %>
-          <%= link_to_function 'log', "Element.toggle('#{key}')" %>
-        </td>
-      <% else %>
-        <td colspan="2" align="center"><%= r[:stopped] ? "stopped" : "stopping" %></td>
-      <% end %> 
-     </tr>
-     <tr style="display:none;" id="<%= key %>">
-      <td colspan="5" style="font-size:8pt; padding-left:15px; color: #aaa;">
-       <%= r[:log].join( "<br>" ) %>
-      </td>
-     </tr>    
-     <!-- #visual_effect( :toggle_slide, key, :duration => 0.5 ) -->
-   <% else %>
-      <tr>
-       <td><%= key %></td>
-       <td colspan="4" align="center"> An error occured </td>
-      </tr>
-   <% end %>
+<% key  = worker[0].to_s.sub( 'fetch_resources_worker_', '' )  %>
+<% r    = MiddleMan.ask_status(:worker => :fetch_resources_worker, :job_key => key ) %>
+<% if r %>
+  <% r[:user] = 'any' if r[:user].empty? %>
+  <% r[:type] = 'any' if r[:type].empty? %>
+  <tr>
+   <td><%= "#{r[:user]}, #{r[:type]}, #{r[:sleep]}" %></td>
+   <td align="center"><%= (Time.now - r[:last_run]).to_i %> sec</td>
+   <td>
+      <%= r[:processing] ? "#{r[:account_type]} owned by #{r[:account_user]}" : "sleeping" -%>
+   </td>
+   <td>
+      <% unless r[:stopped] %>
+        <%= link_to 'stop', worker_path( key ), :method => :delete, :confirm => "Are you sure?" %>
+        <%= link_to_function 'log', "Element.toggle('#{key}')" %>
+	 <% end %>
+    </td>
+  </tr>
+  <tr style="display:none;" id="<%= key %>">
+   <td colspan="5" style="font-size:8pt; padding-left:15px; color: #aaa;">
+    <%= r[:log].join( "<br>" ) %>
+   </td>
+  </tr>    
+  <!-- #visual_effect( :toggle_slide, key, :duration => 0.5 ) -->
+<% else %>
+   <tr>
+    <td><%= key %></td>
+    <td colspan="4" align="center"> starting... </td>
+   </tr>
+<% end %>

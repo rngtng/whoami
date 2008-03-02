@@ -33,7 +33,7 @@ test:
 production:
   adapter: mysql
   database: whoami
-  username: bielohla
+  username: whoami
   password: 2007whoami..
   host: serv-4100
   encoding: utf8
