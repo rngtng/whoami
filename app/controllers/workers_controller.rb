@@ -8,10 +8,7 @@ class WorkersController < ApplicationController
    before_filter :backgroundrb_runs?
 
    def index
-      respond_to do |format|  #strange bug: fromat.html must be first in row in case format is not given!?
-         format.html
-         format.js { render :partial => "worker", :collection => @workers }
-      end
+      return render( :partial => "worker", :collection => @workers ) if request.xhr?  
    end
 
 
