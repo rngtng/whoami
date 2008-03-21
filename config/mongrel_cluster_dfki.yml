@@ -1,5 +1,5 @@
 --- 
-cwd: /home/bielohla/rails/whoami/current
+cwd: /home/whoami/public/current
 port: "3000"
 environment: production
 address: pc-6433.kl.dfki.de
