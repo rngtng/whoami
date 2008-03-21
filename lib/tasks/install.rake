@@ -18,11 +18,11 @@ namespace :install do
       sh "gem install youtube"
       sh "gem install twitter4r"
       sh "gem install rflickr"
-      sh "gem install daemons"
-      sh "gem install slave"
+      #sh "gem install daemons"
+      #sh "gem install slave"
       sh "gem install ruby-openid"
       sh "gem install icalendar"
-      sh "gem install packet"   #for backgorundrb
+      sh "gem install chronic packet"   #for backgorundrb
       puts ""
       puts "#######################################################"
       puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"
