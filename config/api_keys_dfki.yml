@@ -2,8 +2,8 @@
 
 development:
  flickr: 
-    key: 4e49a06e0e815680660e1e37ae4a1a2d
-    secret: 9390237b2c854292
+    key: c972d1adf127c566d9bc689cdbe9aecb
+    secret: 7a7805e600984b8b
  youtube:
     key: G1Wl5IDX66M
  plazes:
@@ -11,8 +11,8 @@ development:
 
 test:
  flickr: 
-    key: 4e49a06e0e815680660e1e37ae4a1a2d
-    secret: 9390237b2c854292
+    key: c972d1adf127c566d9bc689cdbe9aecb
+    secret: 7a7805e600984b8b
  youtube:
     key: G1Wl5IDX66M
  plazes:
