@@ -22,7 +22,7 @@ namespace :install do
       sh "gem install slave"
       sh "gem install ruby-openid"
       sh "gem install icalendar"
-      sh "gem install ruby-openid"
+      sh "gem install packet"   #for backgorundrb
       puts ""
       puts "#######################################################"
       puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"
