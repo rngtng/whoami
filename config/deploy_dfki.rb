@@ -9,12 +9,12 @@
 
 #### DFKI
 #set :default_shell, "/usr/bin/tcsh"
-role :web, "serv-4103.kl.dfki.de"
-role :app, "serv-4103.kl.dfki.de"
-role :db,  "serv-4103.kl.dfki.de", :primary => true
-set :deploy_to,    "/home/bielohla/rails/whoami/"           # defaults to "/u/apps/#{application}"
-set :mongrel_conf, "/home/bielohla/rails/whoami/current/config/mongrel_cluster_dfki.yml"
-set :user,         "bielohla"    # defaults to the currently logged in user
+role :web, "pc-6433.kl.dfki.de"
+role :app, "pc-6433.kl.dfki.de"
+role :db,  "pc-6433.kl.dfki.de", :primary => true
+set :deploy_to,    "/home/whoami/public/"           # defaults to "/u/apps/#{application}"
+set :mongrel_conf, "/home/whoami/public/current/config/mongrel_cluster_dfki.yml"
+set :user,         "whoami"    # defaults to the currently logged in user
 
 namespace :deploy do
    task :set_config, :roles => :app do
