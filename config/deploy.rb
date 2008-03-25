@@ -148,7 +148,7 @@ namespace :deploy do
    end
    
    task :restart, :roles => :web do
-      run "mongrel_rails  restart -e production"
+      
    end
 
    task :start, :roles => :web do
@@ -167,6 +167,10 @@ after  'deploy:update_code', 'deploy:copy_background'
 
 before 'deploy:stop',  'backgroundrb:stop'
 after  'deploy:start', 'backgroundrb:start'
+
+before  'deploy:restart', 'deploy:stop'
+after   'deploy:restart', 'deploy:start'
+
 
 before 'mongrel:cluster:restart',  'backgroundrb:stop'
 after  'mongrel:cluster:restart',  'backgroundrb:start'
