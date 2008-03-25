@@ -8,8 +8,6 @@
 # (http://manuals.rubyonrails.com/read/book/17). It allows you to automate
 # (among other things) the deployment of your application.
 
-require 'lib/mongrel_cluster_recipes.rb'
-
 # =============================================================================
 # REQUIRED VARIABLES
 # =============================================================================
@@ -142,22 +140,33 @@ namespace :deploy do
    task :copy_background, :roles => :app do
       run "cp -f #{release_path}/vendor/middleman_rails_init.rb  #{release_path}/vendor/plugins/backgroundrb/lib/middleman_rails_init.rb"
    end
-end
 
-namespace :deploy do
    task :set_config, :roles => :app do
       run "mv -f #{release_path}/config/database_dfki.yml #{release_path}/config/database.yml"
       run "mv -f #{release_path}/config/api_keys_dfki.yml #{release_path}/config/api_keys.yml"
       run "mv -f #{release_path}/config/gmaps_api_key_dfki.yml #{release_path}/config/gmaps_api_key.yml"
    end
+   
+   task :restart, :roles => :web do
+      run "mongrel_rails  restart -e production"
+   end
+
+   task :start, :roles => :web do
+     run "mongrel_rails start -e production -d -n 3 -c /home/whoami/public/current"
+   end
+   
+   task :stop, :roles => :web do
+     run "mongrel_rails stop -c /home/whoami/public/current"
+   end
+
 end
 
-after  'deploy:update_code', 'deploy:set_config'
 
+after  'deploy:update_code', 'deploy:set_config'
 after  'deploy:update_code', 'deploy:copy_background'
 
-before 'mongrel:cluster:stop',  'backgroundrb:stop'
-after  'mongrel:cluster:start', 'backgroundrb:start'
+before 'deploy:stop',  'backgroundrb:stop'
+after  'deploy:start', 'backgroundrb:start'
 
 before 'mongrel:cluster:restart',  'backgroundrb:stop'
 after  'mongrel:cluster:restart',  'backgroundrb:start'

@@ -1,7 +1,0 @@
---- 
-cwd: /home/whoami/public/current
-port: "3000"
-environment: production
-address: pc-6433.kl.dfki.de
-pid_file: log/mongrel.pid
-servers: 1
