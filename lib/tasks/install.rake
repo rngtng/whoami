@@ -6,7 +6,7 @@ namespace :install do
 
    desc "Install deploy gems"
    task :deploy_gems do
-      sh "gem install termios"
+      #sh "gem install termios"
       sh "gem install capistrano"
       sh "gem install mongrel"
       sh "gem install mongrel_cluster"
@@ -18,8 +18,6 @@ namespace :install do
       sh "gem install youtube"
       sh "gem install twitter4r"
       sh "gem install rflickr"
-      #sh "gem install daemons"
-      #sh "gem install slave"
       sh "gem install ruby-openid"
       sh "gem install icalendar"
       sh "gem install chronic packet"   #for backgorundrb

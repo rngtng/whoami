@@ -105,6 +105,25 @@ set :use_sudo, false
 # all should be rolled back (for each task that specifies an on_rollback
 # handler).
 
+ task :dfki do
+   role :web, "pc-6433.kl.dfki.de"
+   role :app, "pc-6433.kl.dfki.de"
+   role :db,  "pc-6433.kl.dfki.de", :primary => true
+   set :deploy_to,    "/home/whoami/public/"           # defaults to "/u/apps/#{application}"
+   set :mongrel_conf, "/home/whoami/public/current/config/mongrel_cluster_dfki.yml"
+   set :user,         "whoami"    # defaults to the currently logged in user
+ end
+ 
+ task :warteschlange do
+   role :web, "whoami.warteschlange.de"
+   role :app, "whoami.warteschlange.de"
+   role :db,  "whoami.warteschlange.de", :primary => true
+   set :deploy_to,    "/kunden/warteschlange.de/produktiv/rails/whoami/"           # defaults to "/u/apps/#{application}"
+   set :mongrel_conf, "/kunden/warteschlange.de/produktiv/rails/whoami/current/config/mongrel_cluster.yml"
+   set :user,         "ssh-21560-rails"    # defaults to the currently logged in user
+ end
+
+
 namespace :backgroundrb do
    desc "Start  backgroundrb"
    task :start, :roles => :app do
@@ -124,6 +143,16 @@ namespace :deploy do
       run "cp -f #{release_path}/vendor/middleman_rails_init.rb  #{release_path}/vendor/plugins/backgroundrb/lib/middleman_rails_init.rb"
    end
 end
+
+namespace :deploy do
+   task :set_config, :roles => :app do
+      run "mv -f #{release_path}/config/database_dfki.yml #{release_path}/config/database.yml"
+      run "mv -f #{release_path}/config/api_keys_dfki.yml #{release_path}/config/api_keys.yml"
+      run "mv -f #{release_path}/config/gmaps_api_key_dfki.yml #{release_path}/config/gmaps_api_key.yml"
+   end
+end
+
+after  'deploy:update_code', 'deploy:set_config'
 
 after  'deploy:update_code', 'deploy:copy_background'
 
