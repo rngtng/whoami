@@ -152,11 +152,11 @@ namespace :deploy do
    end
 
    task :start, :roles => :web do
-     run "mongrel_rails start -e production -d -n 3 -c /home/whoami/public/current"
+     run "mongrel_rails start -e production -d -n 3 -c #{deploy_to}/current"
    end
    
    task :stop, :roles => :web do
-     run "mongrel_rails stop -c /home/whoami/public/current"
+     run "mongrel_rails stop -c #{deploy_to}/current"
    end
 
 end
