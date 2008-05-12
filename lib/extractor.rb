@@ -28,7 +28,7 @@ class Extractor
    private
    # Extracts everthing fomr http://tagthe.net
    def self.tag_the_net( type, from  )
-      from = text.gsub( /<[^>]*>/, '' ).gsub( /&[a-z0-9#]*;/, '' ) if type == :text
+      from = from.gsub( /<[^>]*>/, '' ).gsub( /&[a-z0-9#]*;/, '' ) if type == :text
       doc = Hpricot.XML( open( "http://tagthe.net/api/?#{type}=#{CGI::escape(from)}" ) )
       [:topic, :person, :location, :language, :author].each do |type|
          (doc/"dim[@type='#{type}']/item").each do |resource|

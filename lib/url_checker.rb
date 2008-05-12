@@ -36,15 +36,16 @@ class UrlChecker
    #check if it is an feed url, if not try to extract the feed url
    def self.get_feed_url( url )
       url = "http://#{url.sub( 'http://', '')}"
-      begin
+   #   begin
+            p url
          content = Hpricot.XML( open( url ) )
          return url if (content%"rss") or (content%"channel") or (content%"feed") #it is already an feed url -> return
          ['rss', 'atom'].each do |type|
             new_url = get_url( content, type )
             return new_url  if new_url
          end
-      rescue Exception => e
-      end
+  #    rescue Exception => e
+   #   end
       false #nothing found
    end
 
