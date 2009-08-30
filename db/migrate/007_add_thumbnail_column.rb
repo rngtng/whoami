@@ -6,11 +6,11 @@ class AddThumbnailColumn < ActiveRecord::Migration
       add_column :resources, :url,        :string
 
       Resource.find( :all ).each  do |resource|
-         resource.text      = resource.text
-	 resource.title     = resource.title
-	 resource.url       = resource.url
-         resource.thumbnail = resource.thumbnail
-         resource.save
+        resource.text      = resource.text
+        resource.title     = resource.title
+        resource.url       = resource.url
+        resource.thumbnail = resource.thumbnail
+        resource.save
       end
    end
 
