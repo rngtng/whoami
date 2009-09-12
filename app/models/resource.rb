@@ -12,15 +12,15 @@ class Resource < ActiveRecord::Base
 
    belongs_to :account  # :counter_cache => true
 
-   scope_out :incomplete, :conditions =>  [ 'complete=?', false ]
-   scope_out :complete,   :conditions =>  [ 'complete=?', true ]
+   named_scope :incomplete, :conditions =>  { :complete => false }
+   named_scope :complete,   :conditions =>  { :complete => true }
 
-   #TODO scope_out :min,        :conditions =>  [ 'resources.complete=?', true ]
-   #TODO scope_out :max,        :conditions =>  [ 'resources.complete=?', true ]
+   #TODO named_scope :min,        :conditions =>  [ 'resources.complete=?', true ]
+   #TODO named_scope :max,        :conditions =>  [ 'resources.complete=?', true ]
 
    delegate :user, :to => :account
 
-   has_many_polymorphs :annotations, :through => :annotatings, :from =>  Annotation.types
+   #has_many_polymorphs :annotations, :through => :annotatings, :from =>  Annotation.types
 
    serialize  :data
 
