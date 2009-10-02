@@ -34,11 +34,50 @@ namespace :backgroundrb do
       FileUtils.cp_r(test_helper_src,test_helper_dest)
     end
 
+    worker_env_loader_dest = "#{RAILS_ROOT}/script/load_worker_env.rb"
+    worker_env_loader_src = File.join(File.dirname(__FILE__),"..","script","load_worker_env.rb")
+    unless File.exists? worker_env_loader_dest
+      puts "Copying Worker envionment loader file #{worker_env_loader_dest}"
+      FileUtils.cp_r(worker_env_loader_src,worker_env_loader_dest)
+    end
+
+    # Generate the migration
+    Rake::Task['backgroundrb:queue_migration'].invoke
+  end
+
+  desc "Drops and recreate backgroundrb queue table"
+  task :redo_queue => :queue_migration do
+  end
+
+  desc 'update backgroundrb config files from your rails application'
+  task :update do
+    temp_scripts = ["backgroundrb","load_worker_env.rb"].map {|x| "#{RAILS_ROOT}/script/#{x}"}
+    temp_scripts.each do |file_name|
+      if File.exists?(file_name)
+        puts "Removing #{file_name} ..."
+        FileUtils.rm(file_name,:force => true)
+      end
+    end
+    new_temp_scripts = ["backgroundrb","load_worker_env.rb"].map {|x| File.dirname(__FILE__) + "/../script/#{x}" }
+    new_temp_scripts.each do |file_name|
+      puts "Updating file #{File.expand_path(file_name)} ..."
+      FileUtils.cp_r(file_name,"#{RAILS_ROOT}/script/")
+    end
+  end
+
+  desc 'Generate a migration for the backgroundrb queue table.  The migration name can be ' +
+    'specified with the MIGRATION environment variable.'
+  task :queue_migration => :environment do
+    raise "Task unavailable to this database (no migration support)" unless ActiveRecord::Base.connection.supports_migrations?
+    require 'rails_generator'
+    require 'rails_generator/scripts/generate'
+    Rails::Generator::Scripts::Generate.new.run(['bdrb_migration', ENV['MIGRATION'] || 'CreateBackgroundrbQueueTable'])
   end
 
   desc 'Remove backgroundrb from your rails application'
   task :remove do
     script_src = "#{RAILS_ROOT}/script/backgroundrb"
+    temp_scripts = ["backgroundrb","load_worker_env.rb"].map {|x| "#{RAILS_ROOT}/script/#{x}"}
 
     if File.exists?(script_src)
         puts "Removing #{script_src} ..."

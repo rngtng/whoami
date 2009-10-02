@@ -11,7 +11,7 @@ task :default => :test
 desc 'Test the backgroundrb plugin.'
 Rake::TestTask.new(:test) do |t|
   t.libs << 'lib'
-  t.pattern = 'test/**/*_test.rb'
+  t.pattern = 'test/**/test_*.rb'
   t.verbose = true
 end
 
@@ -23,15 +23,13 @@ Spec::Rake::SpecTask.new('specs') do |t|
 end
 
 desc "RCov"
-Spec::Rake::SpecTask.new('rcov') do |t|
-  t.spec_files = FileList['specs/**/*_spec.rb']
-  t.libs = ['lib', 'server/lib' ]
-  t.rcov = true
+task :rcov do
+  sh("rcov test/**/*.rb")
 end
 
 desc 'Generate documentation for the backgroundrb plugin.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
+  rdoc.rdoc_dir = 'doc/output/manual'
   rdoc.title    = 'Backgroundrb'
   rdoc.options << '--line-numbers' << '--inline-source'
   rdoc.rdoc_files.include('README')
@@ -62,9 +60,44 @@ task :publish_rdoc => [:rdoc] do
   publisher.upload
 end
 
-namespace :git do 
+namespace :git do
+  def current_branch
+    branches = `git branch`
+    return branches.split("\n").detect {|x| x =~ /^\*/}.split(' ')[1]
+  end
+
   desc "Push changes to central git repo"
-  task :push do 
+  task :push do
     sh("git push origin master")
   end
+
+  desc "update master branch"
+  task :up do
+    t_branch = current_branch
+    sh("git checkout master")
+    sh("git pull")
+    sh("git checkout #{t_branch}")
+  end
+
+  desc "rebase current branch to master"
+  task :rebase => [:up] do
+    sh("git rebase master")
+  end
+
+  desc "merge current branch to master"
+  task :merge => [:up] do
+    t_branch = current_branch
+    sh("git checkout master")
+    sh("git merge #{t_branch}")
+    sh("git checkout #{t_branch}")
+  end
+
+  desc "commot current branch"
+  task :commit => [:merge] do
+    t_branch = current_branch
+    sh("git checkout master")
+    sh("git push origin master")
+    sh("git checkout #{t_branch}")
+  end
 end
+
