@@ -1,5 +1,1 @@
-## YAML Template.
-:backgroundrb:
-  :ip: 127.0.0.1
-  :port: 12001
-  :environment: development
+shared/backgroundrb.yml

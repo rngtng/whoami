@@ -1,5 +1,5 @@
 # This file is auto-generated from the current state of the database. Instead of editing this file, 
-# please use the migrations feature of ActiveRecord to incrementally modify your database, and
+# please use the migrations feature of Active Record to incrementally modify your database, and
 # then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your database schema. If you need
@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 7) do
+ActiveRecord::Schema.define(:version => 20091002160120) do
 
   create_table "accounts", :force => true do |t|
     t.integer  "user_id"
@@ -43,29 +43,30 @@ ActiveRecord::Schema.define(:version => 7) do
 
   add_index "annotations", ["name", "type"], :name => "index_annotations_on_name_and_type"
 
+  create_table "bdrb_job_queues", :force => true do |t|
+    t.text     "args"
+    t.string   "worker_name"
+    t.string   "worker_method"
+    t.string   "job_key"
+    t.integer  "taken"
+    t.integer  "finished"
+    t.integer  "timeout"
+    t.integer  "priority"
+    t.datetime "submitted_at"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "archived_at"
+    t.string   "tag"
+    t.string   "submitter_info"
+    t.string   "runner_info"
+    t.string   "worker_key"
+    t.datetime "scheduled_at"
+  end
+
   create_table "cachedalbums", :force => true do |t|
     t.string "artist"
     t.string "title"
     t.text   "album"
-  end
-
-  create_table "open_id_authentication_associations", :force => true do |t|
-    t.binary  "server_url"
-    t.string  "handle"
-    t.binary  "secret"
-    t.integer "issued"
-    t.integer "lifetime"
-    t.string  "assoc_type"
-  end
-
-  create_table "open_id_authentication_nonces", :force => true do |t|
-    t.string  "nonce"
-    t.integer "created"
-  end
-
-  create_table "open_id_authentication_settings", :force => true do |t|
-    t.string "setting"
-    t.binary "value"
   end
 
   create_table "resources", :force => true do |t|

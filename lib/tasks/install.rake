@@ -14,13 +14,8 @@ namespace :install do
 
    desc "Install vendor gems"
    task :vendor_gems do
-      sh "gem install feed-normalizer"
-      sh "gem install youtube"
       sh "gem install twitter4r"
-      sh "gem install rflickr"
-      sh "gem install ruby-openid"
       sh "gem install icalendar"
-      sh "gem install chronic packet"   #for backgorundrb
       puts ""
       puts "#######################################################"
       puts "####  WARNING: rFlickr 2006.02.01   has a bug!     ####"

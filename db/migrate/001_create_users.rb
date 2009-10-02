@@ -19,25 +19,6 @@ class CreateUsers < ActiveRecord::Migration
       end
 
       add_index :users, [ :login ]
-
-      create_table :open_id_authentication_associations do |t|
-         t.column :server_url, :binary
-         t.column :handle, :string
-         t.column :secret, :binary
-         t.column :issued, :integer
-         t.column :lifetime, :integer
-         t.column :assoc_type, :string
-      end
-
-      create_table :open_id_authentication_nonces do |t|
-         t.column :nonce, :string
-         t.column :created, :integer
-      end
-
-      create_table :open_id_authentication_settings do |t|
-         t.column :setting, :string
-         t.column :value, :binary
-      end
    end
 
    def self.down
